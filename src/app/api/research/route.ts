@@ -59,10 +59,13 @@ export async function POST(req: Request) {
           contents: [
             `You are a college admissions expert. Search the web for the most accurate and up-to-date admissions data for ${collegeName} for students applying to start college in Fall 2027 (this means application deadlines are typically in late 2026 or early 2027). Find their exact Need-Blind policy, whether they offer early admission, their application deadlines for the Fall 2027 cycle, and their average admitted student GPA.
             
+            CRITICAL INSTRUCTION: Since Fall 2027 dates might not be officially published yet, you may need to project them based on historical Fall 2026 dates (e.g., if it is always Nov 1, project Nov 1, 2026). If you are projecting dates based on historical patterns rather than finding an explicitly announced Fall 2027 date, you MUST set "isEstimatedDeadlines" to true.
+            
             You MUST return ONLY a raw JSON object with the following exact keys and types, and nothing else. Do not use markdown code blocks like \`\`\`json.
             {
               "isNeedBlind": boolean or null (True if need-blind for domestic, false if need-aware. Use null if explicitly unknown/not published),
               "offersEarlyAdmission": boolean or null (True if Early Decision/Action is offered. Use null if unknown),
+              "isEstimatedDeadlines": boolean (True if dates are projected from historical patterns, false if officially announced for Fall 2027),
               "earlyDecision1": string or null (The exact ED1 deadline date including the year, e.g. "Nov 1, 2026". Return null if not offered),
               "earlyDecision2": string or null (The exact ED2 deadline date including the year, e.g. "Jan 1, 2027". Return null if not offered),
               "earlyAction": string or null (The exact EA deadline date including the year, e.g. "Nov 1, 2026". Return null if not offered),

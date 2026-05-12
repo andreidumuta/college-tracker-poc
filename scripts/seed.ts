@@ -28,6 +28,7 @@ function generateMockData() {
     isNeedAware: null,
     offersEarlyAdmission: null,
     averageGpa: null,
+    isEstimatedDeadlines: null,
     deadlines: {
       earlyDecision1: null,
       earlyDecision2: null,

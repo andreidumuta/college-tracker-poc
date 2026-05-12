@@ -23,6 +23,7 @@ interface College {
   isNeedBlind: boolean | null;
   isNeedAware: boolean | null;
   offersEarlyAdmission: boolean | null;
+  isEstimatedDeadlines: boolean | null;
   deadlines: {
     earlyDecision1: string | null;
     earlyDecision2: string | null;
@@ -72,6 +73,7 @@ export default function Dashboard() {
         isNeedBlind: data.isNeedBlind,
         isNeedAware: !data.isNeedBlind,
         offersEarlyAdmission: data.offersEarlyAdmission,
+        isEstimatedDeadlines: data.isEstimatedDeadlines ?? null,
         averageGpa: data.averageGpa,
         deadlines: {
           earlyDecision1: data.earlyDecision1 || null,
@@ -204,12 +206,14 @@ export default function Dashboard() {
                       <Calendar className="w-4 h-4 text-purple-400" />
                       <span className="font-semibold text-slate-200">Regular Decision:</span>
                       {college.deadlines?.regularDecision ?? "Unknown"}
+                      {college.isEstimatedDeadlines && college.deadlines?.regularDecision && <span className="text-slate-500 text-xs">(est)</span>}
                     </div>
                     {college.deadlines?.earlyAction && (
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-blue-400" />
                         <span className="font-semibold text-slate-200">Early Action (EA):</span>
                         {college.deadlines.earlyAction}
+                        {college.isEstimatedDeadlines && <span className="text-slate-500 text-xs">(est)</span>}
                       </div>
                     )}
                     {college.deadlines?.earlyDecision1 && (
@@ -217,6 +221,7 @@ export default function Dashboard() {
                         <Calendar className="w-4 h-4 text-blue-500" />
                         <span className="font-semibold text-slate-200">Early Decision 1:</span>
                         {college.deadlines.earlyDecision1}
+                        {college.isEstimatedDeadlines && <span className="text-slate-500 text-xs">(est)</span>}
                       </div>
                     )}
                     {college.deadlines?.earlyDecision2 && (
@@ -224,6 +229,7 @@ export default function Dashboard() {
                         <Calendar className="w-4 h-4 text-indigo-400" />
                         <span className="font-semibold text-slate-200">Early Decision 2:</span>
                         {college.deadlines.earlyDecision2}
+                        {college.isEstimatedDeadlines && <span className="text-slate-500 text-xs">(est)</span>}
                       </div>
                     )}
                     {college.deadlines?.rolling === true && (

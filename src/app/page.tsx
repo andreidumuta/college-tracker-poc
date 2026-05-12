@@ -184,6 +184,11 @@ export default function Dashboard() {
                     <span className="badge badge-blue">
                       Acceptance: {college.acceptanceRate ? (college.acceptanceRate * 100).toFixed(1) + "%" : "N/A"}
                     </span>
+                    {college.averageGpa && (
+                      <span className="badge badge-blue">
+                        Avg GPA: {college.averageGpa}
+                      </span>
+                    )}
                     {college.offersNeedBasedAid && (
                       <span className="badge badge-blue">Need-Based Aid</span>
                     )}

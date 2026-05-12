@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { GraduationCap, MapPin, Search, Calendar, Landmark, CheckCircle2, XCircle } from "lucide-react";
+import { GraduationCap, MapPin, Search, Calendar, Landmark, CheckCircle2, XCircle, Wand2 } from "lucide-react";
 
 interface TestScore {
   p25: number | null;
@@ -40,7 +40,43 @@ export default function Dashboard() {
   const [colleges, setColleges] = useState<College[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [researchingId, setResearchingId] = useState<string | null>(null);
 
+  const handleResearch = async (college: College) => {
+    setResearchingId(college.id);
+    try {
+      const res = await fetch("/api/research", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ collegeName: college.name }),
+      });
+      
+      if (!res.ok) throw new Error("Research failed");
+      const data = await res.json();
+      
+      const updatedData = {
+        isNeedBlind: data.isNeedBlind,
+        isNeedAware: !data.isNeedBlind,
+        offersEarlyAdmission: data.offersEarlyAdmission,
+        averageGpa: data.averageGpa,
+        deadlines: {
+          earlyDecision: data.earlyDecisionDeadline || null,
+          regularDecision: data.regularDecisionDeadline || null,
+        }
+      };
+
+      await updateDoc(doc(db, "colleges", college.id), updatedData);
+      
+      setColleges(prev => prev.map(c => 
+        c.id === college.id ? { ...c, ...updatedData } : c
+      ));
+    } catch (error) {
+      console.error("Error researching college:", error);
+      alert("Failed to research college. Check your API key or console for details.");
+    } finally {
+      setResearchingId(null);
+    }
+  };
   useEffect(() => {
     async function fetchColleges() {
       try {
@@ -127,12 +163,27 @@ export default function Dashboard() {
                     )}
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-slate-400 font-semibold uppercase flex items-center justify-end">
-                    Test Optional
-                    {college.isTestOptional ? <CheckCircle2 className="w-4 h-4 ml-1 text-green-400" /> : <XCircle className="w-4 h-4 ml-1 text-red-400" />}
-                  </p>
-                  <p className="text-sm font-medium text-slate-300 mt-1">{college.isTestOptional ? "Yes" : "Required"}</p>
+                <div className="text-right flex flex-col items-end gap-2">
+                  <div className="text-right">
+                    <p className="text-xs text-slate-400 font-semibold uppercase flex items-center justify-end">
+                      Test Optional
+                      {college.isTestOptional ? <CheckCircle2 className="w-4 h-4 ml-1 text-green-400" /> : <XCircle className="w-4 h-4 ml-1 text-red-400" />}
+                    </p>
+                    <p className="text-sm font-medium text-slate-300 mt-1">{college.isTestOptional ? "Yes" : "Required"}</p>
+                  </div>
+                  
+                  <button
+                    onClick={() => handleResearch(college)}
+                    disabled={researchingId === college.id}
+                    className="mt-2 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {researchingId === college.id ? (
+                      <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Wand2 className="w-3.5 h-3.5" />
+                    )}
+                    {researchingId === college.id ? "Researching..." : "Auto-Research"}
+                  </button>
                 </div>
               </div>
 

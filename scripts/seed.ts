@@ -23,21 +23,14 @@ const SCORECARD_API_KEY = "DEMO_KEY";
 const BASE_URL = "https://api.data.gov/ed/collegescorecard/v1/schools";
 
 function generateMockData() {
-  const isNeedBlind = Math.random() > 0.5;
-  const isNeedAware = !isNeedBlind;
-  const offersEarlyAdmission = Math.random() > 0.3;
-  const avgGpa = (Math.random() * (4.0 - 3.2) + 3.2).toFixed(2);
-  const edDeadline = offersEarlyAdmission ? "Nov 1" : null;
-  const rdDeadline = "Jan 1";
-
   return {
-    isNeedBlind,
-    isNeedAware,
-    offersEarlyAdmission,
-    averageGpa: parseFloat(avgGpa),
+    isNeedBlind: null,
+    isNeedAware: null,
+    offersEarlyAdmission: null,
+    averageGpa: null,
     deadlines: {
-      earlyDecision: edDeadline,
-      regularDecision: rdDeadline
+      earlyDecision: null,
+      regularDecision: null
     }
   };
 }

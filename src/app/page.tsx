@@ -18,11 +18,11 @@ interface College {
   isPublic: boolean;
   acceptanceRate: number | null;
   isTestOptional: boolean;
-  averageGpa: number;
+  averageGpa: number | null;
   offersNeedBasedAid: boolean;
-  isNeedBlind: boolean;
-  isNeedAware: boolean;
-  offersEarlyAdmission: boolean;
+  isNeedBlind: boolean | null;
+  isNeedAware: boolean | null;
+  offersEarlyAdmission: boolean | null;
   deadlines: {
     earlyDecision: string | null;
     regularDecision: string | null;
@@ -178,12 +178,13 @@ export default function Dashboard() {
                     {college.offersNeedBasedAid && (
                       <span className="badge badge-blue">Need-Based Aid</span>
                     )}
-                    {college.isNeedBlind ? (
+                    {college.isNeedBlind === true && (
                       <span className="badge badge-green">Need-Blind</span>
-                    ) : (
+                    )}
+                    {college.isNeedAware === true && (
                       <span className="badge badge-red">Need-Aware</span>
                     )}
-                    {college.offersEarlyAdmission && (
+                    {college.offersEarlyAdmission === true && (
                       <span className="badge badge-blue">Early Admission</span>
                     )}
                   </div>
@@ -192,13 +193,13 @@ export default function Dashboard() {
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-purple-400" />
                       <span className="font-semibold text-slate-200">Regular Decision:</span>
-                      {college.deadlines?.regularDecision || "Unknown"}
+                      {college.deadlines?.regularDecision || "Not published"}
                     </div>
-                    {college.offersEarlyAdmission && (
+                    {college.offersEarlyAdmission !== false && (
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-blue-400" />
                         <span className="font-semibold text-slate-200">Early Admission:</span>
-                        {college.deadlines?.earlyDecision || "Unknown"}
+                        {college.deadlines?.earlyDecision || "Not published"}
                       </div>
                     )}
                   </div>

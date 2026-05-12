@@ -22,16 +22,11 @@ const db = getFirestore(app);
 const SCORECARD_API_KEY = "DEMO_KEY";
 const BASE_URL = "https://api.data.gov/ed/collegescorecard/v1/schools";
 
-// Helper function to generate mock data for fields not in the public API
 function generateMockData() {
   const isNeedBlind = Math.random() > 0.5;
   const isNeedAware = !isNeedBlind;
   const offersEarlyAdmission = Math.random() > 0.3;
-  
-  // Random average GPA between 3.2 and 4.0
   const avgGpa = (Math.random() * (4.0 - 3.2) + 3.2).toFixed(2);
-  
-  // Random dates
   const edDeadline = offersEarlyAdmission ? "Nov 1" : null;
   const rdDeadline = "Jan 1";
 
@@ -63,10 +58,21 @@ async function fetchAndSeed() {
       "school.ownership",
       "latest.admissions.admission_rate.overall",
       "latest.admissions.test_requirements",
+      "latest.admissions.sat_scores.25th_percentile.math",
+      "latest.admissions.sat_scores.75th_percentile.math",
       "latest.admissions.sat_scores.midpoint.math",
+      "latest.admissions.sat_scores.25th_percentile.critical_reading",
+      "latest.admissions.sat_scores.75th_percentile.critical_reading",
       "latest.admissions.sat_scores.midpoint.critical_reading",
+      "latest.admissions.act_scores.25th_percentile.cumulative",
+      "latest.admissions.act_scores.75th_percentile.cumulative",
       "latest.admissions.act_scores.midpoint.cumulative",
-      "latest.cost.attendance.academic_year" // proxy for need-based aid if we want to show cost
+      "latest.admissions.act_scores.25th_percentile.english",
+      "latest.admissions.act_scores.75th_percentile.english",
+      "latest.admissions.act_scores.midpoint.english",
+      "latest.admissions.act_scores.25th_percentile.math",
+      "latest.admissions.act_scores.75th_percentile.math",
+      "latest.admissions.act_scores.midpoint.math",
     ].join(",")
   });
 
@@ -88,13 +94,35 @@ async function fetchAndSeed() {
         isPublic: isPublic,
         acceptanceRate: school["latest.admissions.admission_rate.overall"] || null,
         isTestOptional: testReqId === 2 || testReqId === 3 || testReqId === 5,
-        averageSatMath: school["latest.admissions.sat_scores.midpoint.math"] || null,
-        averageSatReading: school["latest.admissions.sat_scores.midpoint.critical_reading"] || null,
-        averageSatTotal: (school["latest.admissions.sat_scores.midpoint.math"] && school["latest.admissions.sat_scores.midpoint.critical_reading"]) 
-                         ? school["latest.admissions.sat_scores.midpoint.math"] + school["latest.admissions.sat_scores.midpoint.critical_reading"]
-                         : null,
-        averageAct: school["latest.admissions.act_scores.midpoint.cumulative"] || null,
-        offersNeedBasedAid: true, // Almost all Title IV institutions offer some need-based aid
+        
+        testScores: {
+          satReading: {
+            p25: school["latest.admissions.sat_scores.25th_percentile.critical_reading"] || null,
+            mid: school["latest.admissions.sat_scores.midpoint.critical_reading"] || null,
+            p75: school["latest.admissions.sat_scores.75th_percentile.critical_reading"] || null,
+          },
+          satMath: {
+            p25: school["latest.admissions.sat_scores.25th_percentile.math"] || null,
+            mid: school["latest.admissions.sat_scores.midpoint.math"] || null,
+            p75: school["latest.admissions.sat_scores.75th_percentile.math"] || null,
+          },
+          actComposite: {
+            p25: school["latest.admissions.act_scores.25th_percentile.cumulative"] || null,
+            mid: school["latest.admissions.act_scores.midpoint.cumulative"] || null,
+            p75: school["latest.admissions.act_scores.75th_percentile.cumulative"] || null,
+          },
+          actEnglish: {
+            p25: school["latest.admissions.act_scores.25th_percentile.english"] || null,
+            mid: school["latest.admissions.act_scores.midpoint.english"] || null,
+            p75: school["latest.admissions.act_scores.75th_percentile.english"] || null,
+          },
+          actMath: {
+            p25: school["latest.admissions.act_scores.25th_percentile.math"] || null,
+            mid: school["latest.admissions.act_scores.midpoint.math"] || null,
+            p75: school["latest.admissions.act_scores.75th_percentile.math"] || null,
+          }
+        },
+        offersNeedBasedAid: true,
         ...generateMockData()
       };
 

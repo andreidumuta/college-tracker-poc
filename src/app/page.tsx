@@ -5,6 +5,12 @@ import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { GraduationCap, MapPin, Search, Calendar, Landmark, CheckCircle2, XCircle } from "lucide-react";
 
+interface TestScore {
+  p25: number | null;
+  mid: number | null;
+  p75: number | null;
+}
+
 interface College {
   id: string;
   name: string;
@@ -12,8 +18,6 @@ interface College {
   isPublic: boolean;
   acceptanceRate: number | null;
   isTestOptional: boolean;
-  averageSatTotal: number | null;
-  averageAct: number | null;
   averageGpa: number;
   offersNeedBasedAid: boolean;
   isNeedBlind: boolean;
@@ -22,6 +26,13 @@ interface College {
   deadlines: {
     earlyDecision: string | null;
     regularDecision: string | null;
+  };
+  testScores?: {
+    satReading: TestScore;
+    satMath: TestScore;
+    actComposite: TestScore;
+    actEnglish: TestScore;
+    actMath: TestScore;
   };
 }
 
@@ -52,7 +63,7 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="min-h-screen p-8 max-w-7xl mx-auto">
+    <div className="min-h-screen p-8 max-w-[1400px] mx-auto">
       <header className="mb-12 text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-6">
         <div>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-2 flex items-center gap-3">
@@ -83,60 +94,89 @@ export default function Dashboard() {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           {filteredColleges.map((college) => (
-            <div key={college.id} className="glass-card rounded-2xl p-6 flex flex-col h-full relative overflow-hidden">
+            <div key={college.id} className="glass-card rounded-2xl p-6 flex flex-col relative overflow-hidden">
               <div className="absolute top-0 right-0 p-4 opacity-10">
                 <Landmark className="w-24 h-24" />
               </div>
               
-              <div className="mb-4 relative z-10">
-                <h2 className="text-2xl font-bold text-white mb-2 leading-tight">{college.name}</h2>
-                <div className="flex items-center text-slate-400 text-sm mb-3">
-                  <MapPin className="w-4 h-4 mr-1" />
-                  {college.location}
-                  <span className="mx-2">•</span>
-                  {college.isPublic ? "Public" : "Private"}
+              <div className="mb-6 relative z-10 flex justify-between items-start">
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-2 leading-tight">{college.name}</h2>
+                  <div className="flex items-center text-slate-400 text-sm mb-3">
+                    <MapPin className="w-4 h-4 mr-1" />
+                    {college.location}
+                    <span className="mx-2">•</span>
+                    {college.isPublic ? "Public" : "Private"}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="badge badge-blue">
+                      Acceptance: {college.acceptanceRate ? (college.acceptanceRate * 100).toFixed(1) + "%" : "N/A"}
+                    </span>
+                    {college.isNeedBlind && (
+                      <span className="badge badge-green">Need-Blind</span>
+                    )}
+                    {college.offersEarlyAdmission && (
+                      <span className="badge badge-blue">Early Admission</span>
+                    )}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <span className="badge badge-blue">
-                    Acceptance: {college.acceptanceRate ? (college.acceptanceRate * 100).toFixed(1) + "%" : "N/A"}
-                  </span>
-                  {college.isNeedBlind && (
-                    <span className="badge badge-green">Need-Blind</span>
-                  )}
-                  {college.offersEarlyAdmission && (
-                    <span className="badge badge-blue">Early Admission</span>
-                  )}
+                <div className="text-right">
+                  <p className="text-xs text-slate-400 font-semibold uppercase flex items-center justify-end">
+                    Test Optional
+                    {college.isTestOptional ? <CheckCircle2 className="w-4 h-4 ml-1 text-green-400" /> : <XCircle className="w-4 h-4 ml-1 text-red-400" />}
+                  </p>
+                  <p className="text-sm font-medium text-slate-300 mt-1">{college.isTestOptional ? "Yes" : "Required"}</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mt-auto z-10 pt-4 border-t border-slate-700/50">
-                <div>
-                  <p className="text-xs text-slate-400 font-semibold uppercase">Avg SAT</p>
-                  <p className="text-lg font-bold text-white">{college.averageSatTotal || "N/A"}</p>
+              {college.testScores && (
+                <div className="mt-auto relative z-10 bg-slate-900/50 rounded-xl overflow-hidden border border-slate-700/50">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-slate-800/80 text-slate-300 text-xs uppercase font-semibold border-b border-slate-700/50">
+                      <tr>
+                        <th className="px-4 py-3">Test</th>
+                        <th className="px-4 py-3 text-center">25th Percentile</th>
+                        <th className="px-4 py-3 text-center">Median</th>
+                        <th className="px-4 py-3 text-center">75th Percentile</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-700/50 text-slate-200">
+                      <tr className="hover:bg-slate-800/30 transition-colors">
+                        <td className="px-4 py-3 font-medium">SAT Evidence-Based Reading and Writing</td>
+                        <td className="px-4 py-3 text-center">{college.testScores.satReading.p25 || "-"}</td>
+                        <td className="px-4 py-3 text-center">{college.testScores.satReading.mid || "-"}</td>
+                        <td className="px-4 py-3 text-center">{college.testScores.satReading.p75 || "-"}</td>
+                      </tr>
+                      <tr className="hover:bg-slate-800/30 transition-colors">
+                        <td className="px-4 py-3 font-medium">SAT Math</td>
+                        <td className="px-4 py-3 text-center">{college.testScores.satMath.p25 || "-"}</td>
+                        <td className="px-4 py-3 text-center">{college.testScores.satMath.mid || "-"}</td>
+                        <td className="px-4 py-3 text-center">{college.testScores.satMath.p75 || "-"}</td>
+                      </tr>
+                      <tr className="hover:bg-slate-800/30 transition-colors">
+                        <td className="px-4 py-3 font-medium">ACT Composite</td>
+                        <td className="px-4 py-3 text-center">{college.testScores.actComposite.p25 || "-"}</td>
+                        <td className="px-4 py-3 text-center">{college.testScores.actComposite.mid || "-"}</td>
+                        <td className="px-4 py-3 text-center">{college.testScores.actComposite.p75 || "-"}</td>
+                      </tr>
+                      <tr className="hover:bg-slate-800/30 transition-colors">
+                        <td className="px-4 py-3 font-medium">ACT English</td>
+                        <td className="px-4 py-3 text-center">{college.testScores.actEnglish.p25 || "-"}</td>
+                        <td className="px-4 py-3 text-center">{college.testScores.actEnglish.mid || "-"}</td>
+                        <td className="px-4 py-3 text-center">{college.testScores.actEnglish.p75 || "-"}</td>
+                      </tr>
+                      <tr className="hover:bg-slate-800/30 transition-colors">
+                        <td className="px-4 py-3 font-medium">ACT Math</td>
+                        <td className="px-4 py-3 text-center">{college.testScores.actMath.p25 || "-"}</td>
+                        <td className="px-4 py-3 text-center">{college.testScores.actMath.mid || "-"}</td>
+                        <td className="px-4 py-3 text-center">{college.testScores.actMath.p75 || "-"}</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
-                <div>
-                  <p className="text-xs text-slate-400 font-semibold uppercase">Avg GPA (Mock)</p>
-                  <p className="text-lg font-bold text-white">{college.averageGpa.toFixed(2)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400 font-semibold uppercase flex items-center">
-                    Test Optional
-                    {college.isTestOptional ? <CheckCircle2 className="w-3 h-3 ml-1 text-green-400" /> : <XCircle className="w-3 h-3 ml-1 text-red-400" />}
-                  </p>
-                  <p className="text-sm font-medium text-slate-300">{college.isTestOptional ? "Yes" : "Required"}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400 font-semibold uppercase flex items-center">
-                    <Calendar className="w-3 h-3 mr-1" /> Deadlines
-                  </p>
-                  <p className="text-sm font-medium text-slate-300">
-                    RD: {college.deadlines.regularDecision || "N/A"}
-                    {college.deadlines.earlyDecision && ` | ED: ${college.deadlines.earlyDecision}`}
-                  </p>
-                </div>
-              </div>
+              )}
             </div>
           ))}
         </div>

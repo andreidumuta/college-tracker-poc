@@ -29,8 +29,11 @@ function generateMockData() {
     offersEarlyAdmission: null,
     averageGpa: null,
     deadlines: {
-      earlyDecision: null,
-      regularDecision: null
+      earlyDecision1: null,
+      earlyDecision2: null,
+      earlyAction: null,
+      regularDecision: null,
+      rolling: null
     }
   };
 }

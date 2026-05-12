@@ -24,8 +24,11 @@ interface College {
   isNeedAware: boolean | null;
   offersEarlyAdmission: boolean | null;
   deadlines: {
-    earlyDecision: string | null;
+    earlyDecision1: string | null;
+    earlyDecision2: string | null;
+    earlyAction: string | null;
     regularDecision: string | null;
+    rolling: boolean | null;
   };
   testScores?: {
     satReading: TestScore;
@@ -71,8 +74,11 @@ export default function Dashboard() {
         offersEarlyAdmission: data.offersEarlyAdmission,
         averageGpa: data.averageGpa,
         deadlines: {
-          earlyDecision: data.earlyDecisionDeadline || null,
-          regularDecision: data.regularDecisionDeadline || null,
+          earlyDecision1: data.earlyDecision1 || null,
+          earlyDecision2: data.earlyDecision2 || null,
+          earlyAction: data.earlyAction || null,
+          regularDecision: data.regularDecision || null,
+          rolling: data.rolling || null,
         }
       };
 
@@ -188,6 +194,9 @@ export default function Dashboard() {
                     {college.offersEarlyAdmission === true && (
                       <span className="badge badge-blue">Early Admission</span>
                     )}
+                    {college.deadlines?.rolling === true && (
+                      <span className="badge badge-purple">Rolling Admissions</span>
+                    )}
                   </div>
 
                   <div className="mt-4 flex flex-col gap-1.5 text-sm text-slate-300 bg-slate-800/30 p-3 rounded-xl border border-slate-700/50">
@@ -196,11 +205,32 @@ export default function Dashboard() {
                       <span className="font-semibold text-slate-200">Regular Decision:</span>
                       {college.deadlines?.regularDecision ?? "Unknown"}
                     </div>
-                    {college.offersEarlyAdmission !== false && (
+                    {college.deadlines?.earlyAction && (
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-blue-400" />
-                        <span className="font-semibold text-slate-200">Early Admission:</span>
-                        {college.deadlines?.earlyDecision ?? "Unknown"}
+                        <span className="font-semibold text-slate-200">Early Action (EA):</span>
+                        {college.deadlines.earlyAction}
+                      </div>
+                    )}
+                    {college.deadlines?.earlyDecision1 && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-blue-500" />
+                        <span className="font-semibold text-slate-200">Early Decision 1:</span>
+                        {college.deadlines.earlyDecision1}
+                      </div>
+                    )}
+                    {college.deadlines?.earlyDecision2 && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-indigo-400" />
+                        <span className="font-semibold text-slate-200">Early Decision 2:</span>
+                        {college.deadlines.earlyDecision2}
+                      </div>
+                    )}
+                    {college.deadlines?.rolling === true && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-emerald-400" />
+                        <span className="font-semibold text-slate-200">Rolling Admissions:</span>
+                        Yes
                       </div>
                     )}
                   </div>

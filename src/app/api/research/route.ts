@@ -57,8 +57,11 @@ export async function POST(req: Request) {
         {
           "isNeedBlind": boolean or null (True if need-blind for domestic, false if need-aware. Use null if explicitly unknown/not published),
           "offersEarlyAdmission": boolean or null (True if Early Decision/Action is offered. Use null if unknown),
-          "earlyDecisionDeadline": string or null (The exact deadline date including the year, e.g. "Nov 1, 2026". Return "Not published" if the college has explicitly not released it yet.),
-          "regularDecisionDeadline": string (The exact deadline date including the year, e.g. "Jan 1, 2027". Return "Not published" if the college has explicitly not released it yet.),
+          "earlyDecision1": string or null (The exact ED1 deadline date including the year, e.g. "Nov 1, 2026". Return null if not offered),
+          "earlyDecision2": string or null (The exact ED2 deadline date including the year, e.g. "Jan 1, 2027". Return null if not offered),
+          "earlyAction": string or null (The exact EA deadline date including the year, e.g. "Nov 1, 2026". Return null if not offered),
+          "regularDecision": string (The exact RD deadline date including the year, e.g. "Jan 1, 2027". Return "Not published" if explicitly unknown),
+          "rolling": boolean or null (True if they offer rolling admissions, false otherwise),
           "averageGpa": number or null (e.g. 3.9, use null if not published)
         }`
       ],

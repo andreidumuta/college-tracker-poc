@@ -48,10 +48,10 @@ export default function Dashboard() {
 
   const handleResearchAll = async () => {
     setIsResearchingAll(true);
-    // Process sequentially with a 4.5-second delay to avoid hitting Gemini free tier rate limits (15 RPM)
+    // Process sequentially with a 6.5-second delay to safely avoid Gemini RPM rate limits
     for (const college of colleges) {
       await handleResearch(college);
-      await new Promise(resolve => setTimeout(resolve, 4500));
+      await new Promise(resolve => setTimeout(resolve, 6500));
     }
     setIsResearchingAll(false);
   };

@@ -47,29 +47,47 @@ export async function POST(req: Request) {
 
     console.log(`Researching data for: ${collegeName}`);
 
-    // Call Gemini with Google Search Grounding enabled
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: [
-        `You are a college admissions expert. Search the web for the most accurate and up-to-date admissions data for ${collegeName} for students applying to start college in Fall 2027 (this means application deadlines are typically in late 2026 or early 2027). Find their exact Need-Blind policy, whether they offer early admission, their application deadlines for the Fall 2027 cycle, and their average admitted student GPA.
-        
-        You MUST return ONLY a raw JSON object with the following exact keys and types, and nothing else. Do not use markdown code blocks like \`\`\`json.
-        {
-          "isNeedBlind": boolean or null (True if need-blind for domestic, false if need-aware. Use null if explicitly unknown/not published),
-          "offersEarlyAdmission": boolean or null (True if Early Decision/Action is offered. Use null if unknown),
-          "earlyDecision1": string or null (The exact ED1 deadline date including the year, e.g. "Nov 1, 2026". Return null if not offered),
-          "earlyDecision2": string or null (The exact ED2 deadline date including the year, e.g. "Jan 1, 2027". Return null if not offered),
-          "earlyAction": string or null (The exact EA deadline date including the year, e.g. "Nov 1, 2026". Return null if not offered),
-          "regularDecision": string (The exact RD deadline date including the year, e.g. "Jan 1, 2027". Return "Not published" if explicitly unknown),
-          "rolling": boolean or null (True if they offer rolling admissions, false otherwise),
-          "averageGpa": number or null (e.g. 3.9, use null if not published)
-        }`
-      ],
-      config: {
-        tools: [{ googleSearch: {} }],
-        temperature: 0.1, // Keep it deterministic
+    // Implement retry logic with exponential backoff for 429 errors
+    let response;
+    let retries = 3;
+    let delay = 2000;
+    
+    while (retries > 0) {
+      try {
+        response = await ai.models.generateContent({
+          model: "gemini-1.5-flash",
+          contents: [
+            `You are a college admissions expert. Search the web for the most accurate and up-to-date admissions data for ${collegeName} for students applying to start college in Fall 2027 (this means application deadlines are typically in late 2026 or early 2027). Find their exact Need-Blind policy, whether they offer early admission, their application deadlines for the Fall 2027 cycle, and their average admitted student GPA.
+            
+            You MUST return ONLY a raw JSON object with the following exact keys and types, and nothing else. Do not use markdown code blocks like \`\`\`json.
+            {
+              "isNeedBlind": boolean or null (True if need-blind for domestic, false if need-aware. Use null if explicitly unknown/not published),
+              "offersEarlyAdmission": boolean or null (True if Early Decision/Action is offered. Use null if unknown),
+              "earlyDecision1": string or null (The exact ED1 deadline date including the year, e.g. "Nov 1, 2026". Return null if not offered),
+              "earlyDecision2": string or null (The exact ED2 deadline date including the year, e.g. "Jan 1, 2027". Return null if not offered),
+              "earlyAction": string or null (The exact EA deadline date including the year, e.g. "Nov 1, 2026". Return null if not offered),
+              "regularDecision": string (The exact RD deadline date including the year, e.g. "Jan 1, 2027". Return "Not published" if explicitly unknown),
+              "rolling": boolean or null (True if they offer rolling admissions, false otherwise),
+              "averageGpa": number or null (e.g. 3.9, use null if not published)
+            }`
+          ],
+          config: {
+            tools: [{ googleSearch: {} }],
+            temperature: 0.1, // Keep it deterministic
+          }
+        });
+        break; // Exit loop on success
+      } catch (err: any) {
+        if (err.status === 429 && retries > 1) {
+          console.warn(`Rate limited (429). Retrying in ${delay}ms...`);
+          await new Promise(res => setTimeout(res, delay));
+          delay *= 2; // Exponential backoff
+          retries--;
+        } else {
+          throw err;
+        }
       }
-    });
+    }
 
     let resultText = response.text;
     

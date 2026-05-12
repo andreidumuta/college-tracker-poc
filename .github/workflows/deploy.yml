@@ -1,0 +1,35 @@
+name: Deploy to Google Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: college-tracker
+          region: us-central1
+          source: ./
+          env_vars: |
+            NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+          # Note: The deploy-cloudrun action automatically uses Google Cloud Build 
+          # behind the scenes to build the Dockerfile and push it to Artifact Registry
+          
+      - name: Show Deployment URL
+        run: echo "App deployed successfully at ${{ steps.deploy.outputs.url }}"

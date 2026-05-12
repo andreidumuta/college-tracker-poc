@@ -49,7 +49,7 @@ export async function POST(req: Request) {
 
     // Call Gemini with Google Search Grounding enabled
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash",
+      model: "gemini-2.5-flash",
       contents: [
         `You are a college admissions expert. Search the web for the most accurate and up-to-date admissions data for ${collegeName} for students applying to start college in Fall 2026 (this means application deadlines are typically in late 2025 or early 2026). Find their exact Need-Blind policy, whether they offer early admission, their application deadlines for the Fall 2026 cycle, and their average admitted student GPA.
         

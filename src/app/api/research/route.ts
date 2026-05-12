@@ -51,21 +51,31 @@ export async function POST(req: Request) {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: [
-        `You are a college admissions expert. Search the web for the most accurate and up-to-date admissions data for ${collegeName}. Find their exact Need-Blind policy, whether they offer early admission, their application deadlines, and their average admitted student GPA.`
+        `You are a college admissions expert. Search the web for the most accurate and up-to-date admissions data for ${collegeName}. Find their exact Need-Blind policy, whether they offer early admission, their application deadlines, and their average admitted student GPA.
+        
+        You MUST return ONLY a raw JSON object with the following exact keys and types, and nothing else. Do not use markdown code blocks like \`\`\`json.
+        {
+          "isNeedBlind": boolean (True if need-blind for domestic, false if need-aware),
+          "offersEarlyAdmission": boolean (True if Early Decision or Early Action is offered),
+          "earlyDecisionDeadline": string or null (e.g. "Nov 1"),
+          "regularDecisionDeadline": string (e.g. "Jan 1"),
+          "averageGpa": number (e.g. 3.9)
+        }`
       ],
       config: {
         tools: [{ googleSearch: {} }],
-        responseMimeType: "application/json",
-        responseSchema: responseSchema,
         temperature: 0.1, // Keep it deterministic
       }
     });
 
-    const resultText = response.text;
+    let resultText = response.text;
     
     if (!resultText) {
       throw new Error("Empty response from Gemini");
     }
+
+    // Clean up potential markdown formatting just in case
+    resultText = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
 
     const data = JSON.parse(resultText);
     return NextResponse.json(data);

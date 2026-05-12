@@ -41,6 +41,16 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [researchingId, setResearchingId] = useState<string | null>(null);
+  const [isResearchingAll, setIsResearchingAll] = useState(false);
+
+  const handleResearchAll = async () => {
+    setIsResearchingAll(true);
+    // Process sequentially to avoid hitting Gemini rate limits on the free tier
+    for (const college of colleges) {
+      await handleResearch(college);
+    }
+    setIsResearchingAll(false);
+  };
 
   const handleResearch = async (college: College) => {
     setResearchingId(college.id);
@@ -111,17 +121,32 @@ export default function Dashboard() {
           <p className="text-slate-400 text-lg">Massachusetts Edition</p>
         </div>
         
-        <div className="relative w-full md:w-96">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-slate-400" />
+        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+          <button
+            onClick={handleResearchAll}
+            disabled={isResearchingAll}
+            className="flex items-center justify-center gap-2 px-6 py-3 w-full md:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-slate-700 disabled:to-slate-700 text-white shadow-lg shadow-blue-900/20 rounded-xl font-bold transition-all"
+          >
+            {isResearchingAll ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Wand2 className="w-5 h-5" />
+            )}
+            {isResearchingAll ? "Researching..." : "Research All"}
+          </button>
+          
+          <div className="relative w-full md:w-80">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-slate-400" />
+            </div>
+            <input
+              type="text"
+              className="block w-full pl-10 pr-3 py-3 border border-slate-700 rounded-xl leading-5 bg-slate-800/50 text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              placeholder="Search colleges by name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-          <input
-            type="text"
-            className="block w-full pl-10 pr-3 py-3 border border-slate-700 rounded-xl leading-5 bg-slate-800/50 text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            placeholder="Search colleges by name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
         </div>
       </header>
 

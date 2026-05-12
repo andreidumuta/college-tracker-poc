@@ -26,6 +26,8 @@ jobs:
           service: college-tracker
           region: us-central1
           source: ./
+          env_vars: |
+            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
 
           # Note: The deploy-cloudrun action automatically uses Google Cloud Build 
           # behind the scenes to build the Dockerfile and push it to Artifact Registry

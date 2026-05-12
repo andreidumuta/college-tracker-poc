@@ -114,8 +114,13 @@ export default function Dashboard() {
                     <span className="badge badge-blue">
                       Acceptance: {college.acceptanceRate ? (college.acceptanceRate * 100).toFixed(1) + "%" : "N/A"}
                     </span>
-                    {college.isNeedBlind && (
+                    {college.offersNeedBasedAid && (
+                      <span className="badge badge-blue">Need-Based Aid</span>
+                    )}
+                    {college.isNeedBlind ? (
                       <span className="badge badge-green">Need-Blind</span>
+                    ) : (
+                      <span className="badge badge-red">Need-Aware</span>
                     )}
                     {college.offersEarlyAdmission && (
                       <span className="badge badge-blue">Early Admission</span>

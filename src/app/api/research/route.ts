@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     while (retries > 0) {
       try {
         response = await ai.models.generateContent({
-          model: "gemini-2.0-flash",
+          model: "gemini-2.5-flash",
           contents: [
             `You are a college admissions expert. Search the web for the most accurate and up-to-date admissions data for ${collegeName} for students applying to start college in Fall 2027 (this means application deadlines are typically in late 2026 or early 2027). Find their exact Need-Blind policy, whether they offer early admission, their application deadlines for the Fall 2027 cycle, and their average admitted student GPA.
             

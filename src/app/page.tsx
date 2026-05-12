@@ -194,13 +194,13 @@ export default function Dashboard() {
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-purple-400" />
                       <span className="font-semibold text-slate-200">Regular Decision:</span>
-                      {college.deadlines?.regularDecision || "Not published"}
+                      {college.deadlines?.regularDecision ?? "Unknown"}
                     </div>
                     {college.offersEarlyAdmission !== false && (
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-blue-400" />
                         <span className="font-semibold text-slate-200">Early Admission:</span>
-                        {college.deadlines?.earlyDecision || "Not published"}
+                        {college.deadlines?.earlyDecision ?? "Unknown"}
                       </div>
                     )}
                   </div>

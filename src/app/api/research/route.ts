@@ -51,14 +51,14 @@ export async function POST(req: Request) {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: [
-        `You are a college admissions expert. Search the web for the most accurate and up-to-date admissions data for ${collegeName}. Find their exact Need-Blind policy, whether they offer early admission, their application deadlines, and their average admitted student GPA.
+        `You are a college admissions expert. Search the web for the most accurate and up-to-date admissions data for ${collegeName} for students applying to start college in Fall 2026 (this means application deadlines are typically in late 2025 or early 2026). Find their exact Need-Blind policy, whether they offer early admission, their application deadlines for the Fall 2026 cycle, and their average admitted student GPA.
         
         You MUST return ONLY a raw JSON object with the following exact keys and types, and nothing else. Do not use markdown code blocks like \`\`\`json.
         {
           "isNeedBlind": boolean (True if need-blind for domestic, false if need-aware),
           "offersEarlyAdmission": boolean (True if Early Decision or Early Action is offered),
-          "earlyDecisionDeadline": string or null (e.g. "Nov 1"),
-          "regularDecisionDeadline": string (e.g. "Jan 1"),
+          "earlyDecisionDeadline": string or null (The exact deadline date including the year, e.g. "Nov 1, 2025". Return "Not published" if the college has explicitly not released it yet.),
+          "regularDecisionDeadline": string (The exact deadline date including the year, e.g. "Jan 1, 2026". Return "Not published" if the college has explicitly not released it yet.),
           "averageGpa": number (e.g. 3.9)
         }`
       ],

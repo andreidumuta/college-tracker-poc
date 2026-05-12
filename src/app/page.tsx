@@ -162,6 +162,21 @@ export default function Dashboard() {
                       <span className="badge badge-blue">Early Admission</span>
                     )}
                   </div>
+
+                  <div className="mt-4 flex flex-col gap-1.5 text-sm text-slate-300 bg-slate-800/30 p-3 rounded-xl border border-slate-700/50">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-purple-400" />
+                      <span className="font-semibold text-slate-200">Regular Decision:</span>
+                      {college.deadlines?.regularDecision || "Unknown"}
+                    </div>
+                    {college.offersEarlyAdmission && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-blue-400" />
+                        <span className="font-semibold text-slate-200">Early Admission:</span>
+                        {college.deadlines?.earlyDecision || "Unknown"}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="text-right flex flex-col items-end gap-2">
                   <div className="text-right">

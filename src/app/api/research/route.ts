@@ -51,14 +51,14 @@ export async function POST(req: Request) {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: [
-        `You are a college admissions expert. Search the web for the most accurate and up-to-date admissions data for ${collegeName} for students applying to start college in Fall 2026 (this means application deadlines are typically in late 2025 or early 2026). Find their exact Need-Blind policy, whether they offer early admission, their application deadlines for the Fall 2026 cycle, and their average admitted student GPA.
+        `You are a college admissions expert. Search the web for the most accurate and up-to-date admissions data for ${collegeName} for students applying to start college in Fall 2027 (this means application deadlines are typically in late 2026 or early 2027). Find their exact Need-Blind policy, whether they offer early admission, their application deadlines for the Fall 2027 cycle, and their average admitted student GPA.
         
         You MUST return ONLY a raw JSON object with the following exact keys and types, and nothing else. Do not use markdown code blocks like \`\`\`json.
         {
           "isNeedBlind": boolean or null (True if need-blind for domestic, false if need-aware. Use null if explicitly unknown/not published),
           "offersEarlyAdmission": boolean or null (True if Early Decision/Action is offered. Use null if unknown),
-          "earlyDecisionDeadline": string or null (The exact deadline date including the year, e.g. "Nov 1, 2025". Return "Not published" if the college has explicitly not released it yet.),
-          "regularDecisionDeadline": string (The exact deadline date including the year, e.g. "Jan 1, 2026". Return "Not published" if the college has explicitly not released it yet.),
+          "earlyDecisionDeadline": string or null (The exact deadline date including the year, e.g. "Nov 1, 2026". Return "Not published" if the college has explicitly not released it yet.),
+          "regularDecisionDeadline": string (The exact deadline date including the year, e.g. "Jan 1, 2027". Return "Not published" if the college has explicitly not released it yet.),
           "averageGpa": number or null (e.g. 3.9, use null if not published)
         }`
       ],

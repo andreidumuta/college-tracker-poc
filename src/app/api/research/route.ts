@@ -92,6 +92,10 @@ export async function POST(req: Request) {
       }
     }
 
+    if (!response) {
+      throw new Error("Failed to generate content after multiple retries");
+    }
+
     let resultText = response.text;
     
     if (!resultText) {

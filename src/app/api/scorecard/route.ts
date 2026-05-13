@@ -50,8 +50,10 @@ export async function POST(req: Request) {
         
         if (res.status === 429) {
           console.error("Data.gov API Rate Limit Exceeded (429)");
+          const isDemo = apiKey === "DEMO_KEY";
+          const keyPrefix = isDemo ? "DEMO_KEY" : `${apiKey.substring(0, 4)}...`;
           return NextResponse.json({ 
-            error: "Data.gov API Rate Limit Exceeded. You are using the DEMO_KEY which only allows 40 requests per hour. Please provide a real COLLEGE_SCORECARD_API_KEY in your environment variables.",
+            error: `Data.gov API Rate Limit Exceeded. You are currently using API Key: ${keyPrefix}. ${isDemo ? "The DEMO_KEY only allows 40 requests per hour." : "Your real key has hit its hourly limit."} Please check your GitHub Secrets and deployment status.`,
             count: addedCount
           }, { status: 429 });
         }

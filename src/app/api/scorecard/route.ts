@@ -15,7 +15,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No target colleges provided" }, { status: 400 });
     }
 
-    const apiKey = process.env.COLLEGE_SCORECARD_API_KEY || "kuoc3B0ONHYYwU8JhpAxQ9IPgUzAkNCvzfbUtmaC";
+    const apiKey = process.env.COLLEGE_SCORECARD_API_KEY || "DEMO_KEY";
     const fields = [
       "id",
       "school.name",

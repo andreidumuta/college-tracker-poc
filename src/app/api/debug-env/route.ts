@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const gemini = process.env.GEMINI_API_KEY;
   const scorecard = process.env.COLLEGE_SCORECARD_API_KEY;

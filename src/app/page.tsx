@@ -166,7 +166,14 @@ export default function AdminDashboard() {
         
         if (res.ok) {
           const data = await res.json();
-          totalAdded += data.count || 0;
+          const fetchedColleges = data.colleges || [];
+          
+          // Save each fetched college to Firestore from the authenticated frontend
+          for (const collegeData of fetchedColleges) {
+            const docRef = doc(db, "colleges", collegeData.id);
+            await setDoc(docRef, collegeData, { merge: true });
+            totalAdded++;
+          }
         } else {
           console.error("Chunk failed:", res.statusText);
         }

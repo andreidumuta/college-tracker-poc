@@ -35,7 +35,7 @@ export async function POST(req: Request) {
       "latest.admissions.sat_scores.75th_percentile.math",
     ].join(",");
 
-    let addedCount = 0;
+    const fetchedColleges = [];
 
     // Process each target college
     for (const target of targets) {
@@ -60,8 +60,6 @@ export async function POST(req: Request) {
         // Grab the best match (the first result)
         const school = data.results[0];
         
-        const docRef = doc(db, "colleges", String(school["id"]));
-        
         const payload = {
           id: String(school["id"]),
           name: school["school.name"],
@@ -69,7 +67,6 @@ export async function POST(req: Request) {
           state: school["school.state"],
           location: `${school["school.city"]}, ${school["school.state"]}`,
           acceptanceRate: school["latest.admissions.admission_rate.overall"] || null,
-          // Only set isHumanVerified if it doesn't already exist (merge:true will handle not overwriting existing fields if they exist, but setting default here is safe)
           isHumanVerified: false, 
           financialAid: {
             tuition: {
@@ -99,9 +96,7 @@ export async function POST(req: Request) {
           }
         };
 
-        // Save to Database
-        await setDoc(docRef, payload, { merge: true });
-        addedCount++;
+        fetchedColleges.push(payload);
         
         // Add a tiny delay to respect API rate limits (Data.gov has 1000 requests/hour limit on DEMO_KEY)
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -111,7 +106,7 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, count: addedCount });
+    return NextResponse.json({ success: true, colleges: fetchedColleges });
 
   } catch (error: unknown) {
     console.error(error);

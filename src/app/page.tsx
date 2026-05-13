@@ -597,7 +597,7 @@ export default function AdminDashboard() {
                             </td>
                             <td className="px-4 py-3 text-center">
                               <select
-                                value={college.isNeedBlind === null ? "" : college.isNeedBlind.toString()}
+                                value={college.isNeedBlind == null ? "" : String(college.isNeedBlind)}
                                 onChange={e => updateCollegeField(college.id, "isNeedBlind", e.target.value === "" ? null : e.target.value === "true")}
                                 className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 text-center appearance-none"
                               >

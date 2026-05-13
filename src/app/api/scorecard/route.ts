@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
-import { doc, setDoc } from "firebase/firestore";
+import { adminDb } from "@/lib/firebaseAdmin";
 
 interface TargetCollege {
   id: string;
@@ -35,11 +34,10 @@ export async function POST(req: Request) {
       "latest.admissions.sat_scores.75th_percentile.math",
     ].join(",");
 
-    const fetchedColleges = [];
+    let addedCount = 0;
 
     // Process each target college
     for (const target of targets) {
-      // Encode the name for the URL. Use exact match if possible, but the API handles loose name searches well.
       const encodedName = encodeURIComponent(target.name);
       let url = `https://api.data.gov/ed/collegescorecard/v1/schools.json?school.name=${encodedName}&fields=${fields}&per_page=1&api_key=${apiKey}`;
       
@@ -57,7 +55,6 @@ export async function POST(req: Request) {
           continue;
         }
 
-        // Grab the best match (the first result)
         const school = data.results[0];
         
         const payload = {
@@ -96,9 +93,10 @@ export async function POST(req: Request) {
           }
         };
 
-        fetchedColleges.push(payload);
+        const docRef = adminDb.collection("colleges").doc(String(school["id"]));
+        await docRef.set(payload, { merge: true });
+        addedCount++;
         
-        // Add a tiny delay to respect API rate limits (Data.gov has 1000 requests/hour limit on DEMO_KEY)
         await new Promise(resolve => setTimeout(resolve, 500));
 
       } catch (err) {
@@ -106,7 +104,7 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, colleges: fetchedColleges });
+    return NextResponse.json({ success: true, count: addedCount });
 
   } catch (error: unknown) {
     console.error(error);

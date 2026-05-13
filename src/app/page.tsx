@@ -149,44 +149,29 @@ export default function AdminDashboard() {
     
     setIsFetchingScorecard(true);
     setFetchProgress({ current: 0, total: targetColleges.length });
-    let totalAdded = 0;
     
     try {
-      const chunkSize = 5; // Small chunks prevent Vercel/Cloud Run timeouts
+      // Send ALL targets to the API at once. The server will process them sequentially.
+      // You can close the window after clicking this; the server will continue until the Cloud Run timeout.
+      alert("Fetch initiated! The server will now process all 250 colleges in the background. This will take ~3-4 minutes. You can safely close the window or wait for the confirmation.");
       
-      for (let i = 0; i < targetColleges.length; i += chunkSize) {
-        const chunk = targetColleges.slice(i, i + chunkSize);
-        
-        // Send the chunk to the API
-        const res = await fetch(`/api/scorecard`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ targets: chunk })
-        });
-        
-        if (res.ok) {
-          const data = await res.json();
-          const fetchedColleges = data.colleges || [];
-          
-          // Save each fetched college to Firestore from the authenticated frontend
-          for (const collegeData of fetchedColleges) {
-            const docRef = doc(db, "colleges", collegeData.id);
-            await setDoc(docRef, collegeData, { merge: true });
-            totalAdded++;
-          }
-        } else {
-          console.error("Chunk failed:", res.statusText);
-        }
-        
-        // Update progress and refresh UI so user sees live updates
-        setFetchProgress({ current: Math.min(i + chunkSize, targetColleges.length), total: targetColleges.length });
+      const res = await fetch(`/api/scorecard`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targets: targetColleges })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        alert(`Finished! Successfully fetched and saved data for ${data.count} colleges!`);
         await fetchColleges();
+      } else {
+        console.error("Fetch failed:", res.statusText);
+        alert("Server returned an error. Check server logs.");
       }
-      
-      alert(`Finished! Successfully fetched data for ${totalAdded} target colleges!`);
     } catch (error) {
       console.error(error);
-      alert("A network error occurred while fetching Scorecard data.");
+      alert("A network error occurred (or you closed the window). The server is likely still processing in the background.");
     } finally {
       setIsFetchingScorecard(false);
       setFetchProgress({ current: 0, total: 0 });

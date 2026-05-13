@@ -47,7 +47,19 @@ export async function POST(req: Request) {
 
       try {
         const res = await fetch(url);
-        if (!res.ok) continue;
+        
+        if (res.status === 429) {
+          console.error("Data.gov API Rate Limit Exceeded (429)");
+          return NextResponse.json({ 
+            error: "Data.gov API Rate Limit Exceeded. You are using the DEMO_KEY which only allows 40 requests per hour. Please provide a real COLLEGE_SCORECARD_API_KEY in your environment variables.",
+            count: addedCount
+          }, { status: 429 });
+        }
+        
+        if (!res.ok) {
+          console.warn(`Failed to fetch ${target.name}: HTTP ${res.status}`);
+          continue;
+        }
 
         const data = await res.json();
         if (!data.results || data.results.length === 0) {

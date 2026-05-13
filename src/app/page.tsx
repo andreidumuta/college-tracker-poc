@@ -172,6 +172,9 @@ export default function AdminDashboard() {
       if (res.ok) {
         const data = await res.json();
         alert(`Finished! Successfully fetched and saved data for ${data.count} colleges!`);
+      } else if (res.status === 429) {
+        const errorData = await res.json();
+        alert(`RATE LIMIT REACHED! ${errorData.error}\n\nIt successfully added ${errorData.count} colleges before hitting the limit.`);
       } else {
         console.error("Fetch failed:", res.statusText);
         alert("Server returned an error. Check server logs.");

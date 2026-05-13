@@ -81,6 +81,7 @@ export default function AdminDashboard() {
   const [isFetchingScorecard, setIsFetchingScorecard] = useState(false);
   const [researchingId, setResearchingId] = useState<string | null>(null);
   const [isResearchingAll, setIsResearchingAll] = useState(false);
+  const [isUploadingCSV, setIsUploadingCSV] = useState(false);
 
   const ALLOWED_EMAILS = ["andrei.dumuta@gmail.com", "sorin208@gmail.com"];
 
@@ -320,28 +321,46 @@ export default function AdminDashboard() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setIsUploadingCSV(true);
     const reader = new FileReader();
     reader.onload = async (event) => {
-      const text = event.target?.result as string;
-      const rows = text.split("\n").map(r => r.trim()).filter(r => r);
-      
-      // Skip header row
-      const dataRows = rows.slice(1);
-      
-      let added = 0;
-      for (const row of dataRows) {
-        // Handle simple comma separation, ignoring commas inside quotes could require a real parser, 
-        // but for a template "Official Name,State" standard split is ok for now unless quotes are used.
-        const [name, state] = row.split(",").map(s => s.trim().replace(/^"|"$/g, ''));
-        if (name) {
-          const docRef = doc(collection(db, "target_colleges"));
-          await setDoc(docRef, { name, state: state || "" });
-          added++;
+      try {
+        const text = event.target?.result as string;
+        const rows = text.split("\n").map(r => r.trim()).filter(r => r);
+        
+        // Skip header row
+        const dataRows = rows.slice(1);
+        
+        let added = 0;
+        let skipped = 0;
+        
+        for (const row of dataRows) {
+          const [name, state] = row.split(",").map(s => s.trim().replace(/^"|"$/g, ''));
+          if (name) {
+            // Check for duplicates
+            const isDuplicate = targetColleges.some(c => c.name.toLowerCase() === name.toLowerCase());
+            if (isDuplicate) {
+              skipped++;
+              continue;
+            }
+
+            const docRef = doc(collection(db, "target_colleges"));
+            await setDoc(docRef, { name, state: state || "" });
+            added++;
+            
+            // Optimistically update local state so subsequent rows in same upload are checked
+            targetColleges.push({ id: docRef.id, name, state: state || "" });
+          }
         }
+        
+        alert(`Successfully uploaded and saved ${added} new target colleges! ${skipped > 0 ? `(Skipped ${skipped} duplicates)` : ''}`);
+        fetchColleges(); // Reload the target colleges
+      } catch (error: unknown) {
+        console.error("Upload error:", error);
+        alert(`Failed to upload CSV. Error: ${error instanceof Error ? error.message : "Unknown error"}.`);
+      } finally {
+        setIsUploadingCSV(false);
       }
-      
-      alert(`Successfully uploaded and saved ${added} target colleges!`);
-      fetchColleges(); // Reload the target colleges
     };
     reader.readAsText(file);
     e.target.value = ''; // Reset input
@@ -605,9 +624,9 @@ export default function AdminDashboard() {
                   <p className="text-sm text-slate-400 mb-4">
                     Upload your filled-out CSV to add them to your target list.
                   </p>
-                  <label className="w-full py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-500 hover:to-purple-500 transition-colors font-semibold cursor-pointer flex justify-center items-center">
-                    Select File
-                    <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
+                  <label className={`w-full py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-500 hover:to-purple-500 transition-colors font-semibold flex justify-center items-center ${isUploadingCSV ? 'opacity-50 cursor-wait' : 'cursor-pointer'}`}>
+                    {isUploadingCSV ? "Uploading & Saving..." : "Select File"}
+                    <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} disabled={isUploadingCSV} />
                   </label>
                 </div>
               </div>

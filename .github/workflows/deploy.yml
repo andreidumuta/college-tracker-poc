@@ -19,6 +19,11 @@ jobs:
         with:
           credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
 
+      - name: Verify Secrets Exist
+        run: |
+          if [ -z "${{ secrets.GEMINI_API_KEY }}" ]; then echo "GEMINI_API_KEY is MISSING in GitHub!"; else echo "GEMINI_API_KEY is present."; fi
+          if [ -z "${{ secrets.COLLEGE_SCORECARD_API_KEY }}" ]; then echo "COLLEGE_SCORECARD_API_KEY is MISSING in GitHub!"; else echo "COLLEGE_SCORECARD_API_KEY is present."; fi
+
       - name: Deploy to Cloud Run
         id: deploy
         uses: google-github-actions/deploy-cloudrun@v2

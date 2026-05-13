@@ -82,12 +82,22 @@ export default function AdminDashboard() {
   const [researchingId, setResearchingId] = useState<string | null>(null);
   const [isResearchingAll, setIsResearchingAll] = useState(false);
 
+  const ALLOWED_EMAILS = ["andrei.dumuta@gmail.com", "sorin208@gmail.com"];
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        fetchColleges();
+        if (currentUser.email && ALLOWED_EMAILS.includes(currentUser.email)) {
+          setUser(currentUser);
+          fetchColleges();
+        } else {
+          alert(`Unauthorized: ${currentUser.email} does not have admin access.`);
+          await signOut(auth);
+          setUser(null);
+          setLoading(false);
+        }
       } else {
+        setUser(null);
         setLoading(false);
       }
     });

@@ -24,6 +24,11 @@ jobs:
           if [ -z "${{ secrets.GEMINI_API_KEY }}" ]; then echo "GEMINI_API_KEY is MISSING in GitHub!"; else echo "GEMINI_API_KEY is present."; fi
           if [ -z "${{ secrets.COLLEGE_SCORECARD_API_KEY }}" ]; then echo "COLLEGE_SCORECARD_API_KEY is MISSING in GitHub!"; else echo "COLLEGE_SCORECARD_API_KEY is present."; fi
 
+      - name: Inject Secrets into Next.js Build
+        run: |
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env.production
+          echo "COLLEGE_SCORECARD_API_KEY=${{ secrets.COLLEGE_SCORECARD_API_KEY }}" >> .env.production
+
       - name: Deploy to Cloud Run
         id: deploy
         uses: google-github-actions/deploy-cloudrun@v2
@@ -31,7 +36,6 @@ jobs:
           service: college-tracker
           region: us-central1
           source: ./
-          env_vars: GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }},COLLEGE_SCORECARD_API_KEY=${{ secrets.COLLEGE_SCORECARD_API_KEY }}
 
           # Note: The deploy-cloudrun action automatically uses Google Cloud Build 
           # behind the scenes to build the Dockerfile and push it to Artifact Registry

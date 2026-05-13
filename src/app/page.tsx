@@ -79,6 +79,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<"database" | "whitelist">("database");
   
   const [isFetchingScorecard, setIsFetchingScorecard] = useState(false);
+  const [fetchProgress, setFetchProgress] = useState({ current: 0, total: 0 });
   const [researchingId, setResearchingId] = useState<string | null>(null);
   const [isResearchingAll, setIsResearchingAll] = useState(false);
   const [isUploadingCSV, setIsUploadingCSV] = useState(false);
@@ -147,21 +148,41 @@ export default function AdminDashboard() {
     }
     
     setIsFetchingScorecard(true);
+    setFetchProgress({ current: 0, total: targetColleges.length });
+    let totalAdded = 0;
+    
     try {
-      // Send the whitelist array to the API
-      const res = await fetch(`/api/scorecard`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targets: targetColleges })
-      });
-      if (!res.ok) throw new Error("Failed to fetch Scorecard data");
-      await fetchColleges(); // Reload data
-      alert("Successfully fetched base data for whitelist!");
+      const chunkSize = 5; // Small chunks prevent Vercel/Cloud Run timeouts
+      
+      for (let i = 0; i < targetColleges.length; i += chunkSize) {
+        const chunk = targetColleges.slice(i, i + chunkSize);
+        
+        // Send the chunk to the API
+        const res = await fetch(`/api/scorecard`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targets: chunk })
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          totalAdded += data.count || 0;
+        } else {
+          console.error("Chunk failed:", res.statusText);
+        }
+        
+        // Update progress and refresh UI so user sees live updates
+        setFetchProgress({ current: Math.min(i + chunkSize, targetColleges.length), total: targetColleges.length });
+        await fetchColleges();
+      }
+      
+      alert(`Finished! Successfully fetched data for ${totalAdded} target colleges!`);
     } catch (error) {
       console.error(error);
-      alert("Failed to fetch Scorecard data.");
+      alert("A network error occurred while fetching Scorecard data.");
     } finally {
       setIsFetchingScorecard(false);
+      setFetchProgress({ current: 0, total: 0 });
     }
   };
 
@@ -474,7 +495,9 @@ export default function AdminDashboard() {
                     className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-blue-400 border border-blue-500/30 rounded-lg text-sm font-semibold hover:bg-slate-800/80 transition-colors"
                   >
                     <TableIcon className="w-4 h-4" />
-                    {isFetchingScorecard ? "Fetching API..." : "1. Fetch Base Data (From Whitelist)"}
+                    {isFetchingScorecard 
+                      ? `Fetching API... (${fetchProgress.current}/${fetchProgress.total})` 
+                      : "1. Fetch Base Data (From Whitelist)"}
                   </button>
 
                   <button
@@ -673,7 +696,7 @@ export default function AdminDashboard() {
           )}
 
           {activeTab === "whitelist" && (
-            <div className="p-8 max-w-4xl mx-auto w-full">
+            <div className="p-8 max-w-4xl mx-auto w-full h-full overflow-y-auto">
               <div className="mb-8">
                 <h2 className="text-3xl font-bold text-white mb-2">Target Whitelist</h2>
                 <p className="text-slate-400">

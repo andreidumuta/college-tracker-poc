@@ -244,8 +244,10 @@ export default function AdminDashboard() {
     if (colleges.length === 0) return;
     
     const headers = [
-      "ID", "Name", "City", "State", "Acceptance Rate", "Avg GPA", "Total Cost In-State", 
-      "Total Cost Out-State", "RD Deadline", "ED1 Deadline", "ED2 Deadline", "EA Deadline", "Rolling"
+      "ID", "Name", "City", "State", "Acceptance Rate", "Avg GPA", 
+      "Total Cost In-State", "Total Cost Out-State", 
+      "SAT Reading (Mid)", "SAT Math (Mid)",
+      "RD Deadline", "ED1 Deadline", "ED2 Deadline", "EA Deadline", "Rolling"
     ];
     
     const rows = colleges.map(c => [
@@ -257,6 +259,8 @@ export default function AdminDashboard() {
       c.averageGpa || "",
       c.financialAid?.total.inState || "",
       c.financialAid?.total.outOfState || "",
+      c.testScores?.satReading?.mid || "",
+      c.testScores?.satMath?.mid || "",
       c.deadlines?.regularDecision || "",
       c.deadlines?.earlyDecision1 || "",
       c.deadlines?.earlyDecision2 || "",
@@ -280,8 +284,10 @@ export default function AdminDashboard() {
     if (colleges.length === 0) return;
     
     const headers = [
-      "ID", "Name", "City", "State", "Acceptance Rate", "Avg GPA", "Total Cost In-State", 
-      "Total Cost Out-State", "RD Deadline", "ED1 Deadline", "ED2 Deadline", "EA Deadline", "Rolling"
+      "ID", "Name", "City", "State", "Acceptance Rate", "Avg GPA", 
+      "Total Cost In-State", "Total Cost Out-State", 
+      "SAT Reading (Mid)", "SAT Math (Mid)",
+      "RD Deadline", "ED1 Deadline", "ED2 Deadline", "EA Deadline", "Rolling"
     ];
     
     // Use tabs (\t) instead of commas for seamless pasting into Google Sheets
@@ -294,6 +300,8 @@ export default function AdminDashboard() {
       c.averageGpa || "",
       c.financialAid?.total.inState || "",
       c.financialAid?.total.outOfState || "",
+      c.testScores?.satReading?.mid || "",
+      c.testScores?.satMath?.mid || "",
       c.deadlines?.regularDecision || "",
       c.deadlines?.earlyDecision1 || "",
       c.deadlines?.earlyDecision2 || "",

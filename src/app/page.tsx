@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy, doc, updateDoc, setDoc, deleteDoc } from "firebase/firestore";
+import { collection, query, orderBy, doc, updateDoc, setDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 import { db, auth, googleProvider } from "@/lib/firebase";
 import { signInWithPopup, onAuthStateChanged, User, signOut } from "firebase/auth";
 import { GraduationCap, Search, Wand2, Download, Table as TableIcon, LogOut, FileSpreadsheet, Upload, ListPlus, Database } from "lucide-react";
@@ -91,7 +91,6 @@ export default function AdminDashboard() {
       if (currentUser) {
         if (currentUser.email && ALLOWED_EMAILS.includes(currentUser.email)) {
           setUser(currentUser);
-          fetchColleges();
         } else {
           alert(`Unauthorized: ${currentUser.email} does not have admin access.`);
           await signOut(auth);
@@ -107,24 +106,33 @@ export default function AdminDashboard() {
     return () => unsubscribe();
   }, []);
 
-  async function fetchColleges() {
+  useEffect(() => {
+    if (!user) return;
+    
     setLoading(true);
-    try {
-      const q = query(collection(db, "colleges"), orderBy("name", "asc"));
-      const querySnapshot = await getDocs(q);
-      const data = querySnapshot.docs.map(doc => doc.data() as College);
+    const q = query(collection(db, "colleges"), orderBy("name", "asc"));
+    const unsubscribeColleges = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => doc.data() as College);
       setColleges(data);
-
-      const targetQ = query(collection(db, "target_colleges"), orderBy("name", "asc"));
-      const targetSnapshot = await getDocs(targetQ);
-      const targetData = targetSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TargetCollege));
-      setTargetColleges(targetData);
-    } catch (error) {
-      console.error("Error fetching colleges:", error);
-    } finally {
       setLoading(false);
-    }
-  }
+    }, (error) => {
+      console.error("Error streaming colleges:", error);
+      setLoading(false);
+    });
+
+    const targetQ = query(collection(db, "target_colleges"), orderBy("name", "asc"));
+    const unsubscribeTargets = onSnapshot(targetQ, (snapshot) => {
+      const targetData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TargetCollege));
+      setTargetColleges(targetData);
+    }, (error) => {
+      console.error("Error streaming targets:", error);
+    });
+
+    return () => {
+      unsubscribeColleges();
+      unsubscribeTargets();
+    };
+  }, [user]);
 
   const handleLogin = async () => {
     try {
@@ -164,7 +172,6 @@ export default function AdminDashboard() {
       if (res.ok) {
         const data = await res.json();
         alert(`Finished! Successfully fetched and saved data for ${data.count} colleges!`);
-        await fetchColleges();
       } else {
         console.error("Fetch failed:", res.statusText);
         alert("Server returned an error. Check server logs.");
@@ -375,7 +382,6 @@ export default function AdminDashboard() {
         }
         
         alert(`Successfully uploaded and saved ${added} new target colleges! ${skipped > 0 ? `(Skipped ${skipped} duplicates)` : ''}`);
-        fetchColleges(); // Reload the target colleges
       } catch (error: unknown) {
         console.error("Upload error:", error);
         alert(`Failed to upload CSV. Error: ${error instanceof Error ? error.message : "Unknown error"}.`);

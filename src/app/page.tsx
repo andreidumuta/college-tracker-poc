@@ -1,9 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy, doc, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { GraduationCap, MapPin, Search, Calendar, Landmark, CheckCircle2, XCircle, Wand2 } from "lucide-react";
+import { collection, getDocs, query, orderBy, doc, updateDoc, setDoc, deleteDoc } from "firebase/firestore";
+import { db, auth, googleProvider } from "@/lib/firebase";
+import { signInWithPopup, onAuthStateChanged, User, signOut } from "firebase/auth";
+import { GraduationCap, Search, Wand2, Download, Table as TableIcon, LogIn, LogOut, FileSpreadsheet, Upload, ListPlus, Database } from "lucide-react";
+
+interface CostBreakdown {
+  inState: number | null;
+  outOfState: number | null;
+}
+
+interface FinancialAid {
+  tuition: CostBreakdown;
+  fees: CostBreakdown;
+  roomAndBoard: CostBreakdown;
+  books: CostBreakdown;
+  total: CostBreakdown;
+}
 
 interface TestScore {
   p25: number | null;
@@ -12,16 +26,23 @@ interface TestScore {
 }
 
 interface College {
-  id: string;
+  id: string; // The primary key (often the scorecard ID)
   name: string;
-  location: string;
+  city: string;
+  state: string;
+  location: string; // Legacy field for string "City, ST"
   isPublic: boolean;
   acceptanceRate: number | null;
   isTestOptional: boolean;
   averageGpa: number | null;
+  
+  // Financial Aid
   offersNeedBasedAid: boolean;
   isNeedBlind: boolean | null;
   isNeedAware: boolean | null;
+  financialAid?: FinancialAid;
+
+  // Deadlines
   offersEarlyAdmission: boolean | null;
   isEstimatedDeadlines: boolean | null;
   deadlines: {
@@ -31,6 +52,7 @@ interface College {
     regularDecision: string | null;
     rolling: boolean | null;
   };
+
   testScores?: {
     satReading: TestScore;
     satMath: TestScore;
@@ -38,26 +60,105 @@ interface College {
     actEnglish: TestScore;
     actMath: TestScore;
   };
+
+  isHumanVerified: boolean;
 }
 
-export default function Dashboard() {
+interface TargetCollege {
+  id: string;
+  name: string;
+  state: string;
+}
+
+export default function AdminDashboard() {
+  const [user, setUser] = useState<User | null>(null);
   const [colleges, setColleges] = useState<College[]>([]);
+  const [targetColleges, setTargetColleges] = useState<TargetCollege[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState<"database" | "whitelist">("database");
+  
+  const [isFetchingScorecard, setIsFetchingScorecard] = useState(false);
   const [researchingId, setResearchingId] = useState<string | null>(null);
   const [isResearchingAll, setIsResearchingAll] = useState(false);
 
-  const handleResearchAll = async () => {
-    setIsResearchingAll(true);
-    // Process sequentially with a 6.5-second delay to safely avoid Gemini RPM rate limits
-    for (const college of colleges) {
-      await handleResearch(college);
-      await new Promise(resolve => setTimeout(resolve, 6500));
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        fetchColleges();
+      } else {
+        setLoading(false);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  async function fetchColleges() {
+    setLoading(true);
+    try {
+      const q = query(collection(db, "colleges"), orderBy("name", "asc"));
+      const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map(doc => doc.data() as College);
+      setColleges(data);
+
+      const targetQ = query(collection(db, "target_colleges"), orderBy("name", "asc"));
+      const targetSnapshot = await getDocs(targetQ);
+      const targetData = targetSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TargetCollege));
+      setTargetColleges(targetData);
+    } catch (error) {
+      console.error("Error fetching colleges:", error);
+    } finally {
+      setLoading(false);
     }
-    setIsResearchingAll(false);
+  }
+
+  const handleLogin = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
+  };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    setColleges([]);
+  };
+
+  // --- API Integrations ---
+
+  const fetchScorecardData = async () => {
+    if (targetColleges.length === 0) {
+      alert("Your whitelist is empty. Please upload target colleges first!");
+      return;
+    }
+    
+    setIsFetchingScorecard(true);
+    try {
+      // Send the whitelist array to the API
+      const res = await fetch(`/api/scorecard`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targets: targetColleges })
+      });
+      if (!res.ok) throw new Error("Failed to fetch Scorecard data");
+      await fetchColleges(); // Reload data
+      alert("Successfully fetched base data for whitelist!");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to fetch Scorecard data.");
+    } finally {
+      setIsFetchingScorecard(false);
+    }
   };
 
   const handleResearch = async (college: College) => {
+    if (college.isHumanVerified) {
+      console.log(`Skipping ${college.name} as it is marked Human Verified.`);
+      return;
+    }
+
     setResearchingId(college.id);
     try {
       const res = await fetch("/api/research", {
@@ -91,26 +192,179 @@ export default function Dashboard() {
       ));
     } catch (error) {
       console.error("Error researching college:", error);
-      alert("Failed to research college. Check your API key or console for details.");
     } finally {
       setResearchingId(null);
     }
   };
-  useEffect(() => {
-    async function fetchColleges() {
-      try {
-        const q = query(collection(db, "colleges"), orderBy("acceptanceRate", "asc"));
-        const querySnapshot = await getDocs(q);
-        const data = querySnapshot.docs.map(doc => doc.data() as College);
-        setColleges(data);
-      } catch (error) {
-        console.error("Error fetching colleges:", error);
-      } finally {
-        setLoading(false);
+
+  const handleResearchAll = async () => {
+    setIsResearchingAll(true);
+    for (const college of filteredColleges) {
+      if (!college.isHumanVerified) {
+        await handleResearch(college);
+        await new Promise(resolve => setTimeout(resolve, 6500));
       }
     }
-    fetchColleges();
-  }, []);
+    setIsResearchingAll(false);
+  };
+
+  const updateCollegeField = async (collegeId: string, fieldPath: string, value: any) => {
+    try {
+      // Set human verified when manually edited
+      await updateDoc(doc(db, "colleges", collegeId), {
+        [fieldPath]: value,
+        isHumanVerified: true
+      });
+      
+      setColleges(prev => prev.map(c => {
+        if (c.id === collegeId) {
+          // simple shallow update for UI, deep updates might require lodash set
+          return { ...c, [fieldPath]: value, isHumanVerified: true };
+        }
+        return c;
+      }));
+    } catch (error) {
+      console.error("Error updating field:", error);
+    }
+  };
+
+  const exportToCSV = () => {
+    if (colleges.length === 0) return;
+    
+    const headers = [
+      "ID", "Name", "City", "State", "Acceptance Rate", "Avg GPA", "Total Cost In-State", 
+      "Total Cost Out-State", "RD Deadline", "ED1 Deadline", "ED2 Deadline", "EA Deadline", "Rolling"
+    ];
+    
+    const rows = colleges.map(c => [
+      c.id, 
+      `"${c.name}"`, 
+      `"${c.city}"`, 
+      c.state, 
+      c.acceptanceRate ? (c.acceptanceRate * 100).toFixed(1) + "%" : "",
+      c.averageGpa || "",
+      c.financialAid?.total.inState || "",
+      c.financialAid?.total.outOfState || "",
+      c.deadlines?.regularDecision || "",
+      c.deadlines?.earlyDecision1 || "",
+      c.deadlines?.earlyDecision2 || "",
+      c.deadlines?.earlyAction || "",
+      c.deadlines?.rolling ? "Yes" : "No"
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "colleges_export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const copyForGoogleSheets = () => {
+    if (colleges.length === 0) return;
+    
+    const headers = [
+      "ID", "Name", "City", "State", "Acceptance Rate", "Avg GPA", "Total Cost In-State", 
+      "Total Cost Out-State", "RD Deadline", "ED1 Deadline", "ED2 Deadline", "EA Deadline", "Rolling"
+    ];
+    
+    // Use tabs (\t) instead of commas for seamless pasting into Google Sheets
+    const rows = colleges.map(c => [
+      c.id, 
+      c.name, 
+      c.city, 
+      c.state, 
+      c.acceptanceRate ? (c.acceptanceRate * 100).toFixed(1) + "%" : "",
+      c.averageGpa || "",
+      c.financialAid?.total.inState || "",
+      c.financialAid?.total.outOfState || "",
+      c.deadlines?.regularDecision || "",
+      c.deadlines?.earlyDecision1 || "",
+      c.deadlines?.earlyDecision2 || "",
+      c.deadlines?.earlyAction || "",
+      c.deadlines?.rolling ? "Yes" : "No"
+    ]);
+
+    const tsvContent = [headers.join("\t"), ...rows.map(e => e.join("\t"))].join("\n");
+    navigator.clipboard.writeText(tsvContent);
+    alert("Copied to clipboard! Open a blank Google Sheet and press Ctrl+V to paste.");
+  };
+
+  const downloadCSVTemplate = () => {
+    const csvContent = "data:text/csv;charset=utf-8,Official Name,State\nHarvard University,MA\nStanford University,CA\nMassachusetts Institute of Technology,MA";
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "target_colleges_template.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target?.result as string;
+      const rows = text.split("\n").map(r => r.trim()).filter(r => r);
+      
+      // Skip header row
+      const dataRows = rows.slice(1);
+      
+      let added = 0;
+      for (const row of dataRows) {
+        // Handle simple comma separation, ignoring commas inside quotes could require a real parser, 
+        // but for a template "Official Name,State" standard split is ok for now unless quotes are used.
+        const [name, state] = row.split(",").map(s => s.trim().replace(/^"|"$/g, ''));
+        if (name) {
+          const docRef = doc(collection(db, "target_colleges"));
+          await setDoc(docRef, { name, state: state || "" });
+          added++;
+        }
+      }
+      
+      alert(`Successfully uploaded and saved ${added} target colleges!`);
+      fetchColleges(); // Reload the target colleges
+    };
+    reader.readAsText(file);
+    e.target.value = ''; // Reset input
+  };
+
+  const removeTargetCollege = async (id: string) => {
+    await deleteDoc(doc(db, "target_colleges", id));
+    setTargetColleges(prev => prev.filter(c => c.id !== id));
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-900">
+        <GraduationCap className="w-20 h-20 text-blue-500 mb-6" />
+        <h1 className="text-3xl font-bold text-white mb-2">College Data Admin</h1>
+        <p className="text-slate-400 mb-8">Secure access required to manage the database.</p>
+        <button
+          onClick={handleLogin}
+          className="flex items-center gap-3 px-8 py-4 bg-white text-slate-900 rounded-xl font-bold hover:bg-slate-100 transition-colors shadow-xl"
+        >
+          <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
+          Sign in with Google
+        </button>
+      </div>
+    );
+  }
 
   const filteredColleges = colleges.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -118,208 +372,280 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="min-h-screen p-8 max-w-[1400px] mx-auto">
-      <header className="mb-12 text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-6">
-        <div>
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-2 flex items-center gap-3">
-            <GraduationCap className="w-10 h-10 text-blue-400" />
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
-              College Tracker
-            </span>
-          </h1>
-          <p className="text-slate-400 text-lg">Massachusetts Edition</p>
+    <div className="min-h-screen flex flex-col h-screen overflow-hidden bg-slate-950">
+      {/* Header Bar */}
+      <header className="flex-shrink-0 bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center z-10 shadow-lg">
+        <div className="flex items-center gap-3">
+          <GraduationCap className="w-8 h-8 text-blue-400" />
+          <h1 className="text-xl font-bold text-slate-100">College Tracker Admin</h1>
         </div>
-        
-        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-          <button
-            onClick={handleResearchAll}
-            disabled={isResearchingAll}
-            className="flex items-center justify-center gap-2 px-6 py-3 w-full md:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-slate-700 disabled:to-slate-700 text-white shadow-lg shadow-blue-900/20 rounded-xl font-bold transition-all"
-          >
-            {isResearchingAll ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Wand2 className="w-5 h-5" />
-            )}
-            {isResearchingAll ? "Researching..." : "Research All"}
-          </button>
-          
-          <div className="relative w-full md:w-80">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-slate-400" />
-            </div>
+
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              className="block w-full pl-10 pr-3 py-3 border border-slate-700 rounded-xl leading-5 bg-slate-800/50 text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              placeholder="Search colleges by name..."
+              placeholder="Search database..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-blue-500 w-64"
             />
           </div>
+
+          <div className="h-6 w-px bg-slate-700 mx-2"></div>
+
+          <span className="text-sm text-slate-400">{user.email}</span>
+          <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-white bg-slate-800 rounded-lg hover:bg-slate-700 transition-colors">
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </header>
 
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      {/* Main Content Area */}
+      <div className="flex-1 flex overflow-hidden">
+        
+        {/* Sidebar Nav */}
+        <div className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col p-4 gap-2 flex-shrink-0">
+          <button 
+            onClick={() => setActiveTab("database")}
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === "database" ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20" : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"}`}
+          >
+            <Database className="w-5 h-5" />
+            Database View
+          </button>
+          <button 
+            onClick={() => setActiveTab("whitelist")}
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === "whitelist" ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20" : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"}`}
+          >
+            <ListPlus className="w-5 h-5" />
+            Whitelist Manager
+          </button>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          {filteredColleges.map((college) => (
-            <div key={college.id} className="glass-card rounded-2xl p-6 flex flex-col relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 opacity-10">
-                <Landmark className="w-24 h-24" />
-              </div>
-              
-              <div className="mb-6 relative z-10 flex justify-between items-start">
-                <div>
-                  <h2 className="text-2xl font-bold text-white mb-2 leading-tight">{college.name}</h2>
-                  <div className="flex items-center text-slate-400 text-sm mb-3">
-                    <MapPin className="w-4 h-4 mr-1" />
-                    {college.location}
-                    <span className="mx-2">•</span>
-                    {college.isPublic ? "Public" : "Private"}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="badge badge-blue">
-                      Acceptance: {college.acceptanceRate ? (college.acceptanceRate * 100).toFixed(1) + "%" : "N/A"}
-                    </span>
-                    {college.averageGpa && (
-                      <span className="badge badge-blue">
-                        Avg GPA: {college.averageGpa}
-                      </span>
-                    )}
-                    {college.offersNeedBasedAid && (
-                      <span className="badge badge-blue">Need-Based Aid</span>
-                    )}
-                    {college.isNeedBlind === true && (
-                      <span className="badge badge-green">Need-Blind</span>
-                    )}
-                    {college.isNeedAware === true && (
-                      <span className="badge badge-red">Need-Aware</span>
-                    )}
-                    {college.offersEarlyAdmission === true && (
-                      <span className="badge badge-blue">Early Admission</span>
-                    )}
-                    {college.deadlines?.rolling === true && (
-                      <span className="badge badge-purple">Rolling Admissions</span>
-                    )}
-                  </div>
 
-                  <div className="mt-4 flex flex-col gap-1.5 text-sm text-slate-300 bg-slate-800/30 p-3 rounded-xl border border-slate-700/50">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-purple-400" />
-                      <span className="font-semibold text-slate-200">Regular Decision:</span>
-                      {college.deadlines?.regularDecision ?? "Unknown"}
-                      {college.isEstimatedDeadlines && college.deadlines?.regularDecision && <span className="text-slate-500 text-xs">(est)</span>}
-                    </div>
-                    {college.deadlines?.earlyAction && (
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-blue-400" />
-                        <span className="font-semibold text-slate-200">Early Action (EA):</span>
-                        {college.deadlines.earlyAction}
-                        {college.isEstimatedDeadlines && <span className="text-slate-500 text-xs">(est)</span>}
-                      </div>
-                    )}
-                    {college.deadlines?.earlyDecision1 && (
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-blue-500" />
-                        <span className="font-semibold text-slate-200">Early Decision 1:</span>
-                        {college.deadlines.earlyDecision1}
-                        {college.isEstimatedDeadlines && <span className="text-slate-500 text-xs">(est)</span>}
-                      </div>
-                    )}
-                    {college.deadlines?.earlyDecision2 && (
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-indigo-400" />
-                        <span className="font-semibold text-slate-200">Early Decision 2:</span>
-                        {college.deadlines.earlyDecision2}
-                        {college.isEstimatedDeadlines && <span className="text-slate-500 text-xs">(est)</span>}
-                      </div>
-                    )}
-                    {college.deadlines?.rolling === true && (
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-emerald-400" />
-                        <span className="font-semibold text-slate-200">Rolling Admissions:</span>
-                        Yes
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="text-right flex flex-col items-end gap-2">
-                  <div className="text-right">
-                    <p className="text-xs text-slate-400 font-semibold uppercase flex items-center justify-end">
-                      Test Optional
-                      {college.isTestOptional ? <CheckCircle2 className="w-4 h-4 ml-1 text-green-400" /> : <XCircle className="w-4 h-4 ml-1 text-red-400" />}
-                    </p>
-                    <p className="text-sm font-medium text-slate-300 mt-1">{college.isTestOptional ? "Yes" : "Required"}</p>
-                  </div>
-                  
+        {/* Tab Content */}
+        <div className="flex-1 flex flex-col min-w-0 bg-slate-950">
+          
+          {activeTab === "database" && (
+            <>
+              {/* Control Panel */}
+              <div className="flex-shrink-0 bg-slate-900/50 p-4 border-b border-slate-800 flex justify-between items-center">
+                <div className="flex items-center gap-4">
                   <button
-                    onClick={() => handleResearch(college)}
-                    disabled={researchingId === college.id}
-                    className="mt-2 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={fetchScorecardData}
+                    disabled={isFetchingScorecard}
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-blue-400 border border-blue-500/30 rounded-lg text-sm font-semibold hover:bg-slate-800/80 transition-colors"
                   >
-                    {researchingId === college.id ? (
-                      <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <Wand2 className="w-3.5 h-3.5" />
-                    )}
-                    {researchingId === college.id ? "Researching..." : "Auto-Research"}
+                    <TableIcon className="w-4 h-4" />
+                    {isFetchingScorecard ? "Fetching API..." : "1. Fetch Base Data (From Whitelist)"}
+                  </button>
+
+                  <button
+                    onClick={handleResearchAll}
+                    disabled={isResearchingAll}
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-sm font-semibold hover:from-blue-500 hover:to-purple-500 transition-colors"
+                  >
+                    <Wand2 className="w-4 h-4" />
+                    {isResearchingAll ? "Researching..." : "2. Auto-Research Missing Data"}
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={copyForGoogleSheets}
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-emerald-400 border border-emerald-500/30 rounded-lg text-sm font-semibold hover:bg-slate-800/80 transition-colors"
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    Copy for Sheets
+                  </button>
+                  <button
+                    onClick={exportToCSV}
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-emerald-400 border border-emerald-500/30 rounded-lg text-sm font-semibold hover:bg-slate-800/80 transition-colors"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export CSV
                   </button>
                 </div>
               </div>
 
-              {college.testScores && (
-                <div className="mt-auto relative z-10 bg-slate-900/50 rounded-xl overflow-hidden border border-slate-700/50">
-                  <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-800/80 text-slate-300 text-xs uppercase font-semibold border-b border-slate-700/50">
-                      <tr>
-                        <th className="px-4 py-3">Test</th>
-                        <th className="px-4 py-3 text-center">25th Percentile</th>
-                        <th className="px-4 py-3 text-center">Median</th>
-                        <th className="px-4 py-3 text-center">75th Percentile</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-700/50 text-slate-200">
-                      <tr className="hover:bg-slate-800/30 transition-colors">
-                        <td className="px-4 py-3 font-medium">SAT Evidence-Based Reading and Writing</td>
-                        <td className="px-4 py-3 text-center">{college.testScores.satReading.p25 || "-"}</td>
-                        <td className="px-4 py-3 text-center">{college.testScores.satReading.mid || "-"}</td>
-                        <td className="px-4 py-3 text-center">{college.testScores.satReading.p75 || "-"}</td>
-                      </tr>
-                      <tr className="hover:bg-slate-800/30 transition-colors">
-                        <td className="px-4 py-3 font-medium">SAT Math</td>
-                        <td className="px-4 py-3 text-center">{college.testScores.satMath.p25 || "-"}</td>
-                        <td className="px-4 py-3 text-center">{college.testScores.satMath.mid || "-"}</td>
-                        <td className="px-4 py-3 text-center">{college.testScores.satMath.p75 || "-"}</td>
-                      </tr>
-                      <tr className="hover:bg-slate-800/30 transition-colors">
-                        <td className="px-4 py-3 font-medium">ACT Composite</td>
-                        <td className="px-4 py-3 text-center">{college.testScores.actComposite.p25 || "-"}</td>
-                        <td className="px-4 py-3 text-center">{college.testScores.actComposite.mid || "-"}</td>
-                        <td className="px-4 py-3 text-center">{college.testScores.actComposite.p75 || "-"}</td>
-                      </tr>
-                      <tr className="hover:bg-slate-800/30 transition-colors">
-                        <td className="px-4 py-3 font-medium">ACT English</td>
-                        <td className="px-4 py-3 text-center">{college.testScores.actEnglish.p25 || "-"}</td>
-                        <td className="px-4 py-3 text-center">{college.testScores.actEnglish.mid || "-"}</td>
-                        <td className="px-4 py-3 text-center">{college.testScores.actEnglish.p75 || "-"}</td>
-                      </tr>
-                      <tr className="hover:bg-slate-800/30 transition-colors">
-                        <td className="px-4 py-3 font-medium">ACT Math</td>
-                        <td className="px-4 py-3 text-center">{college.testScores.actMath.p25 || "-"}</td>
-                        <td className="px-4 py-3 text-center">{college.testScores.actMath.mid || "-"}</td>
-                        <td className="px-4 py-3 text-center">{college.testScores.actMath.p75 || "-"}</td>
-                      </tr>
-                    </tbody>
-                  </table>
+              {/* Data Table */}
+              <div className="flex-1 overflow-auto p-4">
+                <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl h-full flex flex-col">
+                  <div className="overflow-auto flex-1">
+                    <table className="w-full text-left text-sm text-slate-300 relative">
+                      <thead className="text-xs uppercase bg-slate-800/80 text-slate-400 sticky top-0 z-10 shadow-md">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold">College</th>
+                          <th className="px-4 py-3 font-semibold">Location</th>
+                          <th className="px-4 py-3 font-semibold text-center">Acceptance</th>
+                          <th className="px-4 py-3 font-semibold text-center">Total Cost (In)</th>
+                          <th className="px-4 py-3 font-semibold text-center">RD Deadline</th>
+                          <th className="px-4 py-3 font-semibold text-center">Verified</th>
+                          <th className="px-4 py-3 font-semibold text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/50">
+                        {filteredColleges.map((college) => (
+                          <tr key={college.id} className="hover:bg-slate-800/30 transition-colors group">
+                            <td className="px-4 py-3 font-medium text-slate-200">
+                              <input 
+                                type="text" 
+                                value={college.name}
+                                onChange={e => updateCollegeField(college.id, "name", e.target.value)}
+                                className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 w-full"
+                              />
+                            </td>
+                            <td className="px-4 py-3">
+                              {college.city}, {college.state}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <input 
+                                type="number" 
+                                value={college.acceptanceRate ? (college.acceptanceRate * 100).toFixed(1) : ""}
+                                onChange={e => updateCollegeField(college.id, "acceptanceRate", parseFloat(e.target.value) / 100)}
+                                className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 w-16 text-center"
+                                placeholder="N/A"
+                              />%
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              ${college.financialAid?.total.inState?.toLocaleString() ?? "---"}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <input 
+                                type="text" 
+                                value={college.deadlines?.regularDecision || ""}
+                                onChange={e => {
+                                  const newDeadlines = { ...college.deadlines, regularDecision: e.target.value };
+                                  updateCollegeField(college.id, "deadlines", newDeadlines);
+                                }}
+                                className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 w-24 text-center"
+                                placeholder="Unknown"
+                              />
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <button 
+                                onClick={() => updateCollegeField(college.id, "isHumanVerified", !college.isHumanVerified)}
+                                className={`px-2 py-1 rounded text-xs font-bold transition-colors ${college.isHumanVerified ? "bg-emerald-500/20 text-emerald-400" : "bg-slate-800 text-slate-500"}`}
+                              >
+                                {college.isHumanVerified ? "LOCKED" : "AUTO"}
+                              </button>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <button
+                                onClick={() => handleResearch(college)}
+                                disabled={researchingId === college.id || college.isHumanVerified}
+                                className="text-blue-400 hover:text-blue-300 disabled:opacity-30 disabled:cursor-not-allowed p-1"
+                                title={college.isHumanVerified ? "Cannot auto-research a Human Verified college" : "Run AI Research"}
+                              >
+                                {researchingId === college.id ? (
+                                  <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <Wand2 className="w-4 h-4" />
+                                )}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {filteredColleges.length === 0 && (
+                          <tr>
+                            <td colSpan={7} className="px-4 py-12 text-center text-slate-500">
+                              No colleges found in Database.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              )}
+              </div>
+            </>
+          )}
+
+          {activeTab === "whitelist" && (
+            <div className="p-8 max-w-4xl mx-auto w-full">
+              <div className="mb-8">
+                <h2 className="text-3xl font-bold text-white mb-2">Target Whitelist</h2>
+                <p className="text-slate-400">
+                  Upload a CSV of specific colleges you want to track. The "Fetch Base Data" API will strictly search for these exact names.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                  <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-4">
+                    <Download className="w-6 h-6 text-blue-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2">1. Get the Template</h3>
+                  <p className="text-sm text-slate-400 mb-4">
+                    Download the exact CSV format we expect (Official Name, State). 
+                  </p>
+                  <button 
+                    onClick={downloadCSVTemplate}
+                    className="w-full py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors font-semibold"
+                  >
+                    Download Template
+                  </button>
+                </div>
+
+                <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl relative overflow-hidden">
+                  <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center mb-4">
+                    <Upload className="w-6 h-6 text-purple-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2">2. Upload CSV</h3>
+                  <p className="text-sm text-slate-400 mb-4">
+                    Upload your filled-out CSV to add them to your target list.
+                  </p>
+                  <label className="w-full py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-500 hover:to-purple-500 transition-colors font-semibold cursor-pointer flex justify-center items-center">
+                    Select File
+                    <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
+                  </label>
+                </div>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/30">
+                  <h3 className="font-bold text-white flex items-center gap-2">
+                    <ListPlus className="w-4 h-4 text-blue-400" />
+                    Currently Tracking ({targetColleges.length})
+                  </h3>
+                </div>
+                <table className="w-full text-left text-sm text-slate-300">
+                  <thead className="text-xs uppercase text-slate-500 bg-slate-900">
+                    <tr>
+                      <th className="px-6 py-3 font-semibold">Official Name</th>
+                      <th className="px-6 py-3 font-semibold">State</th>
+                      <th className="px-6 py-3 font-semibold text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800">
+                    {targetColleges.map(c => (
+                      <tr key={c.id} className="hover:bg-slate-800/50">
+                        <td className="px-6 py-3 text-white font-medium">{c.name}</td>
+                        <td className="px-6 py-3">{c.state}</td>
+                        <td className="px-6 py-3 text-right">
+                          <button 
+                            onClick={() => removeTargetCollege(c.id)}
+                            className="text-red-400 hover:text-red-300 text-xs font-bold"
+                          >
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {targetColleges.length === 0 && (
+                      <tr>
+                        <td colSpan={3} className="px-6 py-12 text-center text-slate-500">
+                          Your whitelist is empty. Upload a CSV to get started!
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          ))}
+          )}
+
         </div>
-      )}
+      </div>
     </div>
   );
 }

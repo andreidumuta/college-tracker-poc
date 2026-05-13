@@ -76,7 +76,6 @@ export async function POST(req: Request) {
           state: school["school.state"],
           location: `${school["school.city"]}, ${school["school.state"]}`,
           acceptanceRate: school["latest.admissions.admission_rate.overall"] || null,
-          isHumanVerified: false, 
           financialAid: {
             tuition: {
               inState: school["latest.cost.tuition.in_state"] || null,

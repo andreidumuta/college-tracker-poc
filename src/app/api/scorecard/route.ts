@@ -41,7 +41,11 @@ export async function POST(req: Request) {
     for (const target of targets) {
       // Encode the name for the URL. Use exact match if possible, but the API handles loose name searches well.
       const encodedName = encodeURIComponent(target.name);
-      const url = `https://api.data.gov/ed/collegescorecard/v1/schools.json?school.name=${encodedName}&fields=${fields}&per_page=1&api_key=${apiKey}`;
+      let url = `https://api.data.gov/ed/collegescorecard/v1/schools.json?school.name=${encodedName}&fields=${fields}&per_page=1&api_key=${apiKey}`;
+      
+      if (target.state && target.state.trim().length === 2) {
+        url += `&school.state=${target.state.trim().toUpperCase()}`;
+      }
 
       try {
         const res = await fetch(url);

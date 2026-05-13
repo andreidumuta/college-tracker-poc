@@ -175,6 +175,9 @@ export default function AdminDashboard() {
       } else if (res.status === 429) {
         const errorData = await res.json();
         alert(`RATE LIMIT REACHED! ${errorData.error}\n\nIt successfully added ${errorData.count} colleges before hitting the limit.`);
+      } else if (res.status === 502) {
+        const errorData = await res.json();
+        alert(`GOVERNMENT API OUTAGE! ${errorData.error}\n\nIt successfully added ${errorData.count} colleges before the connection dropped.`);
       } else {
         console.error("Fetch failed:", res.statusText);
         alert("Server returned an error. Check server logs.");

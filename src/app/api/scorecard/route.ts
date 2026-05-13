@@ -15,7 +15,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No target colleges provided" }, { status: 400 });
     }
 
-    const apiKey = process.env.COLLEGE_SCORECARD_API_KEY || "DEMO_KEY";
+    const apiKey = process.env.COLLEGE_SCORECARD_API_KEY || "kuoc3B0ONHYYwU8JhpAxQ9IPgUzAkNCvzfbUtmaC";
     const fields = [
       "id",
       "school.name",
@@ -56,6 +56,14 @@ export async function POST(req: Request) {
             error: `Data.gov API Rate Limit Exceeded. You are currently using API Key: ${keyPrefix}. ${isDemo ? "The DEMO_KEY only allows 40 requests per hour." : "Your real key has hit its hourly limit."} Please check your GitHub Secrets and deployment status.`,
             count: addedCount
           }, { status: 429 });
+        }
+        
+        if (res.status >= 500) {
+          console.error(`Data.gov API is DOWN (HTTP ${res.status})`);
+          return NextResponse.json({ 
+            error: `The U.S. Government Data.gov API is currently experiencing a nationwide outage (HTTP ${res.status}). Please try again later.`,
+            count: addedCount
+          }, { status: 502 });
         }
         
         if (!res.ok) {

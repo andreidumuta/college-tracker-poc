@@ -512,27 +512,35 @@ export default function AdminDashboard() {
                     <table className="w-full text-left text-sm text-slate-300 relative">
                       <thead className="text-xs uppercase bg-slate-800/80 text-slate-400 sticky top-0 z-10 shadow-md">
                         <tr>
-                          <th className="px-4 py-3 font-semibold">College</th>
-                          <th className="px-4 py-3 font-semibold">Location</th>
-                          <th className="px-4 py-3 font-semibold text-center">Acceptance</th>
-                          <th className="px-4 py-3 font-semibold text-center">Total Cost (In)</th>
-                          <th className="px-4 py-3 font-semibold text-center">RD Deadline</th>
-                          <th className="px-4 py-3 font-semibold text-center">Verified</th>
-                          <th className="px-4 py-3 font-semibold text-right">Actions</th>
+                          <th className="px-4 py-3 font-semibold whitespace-nowrap sticky left-0 bg-slate-800/95 z-20">College</th>
+                          <th className="px-4 py-3 font-semibold whitespace-nowrap">Location</th>
+                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">Acceptance</th>
+                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">Avg GPA</th>
+                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">SAT Math</th>
+                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">SAT Read</th>
+                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">Total Cost (In)</th>
+                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">Total Cost (Out)</th>
+                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">Need Blind</th>
+                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">RD Deadline</th>
+                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">ED1</th>
+                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">ED2</th>
+                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">EA</th>
+                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">Verified</th>
+                          <th className="px-4 py-3 font-semibold text-right whitespace-nowrap sticky right-0 bg-slate-800/95 z-20">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/50">
                         {filteredColleges.map((college) => (
                           <tr key={college.id} className="hover:bg-slate-800/30 transition-colors group">
-                            <td className="px-4 py-3 font-medium text-slate-200">
+                            <td className="px-4 py-3 font-medium text-slate-200 sticky left-0 bg-slate-900 group-hover:bg-slate-800 transition-colors z-10 border-r border-slate-800/50">
                               <input 
                                 type="text" 
                                 value={college.name}
                                 onChange={e => updateCollegeField(college.id, "name", e.target.value)}
-                                className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 w-full"
+                                className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 w-full min-w-[200px]"
                               />
                             </td>
-                            <td className="px-4 py-3">
+                            <td className="px-4 py-3 whitespace-nowrap">
                               {college.city}, {college.state}
                             </td>
                             <td className="px-4 py-3 text-center">
@@ -545,7 +553,37 @@ export default function AdminDashboard() {
                               />%
                             </td>
                             <td className="px-4 py-3 text-center">
+                              <input 
+                                type="number" 
+                                step="0.01"
+                                value={college.averageGpa || ""}
+                                onChange={e => updateCollegeField(college.id, "averageGpa", parseFloat(e.target.value))}
+                                className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 w-16 text-center text-blue-300 font-semibold"
+                                placeholder="N/A"
+                              />
+                            </td>
+                            <td className="px-4 py-3 text-center text-slate-400">
+                              {college.testScores?.satMath?.mid || "---"}
+                            </td>
+                            <td className="px-4 py-3 text-center text-slate-400">
+                              {college.testScores?.satReading?.mid || "---"}
+                            </td>
+                            <td className="px-4 py-3 text-center text-emerald-400/80">
                               ${college.financialAid?.total.inState?.toLocaleString() ?? "---"}
+                            </td>
+                            <td className="px-4 py-3 text-center text-emerald-400/80">
+                              ${college.financialAid?.total.outOfState?.toLocaleString() ?? "---"}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <select
+                                value={college.isNeedBlind === null ? "" : college.isNeedBlind.toString()}
+                                onChange={e => updateCollegeField(college.id, "isNeedBlind", e.target.value === "" ? null : e.target.value === "true")}
+                                className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 text-center appearance-none"
+                              >
+                                <option value="" className="bg-slate-800">Unk</option>
+                                <option value="true" className="bg-slate-800">Yes</option>
+                                <option value="false" className="bg-slate-800">No</option>
+                              </select>
                             </td>
                             <td className="px-4 py-3 text-center">
                               <input 
@@ -555,23 +593,59 @@ export default function AdminDashboard() {
                                   const newDeadlines = { ...college.deadlines, regularDecision: e.target.value };
                                   updateCollegeField(college.id, "deadlines", newDeadlines);
                                 }}
-                                className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 w-24 text-center"
-                                placeholder="Unknown"
+                                className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 w-20 text-center"
+                                placeholder="N/A"
+                              />
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <input 
+                                type="text" 
+                                value={college.deadlines?.earlyDecision1 || ""}
+                                onChange={e => {
+                                  const newDeadlines = { ...college.deadlines, earlyDecision1: e.target.value };
+                                  updateCollegeField(college.id, "deadlines", newDeadlines);
+                                }}
+                                className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 w-20 text-center text-purple-300"
+                                placeholder="N/A"
+                              />
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <input 
+                                type="text" 
+                                value={college.deadlines?.earlyDecision2 || ""}
+                                onChange={e => {
+                                  const newDeadlines = { ...college.deadlines, earlyDecision2: e.target.value };
+                                  updateCollegeField(college.id, "deadlines", newDeadlines);
+                                }}
+                                className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 w-20 text-center text-purple-300"
+                                placeholder="N/A"
+                              />
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <input 
+                                type="text" 
+                                value={college.deadlines?.earlyAction || ""}
+                                onChange={e => {
+                                  const newDeadlines = { ...college.deadlines, earlyAction: e.target.value };
+                                  updateCollegeField(college.id, "deadlines", newDeadlines);
+                                }}
+                                className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 w-20 text-center text-pink-300"
+                                placeholder="N/A"
                               />
                             </td>
                             <td className="px-4 py-3 text-center">
                               <button 
                                 onClick={() => updateCollegeField(college.id, "isHumanVerified", !college.isHumanVerified)}
-                                className={`px-2 py-1 rounded text-xs font-bold transition-colors ${college.isHumanVerified ? "bg-emerald-500/20 text-emerald-400" : "bg-slate-800 text-slate-500"}`}
+                                className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${college.isHumanVerified ? "bg-emerald-500/20 text-emerald-400" : "bg-slate-800 text-slate-500"}`}
                               >
                                 {college.isHumanVerified ? "LOCKED" : "AUTO"}
                               </button>
                             </td>
-                            <td className="px-4 py-3 text-right">
+                            <td className="px-4 py-3 text-right sticky right-0 bg-slate-900 group-hover:bg-slate-800 transition-colors z-10 border-l border-slate-800/50">
                               <button
                                 onClick={() => handleResearch(college)}
                                 disabled={researchingId === college.id || college.isHumanVerified}
-                                className="text-blue-400 hover:text-blue-300 disabled:opacity-30 disabled:cursor-not-allowed p-1"
+                                className="text-blue-400 hover:text-blue-300 disabled:opacity-30 disabled:cursor-not-allowed p-1 bg-blue-500/10 rounded-lg hover:bg-blue-500/20 transition-colors"
                                 title={college.isHumanVerified ? "Cannot auto-research a Human Verified college" : "Run AI Research"}
                               >
                                 {researchingId === college.id ? (
@@ -585,7 +659,7 @@ export default function AdminDashboard() {
                         ))}
                         {filteredColleges.length === 0 && (
                           <tr>
-                            <td colSpan={7} className="px-4 py-12 text-center text-slate-500">
+                            <td colSpan={15} className="px-4 py-12 text-center text-slate-500">
                               No colleges found in Database.
                             </td>
                           </tr>

@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type, Schema } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 
 // Initialize the Google Gen AI SDK
@@ -15,35 +15,6 @@ export async function POST(req: Request) {
     if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json({ error: "GEMINI_API_KEY is not configured" }, { status: 500 });
     }
-
-    // Define the schema we want Gemini to return
-    const responseSchema: Schema = {
-      type: Type.OBJECT,
-      properties: {
-        isNeedBlind: {
-          type: Type.BOOLEAN,
-          description: "True if the college is need-blind for domestic applicants, false if they are need-aware.",
-        },
-        offersEarlyAdmission: {
-          type: Type.BOOLEAN,
-          description: "True if the college offers Early Decision or Early Action.",
-        },
-        earlyDecisionDeadline: {
-          type: Type.STRING,
-          description: "The calendar date for Early Decision/Action deadline (e.g., 'Nov 1'). Null if not offered.",
-          nullable: true,
-        },
-        regularDecisionDeadline: {
-          type: Type.STRING,
-          description: "The calendar date for the Regular Decision deadline (e.g., 'Jan 1').",
-        },
-        averageGpa: {
-          type: Type.NUMBER,
-          description: "The average unweighted GPA of admitted students (e.g., 3.9).",
-        }
-      },
-      required: ["isNeedBlind", "offersEarlyAdmission", "regularDecisionDeadline", "averageGpa"],
-    };
 
     console.log(`Researching data for: ${collegeName}`);
 
@@ -80,8 +51,9 @@ export async function POST(req: Request) {
           }
         });
         break; // Exit loop on success
-      } catch (err: any) {
-        if (err.status === 429 && retries > 1) {
+      } catch (err: unknown) {
+        const errorStatus = (err as { status?: number }).status;
+        if (errorStatus === 429 && retries > 1) {
           console.warn(`Rate limited (429). Retrying in ${delay}ms...`);
           await new Promise(res => setTimeout(res, delay));
           delay *= 2; // Exponential backoff
@@ -108,8 +80,9 @@ export async function POST(req: Request) {
     const data = JSON.parse(resultText);
     return NextResponse.json(data);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error researching college:", error);
-    return NextResponse.json({ error: error.message || "Failed to research college" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Failed to research college";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

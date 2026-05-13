@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { collection, getDocs, query, orderBy, doc, updateDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { db, auth, googleProvider } from "@/lib/firebase";
 import { signInWithPopup, onAuthStateChanged, User, signOut } from "firebase/auth";
-import { GraduationCap, Search, Wand2, Download, Table as TableIcon, LogIn, LogOut, FileSpreadsheet, Upload, ListPlus, Database } from "lucide-react";
+import { GraduationCap, Search, Wand2, Download, Table as TableIcon, LogOut, FileSpreadsheet, Upload, ListPlus, Database } from "lucide-react";
 
 interface CostBreakdown {
   inState: number | null;
@@ -101,6 +101,7 @@ export default function AdminDashboard() {
         setLoading(false);
       }
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     return () => unsubscribe();
   }, []);
 
@@ -218,7 +219,7 @@ export default function AdminDashboard() {
     setIsResearchingAll(false);
   };
 
-  const updateCollegeField = async (collegeId: string, fieldPath: string, value: any) => {
+  const updateCollegeField = async (collegeId: string, fieldPath: string, value: string | number | boolean | null | Record<string, unknown>) => {
     try {
       // Set human verified when manually edited
       await updateDoc(doc(db, "colleges", collegeId), {
@@ -575,7 +576,7 @@ export default function AdminDashboard() {
               <div className="mb-8">
                 <h2 className="text-3xl font-bold text-white mb-2">Target Whitelist</h2>
                 <p className="text-slate-400">
-                  Upload a CSV of specific colleges you want to track. The "Fetch Base Data" API will strictly search for these exact names.
+                  Upload a CSV of specific colleges you want to track. The &quot;Fetch Base Data&quot; API will strictly search for these exact names.
                 </p>
               </div>
 

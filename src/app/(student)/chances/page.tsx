@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { listenToApplications, ApplicationInfo } from "@/lib/user-service";
-import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
+import { listenToApplications, addApplication, ApplicationInfo } from "@/lib/user-service";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { College, UserProfile } from "@/types";
-import Link from "next/link";
-import { Sparkles, User, BarChart2 } from "lucide-react";
+import { Sparkles, User, BarChart2, Search, Plus, Check } from "lucide-react";
 
 interface PeerPoint {
   gpa: number;
@@ -74,52 +73,76 @@ export default function ChancesPage() {
   const [colleges, setColleges] = useState<College[]>([]);
   const [selectedCollegeId, setSelectedCollegeId] = useState<string>("");
   const [peerPoints, setPeerPoints] = useState<PeerPoint[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTab, setSearchTab] = useState<"mySchools" | "allSchools">("mySchools");
+
+  // Derived state to determine the active college ID to show (prioritizing user selection, then first tracked school, then first database school)
+  const activeCollegeId = selectedCollegeId || (trackedSchools.length > 0 ? trackedSchools[0].collegeId : (colleges.length > 0 ? colleges[0].id : ""));
 
   // Derived state to avoid react-hooks/set-state-in-effect on selectedCollege
-  const selectedCollege = colleges.find(c => c.id === selectedCollegeId) || null;
+  const selectedCollege = colleges.find(c => c.id === activeCollegeId) || null;
+
+  // Derived state search results to avoid useEffect-state sync warnings
+  const searchResults = searchTerm.trim()
+    ? colleges.filter((c) =>
+        (c.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (c.city || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (c.state || "").toLowerCase().includes(searchTerm.toLowerCase())
+      ).slice(0, 5)
+    : [];
 
   // Load user's tracked applications
   useEffect(() => {
     if (!user) return;
     const unsubscribe = listenToApplications(user.uid, (apps) => {
       setTrackedSchools(apps);
-      if (apps.length > 0 && !selectedCollegeId) {
-        setSelectedCollegeId(apps[0].collegeId);
-      }
     });
     return () => unsubscribe();
-  }, [user, selectedCollegeId]);
+  }, [user]);
 
-  // Load college details from tracked list
+  // Load all colleges for search capability
   useEffect(() => {
-    const fetchTrackedColleges = async () => {
-      if (trackedSchools.length === 0) return;
+    const fetchAllColleges = async () => {
       try {
+        const querySnapshot = await getDocs(collection(db, "colleges"));
         const list: College[] = [];
-        for (const app of trackedSchools) {
-          const docRef = doc(db, "colleges", app.collegeId);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            list.push(docSnap.data() as College);
-          }
-        }
+        querySnapshot.forEach((doc) => {
+          list.push(doc.data() as College);
+        });
+        list.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         setColleges(list);
       } catch (err) {
-        console.error("Error loading tracked colleges details:", err);
+        console.error("Error loading all colleges:", err);
       }
     };
-    fetchTrackedColleges();
-  }, [trackedSchools]);
+    fetchAllColleges();
+  }, []);
+
+  const handleTrackSchool = async () => {
+    if (!user || !selectedCollege) return;
+    try {
+      await addApplication(
+        user.uid,
+        selectedCollege.id,
+        selectedCollege.name,
+        [selectedCollege.city, selectedCollege.state].filter(Boolean).join(", ")
+      );
+      alert(`${selectedCollege.name} added to your tracker!`);
+    } catch (err) {
+      console.error(err);
+      alert("Error adding application. Please try again.");
+    }
+  };
 
   // Fetch peer application stats for scatter plot
   useEffect(() => {
-    if (!selectedCollegeId || !selectedCollege) return;
+    if (!activeCollegeId || !selectedCollege) return;
     
     const fetchPeerData = async () => {
       try {
         const q = query(
           collection(db, "users"), 
-          where("mySchools", "array-contains", selectedCollegeId)
+          where("mySchools", "array-contains", activeCollegeId)
         );
         const querySnapshot = await getDocs(q);
         const points: PeerPoint[] = [];
@@ -149,7 +172,7 @@ export default function ChancesPage() {
     };
 
     fetchPeerData();
-  }, [selectedCollegeId, selectedCollege, user]);
+  }, [activeCollegeId, selectedCollege, user]);
 
   // Calculate Student Likelihood (Reach, Target, Safety)
   const getLikelihoodInfo = () => {
@@ -192,40 +215,124 @@ export default function ChancesPage() {
   return (
     <div className="space-y-12">
       {/* Tracker list tabs header */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#0060ad]">Admissions Analytics</p>
-          <span className="text-xs text-[#466084] font-semibold">Your tracked list</span>
+      <section className="space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#0060ad]">Admissions Analytics</p>
+            <h2 className="text-3xl font-extrabold text-[#173355] font-headline mt-1">Chances Calculator</h2>
+          </div>
+          
+          {/* Search Tab Switcher if student has tracked schools */}
+          {trackedSchools.length > 0 && (
+            <div className="flex bg-[#eff3ff] p-1.5 rounded-full w-fit">
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchTab("mySchools");
+                  setSearchTerm("");
+                  if (trackedSchools.length > 0) {
+                    setSelectedCollegeId(trackedSchools[0].collegeId);
+                  }
+                }}
+                className={`px-6 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                  searchTab === "mySchools" ? "bg-[#0060ad] text-white shadow-md" : "text-[#466084] hover:text-[#173355]"
+                }`}
+              >
+                My Schools
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchTab("allSchools");
+                  setSearchTerm("");
+                }}
+                className={`px-6 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                  searchTab === "allSchools" ? "bg-[#0060ad] text-white shadow-md" : "text-[#466084] hover:text-[#173355]"
+                }`}
+              >
+                Search Any School
+              </button>
+            </div>
+          )}
         </div>
-        
-        {trackedSchools.length > 0 ? (
-          <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-            {trackedSchools.map((app) => {
-              const isActive = app.collegeId === selectedCollegeId;
-              return (
-                <button
-                  key={app.collegeId}
-                  onClick={() => setSelectedCollegeId(app.collegeId)}
-                  className={`min-w-[160px] text-left p-4 rounded-2xl border transition-all cursor-pointer ${
-                    isActive 
-                      ? "bg-[#e6eeff] border-[#0060ad] text-[#0060ad] scale-[1.02] shadow-sm" 
-                      : "bg-white border-[#dde9ff] text-[#173355] opacity-70 hover:opacity-100"
-                  }`}
-                >
-                  <p className="font-bold text-sm truncate">{app.collegeName}</p>
-                  <p className="text-[10px] text-[#466084] font-medium tracking-tight mt-1">
-                    {app.status} • {app.deadlineType.replace(/([A-Z])/g, " $1")}
-                  </p>
-                </button>
-              );
-            })}
+
+        {/* Dynamic Search/Selection interface depending on mode */}
+        {searchTab === "mySchools" && trackedSchools.length > 0 ? (
+          <div className="space-y-3">
+            <span className="text-xs text-[#466084] font-bold uppercase tracking-wide block">Select from My Schools</span>
+            <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+              {trackedSchools.map((app) => {
+                const isActive = app.collegeId === selectedCollegeId;
+                return (
+                  <button
+                    key={app.collegeId}
+                    type="button"
+                    onClick={() => setSelectedCollegeId(app.collegeId)}
+                    className={`min-w-[160px] text-left p-4 rounded-2xl border transition-all cursor-pointer ${
+                      isActive 
+                        ? "bg-[#e6eeff] border-[#0060ad] text-[#0060ad] scale-[1.02] shadow-sm" 
+                        : "bg-white border-[#dde9ff] text-[#173355] opacity-70 hover:opacity-100"
+                    }`}
+                  >
+                    <p className="font-bold text-sm truncate">{app.collegeName}</p>
+                    <p className="text-[10px] text-[#466084] font-medium tracking-tight mt-1">
+                      {app.status} • {app.deadlineType.replace(/([A-Z])/g, " $1")}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         ) : (
-          <div className="bg-white p-8 rounded-3xl border border-[#99b4dc]/15 text-center">
-            <p className="text-sm text-[#466084]">You haven&apos;t tracked any colleges yet to perform chances comparisons.</p>
-            <Link href="/schools" className="mt-3 inline-block text-xs font-bold text-[#0060ad] hover:underline">
-              Add a school to get started ›
-            </Link>
+          /* Search Input view */
+          <div className="space-y-3 relative z-30 max-w-lg">
+            <span className="text-xs text-[#466084] font-bold uppercase tracking-wide block">Search Database</span>
+            <div className="relative">
+              <Search className="w-5 h-5 text-[#466084] absolute left-4 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search any college by name, city or state..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 py-3.5 bg-white border border-[#dde9ff] rounded-2xl focus:ring-2 focus:ring-[#0060ad] focus:border-transparent text-sm text-[#173355] shadow-sm font-medium"
+              />
+            </div>
+
+            {/* Dropdown search matches */}
+            {searchTerm.trim() && searchResults.length > 0 && (
+              <div className="absolute left-0 right-0 mt-2 bg-white border border-[#dde9ff] rounded-2xl shadow-xl overflow-hidden divide-y divide-[#eff3ff] z-40">
+                {searchResults.map((college) => {
+                  const isAlreadySelected = college.id === selectedCollegeId;
+                  return (
+                    <button
+                      key={college.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCollegeId(college.id);
+                        setSearchTerm("");
+                      }}
+                      className="w-full text-left px-5 py-4 hover:bg-[#eff3ff] transition-all flex items-center justify-between"
+                    >
+                      <div>
+                        <p className="font-bold text-sm text-[#173355]">{college.name}</p>
+                        <p className="text-xs text-[#466084]">{[college.city, college.state].filter(Boolean).join(", ")}</p>
+                      </div>
+                      {isAlreadySelected ? (
+                        <Check className="w-4 h-4 text-emerald-500" />
+                      ) : (
+                        <Plus className="w-4 h-4 text-[#0060ad]" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            
+            {searchTerm.trim() && searchResults.length === 0 && (
+              <div className="absolute left-0 right-0 mt-2 bg-white border border-[#dde9ff] rounded-2xl p-5 text-center shadow-lg z-40">
+                <p className="text-xs text-[#466084]">No matching colleges in database.</p>
+              </div>
+            )}
           </div>
         )}
       </section>
@@ -233,10 +340,30 @@ export default function ChancesPage() {
       {selectedCollege && (
         <>
           {/* Hero Header */}
-          <section className="space-y-3">
-            <h1 className="text-5xl font-extrabold tracking-tight text-[#173355] font-headline">
-              {selectedCollege.name}
-            </h1>
+          <section className="space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <h1 className="text-5xl font-extrabold tracking-tight text-[#173355] font-headline">
+                {selectedCollege.name}
+              </h1>
+              
+              {/* If school is tracked, display badge, otherwise offer button to track */}
+              {trackedSchools.some(s => s.collegeId === selectedCollege.id) ? (
+                <span className="bg-[#10b981]/15 text-[#10b981] font-bold text-xs px-4 py-2 rounded-full flex items-center gap-1.5 w-fit">
+                  <Check className="w-3.5 h-3.5" />
+                  Tracked in Pipeline
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleTrackSchool}
+                  className="bg-[#0060ad] text-white hover:opacity-90 px-5 py-2.5 rounded-full font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-[#0060ad]/15 cursor-pointer w-fit"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Track this School
+                </button>
+              )}
+            </div>
+            
             <p className="text-[#466084] text-lg max-w-2xl leading-relaxed">
               Visualizing your competitive standing against the previous cohort. 
               {profile?.gpa4 ? (

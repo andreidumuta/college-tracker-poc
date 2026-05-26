@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { UserProfile } from "@/types";
-import { User, School, Sparkles } from "lucide-react";
+import { User, School, Sparkles, Check } from "lucide-react";
 
 export default function ProfilePage() {
   const { profile, updateUserProfile } = useAuth();
@@ -11,6 +11,7 @@ export default function ProfilePage() {
   const [dirtyData, setDirtyData] = useState<Partial<UserProfile>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
+  const [showErrors, setShowErrors] = useState(false);
 
   const getVal = <K extends keyof UserProfile>(key: K): UserProfile[K] | "" => {
     if (dirtyData[key] !== undefined) return dirtyData[key] as UserProfile[K];
@@ -33,10 +34,35 @@ export default function ProfilePage() {
     }));
   };
 
+  const appDetailsFields: (keyof UserProfile)[] = [
+    "educationLevel",
+    "isFirstGen",
+    "isUrm",
+    "isLegacy",
+    "applyStatePreference",
+    "seekingFinAid"
+  ];
+
+  const checkFieldCompleted = (key: keyof UserProfile): boolean => {
+    const val = getVal(key);
+    return val !== undefined && val !== null && val !== "";
+  };
+
+  const completedCount = appDetailsFields.filter(checkFieldCompleted).length;
+  const totalCount = appDetailsFields.length;
+  const allDetailsCompleted = completedCount === totalCount;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!allDetailsCompleted) {
+      setShowErrors(true);
+      setSaveMessage("Please complete all required Application Details fields before saving.");
+      return;
+    }
+
     setIsSaving(true);
     setSaveMessage("");
+    setShowErrors(false);
     try {
       const finalPayload = {
         ...profile,
@@ -162,19 +188,39 @@ export default function ProfilePage() {
 
         {/* Section 2: Application Details */}
         <section className="space-y-6">
-          <div className="flex items-center gap-3 px-2">
-            <div className="bg-[#ffe087]/30 p-2 rounded-full text-[#745c00]">
-              <School className="w-5 h-5" />
+          <div className="flex items-center justify-between px-2">
+            <div className="flex items-center gap-3">
+              <div className="bg-[#ffe087]/30 p-2 rounded-full text-[#745c00]">
+                <School className="w-5 h-5" />
+              </div>
+              <h3 className="text-2xl font-bold tracking-tight font-headline text-[#173355]">Application Details</h3>
             </div>
-            <h3 className="text-2xl font-bold tracking-tight font-headline text-[#173355]">Application Details</h3>
+            {/* Status counter / checkmark indicator */}
+            {allDetailsCompleted ? (
+              <span className="bg-[#10b981]/15 text-[#10b981] font-bold text-xs px-4 py-2 rounded-full flex items-center gap-1.5 shadow-sm" title="All fields completed">
+                <Check className="w-3.5 h-3.5" />
+                Completed
+              </span>
+            ) : (
+              <span className="text-xs font-bold text-red-500 bg-red-50 px-3 py-1.5 rounded-full border border-red-200 shadow-sm animate-pulse">
+                {completedCount} of {totalCount} completed
+              </span>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             
             {/* Education Level selector */}
-            <div className="md:col-span-2 bg-white p-8 rounded-3xl shadow-[0_8px_32px_rgba(0,96,173,0.03)] flex flex-col justify-between border border-[#99b4dc]/15">
+            <div className={`md:col-span-2 bg-white p-8 rounded-3xl shadow-[0_8px_32px_rgba(0,96,173,0.03)] flex flex-col justify-between border ${
+              showErrors && !checkFieldCompleted("educationLevel") ? "border-red-500 bg-red-50/10" : "border-[#99b4dc]/15"
+            }`}>
               <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-[#466084]">Current Education Level *</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-[#466084] flex justify-between items-center">
+                  <span>Current Education Level *</span>
+                  {showErrors && !checkFieldCompleted("educationLevel") && (
+                    <span className="text-[10px] text-red-500 font-bold uppercase tracking-normal">This field is required</span>
+                  )}
+                </label>
                 <select
                   value={getVal("educationLevel")}
                   onChange={(e) => handleChange("educationLevel", e.target.value)}
@@ -201,8 +247,15 @@ export default function ProfilePage() {
             {/* Boolean Toggles */}
             <div className="space-y-3">
               {/* First Gen */}
-              <div className="bg-[#e6eeff] p-5 rounded-2xl flex items-center justify-between">
-                <span className="font-semibold text-sm text-[#173355]">First Gen Student *</span>
+              <div className={`p-5 rounded-2xl flex items-center justify-between border ${
+                showErrors && !checkFieldCompleted("isFirstGen") ? "bg-red-50/30 border-red-400" : "bg-[#e6eeff] border-transparent"
+              }`}>
+                <div>
+                  <span className="font-semibold text-sm text-[#173355] block">First Gen Student *</span>
+                  {showErrors && !checkFieldCompleted("isFirstGen") && (
+                    <span className="text-[9px] text-red-500 font-bold uppercase block">Required</span>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={() => handleToggle("isFirstGen")}
@@ -213,8 +266,15 @@ export default function ProfilePage() {
               </div>
 
               {/* URM */}
-              <div className="bg-[#e6eeff] p-5 rounded-2xl flex items-center justify-between">
-                <span className="font-semibold text-sm text-[#173355]">Underrepresented Minority *</span>
+              <div className={`p-5 rounded-2xl flex items-center justify-between border ${
+                showErrors && !checkFieldCompleted("isUrm") ? "bg-red-50/30 border-red-400" : "bg-[#e6eeff] border-transparent"
+              }`}>
+                <div>
+                  <span className="font-semibold text-sm text-[#173355] block">Underrepresented Minority *</span>
+                  {showErrors && !checkFieldCompleted("isUrm") && (
+                    <span className="text-[9px] text-red-500 font-bold uppercase block">Required</span>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={() => handleToggle("isUrm")}
@@ -225,8 +285,15 @@ export default function ProfilePage() {
               </div>
 
               {/* Legacy */}
-              <div className="bg-[#e6eeff] p-5 rounded-2xl flex items-center justify-between">
-                <span className="font-semibold text-sm text-[#173355]">Legacy Student *</span>
+              <div className={`p-5 rounded-2xl flex items-center justify-between border ${
+                showErrors && !checkFieldCompleted("isLegacy") ? "bg-red-50/30 border-red-400" : "bg-[#e6eeff] border-transparent"
+              }`}>
+                <div>
+                  <span className="font-semibold text-sm text-[#173355] block">Legacy Student *</span>
+                  {showErrors && !checkFieldCompleted("isLegacy") && (
+                    <span className="text-[9px] text-red-500 font-bold uppercase block">Required</span>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={() => handleToggle("isLegacy")}
@@ -240,14 +307,21 @@ export default function ProfilePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Primary Area Selection */}
-            <div className="bg-[#eff3ff] p-6 rounded-3xl flex flex-col justify-between space-y-4">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#466084]">Apply Focus *</label>
+            <div className={`p-6 rounded-3xl flex flex-col justify-between space-y-4 border ${
+              showErrors && !checkFieldCompleted("applyStatePreference") ? "bg-red-50/10 border-red-500" : "bg-[#eff3ff] border-transparent"
+            }`}>
+              <label className="text-xs font-bold uppercase tracking-wider text-[#466084] flex justify-between items-center">
+                <span>Apply Focus *</span>
+                {showErrors && !checkFieldCompleted("applyStatePreference") && (
+                  <span className="text-[10px] text-red-500 font-bold uppercase tracking-normal">Required</span>
+                )}
+              </label>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => handleChange("applyStatePreference", "In-state")}
                   className={`flex-1 py-3 px-4 rounded-full font-bold text-sm transition-all ${
-                    getVal("applyStatePreference") === "In-state" ? "bg-[#0060ad] text-white" : "bg-white text-[#173355]"
+                    getVal("applyStatePreference") === "In-state" ? "bg-[#0060ad] text-white shadow-sm" : "bg-white text-[#173355] hover:bg-[#eff3ff]"
                   }`}
                 >
                   In-State
@@ -256,7 +330,7 @@ export default function ProfilePage() {
                   type="button"
                   onClick={() => handleChange("applyStatePreference", "Out of state")}
                   className={`flex-1 py-3 px-4 rounded-full font-bold text-sm transition-all ${
-                    getVal("applyStatePreference") === "Out of state" ? "bg-[#0060ad] text-white" : "bg-white text-[#173355]"
+                    getVal("applyStatePreference") === "Out of state" ? "bg-[#0060ad] text-white shadow-sm" : "bg-white text-[#173355] hover:bg-[#eff3ff]"
                   }`}
                 >
                   Out-of-State
@@ -277,8 +351,15 @@ export default function ProfilePage() {
             </div>
 
             {/* Seeking Financial Aid */}
-            <div className="bg-[#eff3ff] p-6 rounded-3xl flex flex-col justify-between space-y-4">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#466084]">Financial Aid *</label>
+            <div className={`p-6 rounded-3xl flex flex-col justify-between space-y-4 border ${
+              showErrors && !checkFieldCompleted("seekingFinAid") ? "bg-red-50/10 border-red-500" : "bg-[#eff3ff] border-transparent"
+            }`}>
+              <label className="text-xs font-bold uppercase tracking-wider text-[#466084] flex justify-between items-center">
+                <span>Financial Aid *</span>
+                {showErrors && !checkFieldCompleted("seekingFinAid") && (
+                  <span className="text-[10px] text-red-500 font-bold uppercase tracking-normal">Required</span>
+                )}
+              </label>
               <div className="flex gap-1.5">
                 {["Yes", "No", "Don't know"].map((opt) => (
                   <button
@@ -286,7 +367,7 @@ export default function ProfilePage() {
                     type="button"
                     onClick={() => handleChange("seekingFinAid", opt)}
                     className={`flex-1 py-2 px-1 rounded-full font-bold text-xs uppercase tracking-tighter transition-all ${
-                      getVal("seekingFinAid") === opt ? "bg-[#ffe087] text-[#745c00]" : "bg-white text-[#173355]"
+                      getVal("seekingFinAid") === opt ? "bg-[#ffe087] text-[#745c00] shadow-sm" : "bg-white text-[#173355] hover:bg-[#eff3ff]"
                     }`}
                   >
                     {opt === "Don't know" ? "Unsure" : opt}

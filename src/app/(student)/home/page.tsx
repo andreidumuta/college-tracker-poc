@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { listenToApplications, ApplicationInfo } from "@/lib/user-service";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { College } from "@/types";
+import { College, UserProfile } from "@/types";
 import Link from "next/link";
 import { 
   Sparkles, 
@@ -89,6 +89,20 @@ export default function HomeDashboard() {
     });
   }
 
+  const appDetailsFields = [
+    "educationLevel",
+    "isFirstGen",
+    "isUrm",
+    "isLegacy",
+    "applyStatePreference",
+    "seekingFinAid"
+  ];
+  
+  const isApplicationDetailsIncomplete = !profile || !appDetailsFields.every(key => {
+    const val = profile[key as keyof UserProfile];
+    return val !== undefined && val !== null && val !== "";
+  });
+
   const profileCompleteness = profile?.profileCompleteness || 0;
   const isProfileIncomplete = profileCompleteness < 75;
 
@@ -122,7 +136,22 @@ export default function HomeDashboard() {
                 </span>
               </div>
 
-              {isProfileIncomplete ? (
+              {isApplicationDetailsIncomplete ? (
+                /* Prompt profile details fill-in */
+                <div className="space-y-4">
+                  <h3 className="text-3xl font-bold font-headline text-[#173355]">Fill in your profile details</h3>
+                  <p className="text-[#466084] leading-relaxed">
+                    Complete your required application details to lock in your admissions calculation pipeline.
+                  </p>
+                  <Link
+                    href="/profile"
+                    className="bg-[#0060ad] text-white font-bold px-8 py-4 rounded-full flex items-center justify-center gap-2 hover:opacity-95 transition-all w-fit shadow-md shadow-[#0060ad]/15 text-sm"
+                  >
+                    Go to Profile
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              ) : isProfileIncomplete ? (
                 /* Prompt profile fill-in */
                 <div className="space-y-4">
                   <h3 className="text-3xl font-bold font-headline text-[#173355]">Complete your applicant profile</h3>

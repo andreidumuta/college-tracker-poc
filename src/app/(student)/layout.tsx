@@ -32,10 +32,11 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
   const navItems = [
     { name: "Home", href: "/home", icon: Home },
-    { name: "Tracker", href: "/schools", icon: ClipboardCheck },
+    { name: "Schools", href: "/schools", icon: ClipboardCheck },
     { name: "Chances", href: "/chances", icon: BarChart3 },
     { name: "Profile", href: "/profile", icon: User },
   ];
+
 
 
   const isAdmin = user.email && ["andrei.dumuta@gmail.com", "sorin208@gmail.com"].includes(user.email);

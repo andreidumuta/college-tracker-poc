@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Get in! - Your College Success App</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Be+Vietnam+Pro:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "error-dim": "#70030f",
+              "inverse-surface": "#020f1f",
+              "tertiary-fixed": "#73bfff",
+              "tertiary-fixed-dim": "#61b2f3",
+              "error-container": "#f56965",
+              "surface-container-lowest": "#ffffff",
+              "primary-container": "#9ac3ff",
+              "on-tertiary": "#f6f9ff",
+              "error": "#ac3434",
+              "surface-container": "#e6eeff",
+              "on-error": "#fff7f6",
+              "surface-container-low": "#eff3ff",
+              "primary-fixed": "#9ac3ff",
+              "surface-variant": "#d4e3ff",
+              "background": "#f8f9ff",
+              "secondary-fixed": "#ffe087",
+              "on-surface": "#173355",
+              "on-secondary": "#fff8ee",
+              "surface-tint": "#0060ad",
+              "outline-variant": "#99b4dc",
+              "surface": "#f8f9ff",
+              "on-surface-variant": "#466084",
+              "surface-container-highest": "#d4e3ff",
+              "on-primary": "#f8f8ff",
+              "surface-bright": "#f8f9ff",
+              "on-primary-fixed": "#00284e",
+              "secondary-container": "#ffe087",
+              "inverse-on-surface": "#909eb4",
+              "on-primary-container": "#003d71",
+              "on-tertiary-fixed-variant": "#004369",
+              "on-tertiary-fixed": "#002339",
+              "on-primary-fixed-variant": "#004681",
+              "surface-dim": "#c5dbff",
+              "secondary-fixed-dim": "#fad04b",
+              "secondary": "#745c00",
+              "inverse-primary": "#68abff",
+              "on-secondary-container": "#644f00",
+              "outline": "#627ca1",
+              "on-background": "#173355",
+              "tertiary-container": "#73bfff",
+              "tertiary-dim": "#005787",
+              "primary-fixed-dim": "#7fb6ff",
+              "on-secondary-fixed": "#4e3d00",
+              "secondary-dim": "#665100",
+              "on-error-container": "#65000b",
+              "on-secondary-fixed-variant": "#705900",
+              "tertiary": "#006499",
+              "on-tertiary-container": "#003a5b",
+              "primary-dim": "#005498",
+              "primary": "#0060ad",
+              "surface-container-high": "#dde9ff"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Be Vietnam Pro"],
+              "label": ["Be Vietnam Pro"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .text-shadow-sm {
+            text-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .tonal-layering-gap {
+            margin-bottom: 1rem;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<nav class="fixed top-0 w-full z-50 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none">
+<div class="flex items-center justify-between px-6 h-16 w-full max-w-screen-xl mx-auto">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-blue-700 dark:text-blue-400 cursor-pointer active:scale-95 duration-200" data-icon="menu_open">menu_open</span>
+<span class="font-headline text-xl font-extrabold text-blue-900 dark:text-blue-100 italic tracking-tight">Get in!</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex gap-8 items-center">
+<a class="font-headline font-bold tracking-tight text-blue-700 dark:text-blue-400 hover:opacity-80 transition-opacity" href="#">Home</a>
+<a class="font-headline font-bold tracking-tight text-slate-500 dark:text-slate-400 hover:opacity-80 transition-opacity" href="#">Tracker</a>
+<a class="font-headline font-bold tracking-tight text-slate-500 dark:text-slate-400 hover:opacity-80 transition-opacity" href="#">Calendar</a>
+<a class="font-headline font-bold tracking-tight text-slate-500 dark:text-slate-400 hover:opacity-80 transition-opacity" href="#">Chances</a>
+</div>
+<img alt="Student Profile Portrait" class="w-9 h-9 rounded-full bg-surface-container-highest object-cover border-2 border-primary-container" data-alt="Close up portrait of a smiling diverse high school student with a friendly and confident expression, warm natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCyWgA9QpmAgxYD4teEx9LjoIk3S-EIqNoeDIzzIPxDGOnoS8qr_d4DjbD_Aff6JqcI5O9A-MSbLBQRldYbdcQrcJVjGZnCBYIafQPCvMTS8pEfvJEtQVhINFAX5FtHlT5sgwRlzMSGtcSaALQ5LnBfdh80wxjjAKvbVMnupYBZrOup2D6uTMzO2RSK7YBQmqNlgojBQyEhBFziwepLAxjrYRg4UupzTBB7I1ZAGmwV4Y4BPeslxvcbYqH3MiD7SOYbEuwErHuyCY0"/>
+</div>
+</div>
+</nav>
+<main class="pt-24 pb-32 px-6 max-w-screen-xl mx-auto">
+<!-- Hero Section -->
+<header class="mb-12">
+<p class="font-label text-on-surface-variant font-semibold tracking-widest uppercase mb-2">Welcome back, Alex</p>
+<h1 class="font-headline text-5xl md:text-7xl font-extrabold tracking-tighter text-on-surface mb-4 leading-[1.1]">
+                Your college <span class="text-primary italic">success</span> app
+            </h1>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary" data-icon="auto_awesome">auto_awesome</span>
+<p class="font-body text-lg">You're making great progress. 80% of your profile is complete.</p>
+</div>
+</header>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Primary Action Card: Next Steps -->
+<div class="md:col-span-8 bg-surface-container-low rounded-lg p-1 overflow-hidden">
+<div class="bg-surface-container-lowest rounded-[1.5rem] p-8 h-full shadow-[0_8px_32px_rgba(0,96,173,0.06)] flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-8">
+<h2 class="font-headline text-2xl font-bold tracking-tight">Your Next Step</h2>
+<span class="bg-secondary-container text-on-secondary-container px-4 py-1.5 rounded-full font-label text-xs font-bold uppercase tracking-wider">High Priority</span>
+</div>
+<div class="flex flex-col md:flex-row gap-8 items-start">
+<div class="flex-1">
+<h3 class="font-headline text-3xl font-bold text-on-surface mb-3">Submit Columbia essay in 2 days</h3>
+<p class="text-on-surface-variant text-lg leading-relaxed mb-6">Your draft is 90% finished. A quick final review of the "Why Columbia" section is all you need to hit send.</p>
+<button class="bg-primary text-on-primary font-headline font-bold px-8 py-4 rounded-full flex items-center gap-2 hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-primary/20">
+<span>Finish Essay</span>
+<span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<div class="w-full md:w-48 aspect-square rounded-lg bg-surface-container-high flex items-center justify-center overflow-hidden relative group">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Low angle architectural shot of a prestigious university library with large arched windows and stone facade in morning sunlight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7aRzFw8qCMPWcDYdAv5GMfeEbJd9xkfK9n1ENtdI88uyjYP530edvBf9ekh4QaX4_DySq-QbnfXqU6Lk1H5FSBPYLgRGyDGrpDWyd7rtJ3slszRPRENZjqzktgH7EVG_R4xgOOfTbP4fdlVz6etVMA_ilz84xboHBpeZT2he5JIBRxH9x3CvjBh6XRw3jz5MojKLh6u32k1Tmx-HPhKsj-3xpPsrG7LadRv7YPS_irEXsV5QhnfwhC926TkHC9kuGat8xb4v5Y9U"/>
+<div class="absolute inset-0 bg-primary/10 mix-blend-multiply"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Stats Summary Card -->
+<div class="md:col-span-4 flex flex-col gap-6">
+<div class="bg-primary bg-gradient-to-br from-primary to-primary-dim rounded-lg p-8 text-on-primary shadow-xl shadow-primary/10 flex flex-col justify-between h-full relative overflow-hidden">
+<div class="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
+<div>
+<h2 class="font-label text-xs font-bold uppercase tracking-[0.2em] opacity-80 mb-6">Application Status</h2>
+<div class="space-y-6">
+<div class="flex justify-between items-end">
+<span class="text-5xl font-headline font-extrabold">3</span>
+<span class="font-body text-lg opacity-90">Pending</span>
+</div>
+<div class="h-2 bg-white/20 rounded-full overflow-hidden">
+<div class="h-full bg-secondary-fixed w-[60%] rounded-full"></div>
+</div>
+<div class="flex justify-between items-end border-t border-white/10 pt-4">
+<span class="text-5xl font-headline font-extrabold">1</span>
+<span class="font-body text-lg opacity-90">Accepted</span>
+</div>
+</div>
+</div>
+<div class="mt-8 flex items-center gap-2 font-headline font-bold text-sm">
+<span>View all applications</span>
+<span class="material-symbols-outlined text-xs" data-icon="north_east">north_east</span>
+</div>
+</div>
+</div>
+<!-- Deadlines Calendar Grid -->
+<div class="md:col-span-12 lg:col-span-5 bg-surface-container-low rounded-lg p-6">
+<h2 class="font-headline text-xl font-bold mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="calendar_month">calendar_month</span>
+                    Upcoming Deadlines
+                </h2>
+<div class="space-y-3">
+<div class="bg-surface-container-lowest p-4 rounded-lg flex items-center justify-between group hover:shadow-md transition-shadow">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex flex-col items-center justify-center font-headline font-extrabold text-on-surface">
+<span class="text-[10px] uppercase opacity-60">Nov</span>
+<span class="leading-none">15</span>
+</div>
+<div>
+<p class="font-bold text-on-surface">Stanford University</p>
+<p class="text-xs text-on-surface-variant">Early Action Submission</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-lg flex items-center justify-between group hover:shadow-md transition-shadow">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex flex-col items-center justify-center font-headline font-extrabold text-on-surface">
+<span class="text-[10px] uppercase opacity-60">Dec</span>
+<span class="leading-none">01</span>
+</div>
+<div>
+<p class="font-bold text-on-surface">UC Berkeley</p>
+<p class="text-xs text-on-surface-variant">General Application</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-lg flex items-center justify-between group hover:shadow-md transition-shadow">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex flex-col items-center justify-center font-headline font-extrabold text-on-surface">
+<span class="text-[10px] uppercase opacity-60">Jan</span>
+<span class="leading-none">05</span>
+</div>
+<div>
+<p class="font-bold text-on-surface">NYU</p>
+<p class="text-xs text-on-surface-variant">Regular Decision</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</div>
+<!-- Encouragement Card -->
+<div class="md:col-span-12 lg:col-span-7 bg-surface-container-highest/30 rounded-lg p-8 border border-white flex flex-col md:flex-row items-center gap-8">
+<div class="relative w-32 h-32 flex-shrink-0">
+<div class="absolute inset-0 bg-secondary rounded-full animate-pulse opacity-20"></div>
+<div class="absolute inset-4 bg-secondary-container rounded-full flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-4xl" data-icon="school" data-weight="fill" style="font-variation-settings: 'FILL' 1;">school</span>
+</div>
+</div>
+<div>
+<h3 class="font-headline text-2xl font-bold mb-2">You're doing amazing, Alex!</h3>
+<p class="text-on-surface-variant text-lg mb-6">Students who start their essays two weeks before the deadline are 40% more likely to feel confident during interviews.</p>
+<div class="flex flex-wrap gap-2">
+<span class="bg-white px-4 py-2 rounded-full text-sm font-bold shadow-sm">#ClassOf2028</span>
+<span class="bg-white px-4 py-2 rounded-full text-sm font-bold shadow-sm">#FutureLeader</span>
+<span class="bg-white px-4 py-2 rounded-full text-sm font-bold shadow-sm">#CollegeBound</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 h-24 bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl z-50 rounded-t-[2rem] shadow-[0_-4px_24px_rgba(0,0,0,0.04)]">
+<a class="flex flex-col items-center justify-center text-blue-800 dark:text-blue-200 bg-blue-50 dark:bg-blue-900/40 rounded-full px-4 py-1.5 transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-['Be_Vietnam_Pro'] text-[11px] font-semibold uppercase tracking-wider">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-4 py-1.5 hover:text-blue-600 dark:hover:text-blue-300 active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
+<span class="font-['Be_Vietnam_Pro'] text-[11px] font-semibold uppercase tracking-wider">Tracker</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-4 py-1.5 hover:text-blue-600 dark:hover:text-blue-300 active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-['Be_Vietnam_Pro'] text-[11px] font-semibold uppercase tracking-wider">Calendar</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-4 py-1.5 hover:text-blue-600 dark:hover:text-blue-300 active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+<span class="font-['Be_Vietnam_Pro'] text-[11px] font-semibold uppercase tracking-wider">Chances</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-4 py-1.5 hover:text-blue-600 dark:hover:text-blue-300 active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-['Be_Vietnam_Pro'] text-[11px] font-semibold uppercase tracking-wider">Profile</span>
+</a>
+</nav>
+<!-- Floating Action Button (FAB) - Suppression logic: Only on Home/Dashboards -->
+<button class="fixed right-6 bottom-28 md:bottom-8 bg-secondary text-on-secondary w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40">
+<span class="material-symbols-outlined text-3xl" data-icon="add">add</span>
+</button>
+</body></html>

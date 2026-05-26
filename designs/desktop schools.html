@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>App Tracker | Get in!</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Be+Vietnam+Pro:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-lowest": "#ffffff",
+                        "surface": "#f8f9ff",
+                        "background": "#f8f9ff",
+                        "tertiary": "#006499",
+                        "secondary": "#745c00",
+                        "primary-dim": "#005498",
+                        "error-container": "#f56965",
+                        "on-surface": "#173355",
+                        "surface-container-high": "#dde9ff",
+                        "secondary-fixed": "#ffe087",
+                        "on-tertiary-fixed-variant": "#004369",
+                        "inverse-primary": "#68abff",
+                        "on-primary-fixed": "#00284e",
+                        "on-secondary-fixed": "#4e3d00",
+                        "surface-tint": "#0060ad",
+                        "secondary-dim": "#665100",
+                        "surface-container": "#e6eeff",
+                        "error": "#ac3434",
+                        "on-primary-container": "#003d71",
+                        "tertiary-dim": "#005787",
+                        "on-background": "#173355",
+                        "outline-variant": "#99b4dc",
+                        "tertiary-fixed": "#73bfff",
+                        "on-error-container": "#65000b",
+                        "error-dim": "#70030f",
+                        "tertiary-fixed-dim": "#61b2f3",
+                        "surface-variant": "#d4e3ff",
+                        "primary-fixed": "#9ac3ff",
+                        "secondary-container": "#ffe087",
+                        "on-tertiary": "#f6f9ff",
+                        "inverse-on-surface": "#909eb4",
+                        "on-error": "#fff7f6",
+                        "primary-container": "#9ac3ff",
+                        "primary": "#0060ad",
+                        "inverse-surface": "#020f1f",
+                        "on-secondary-fixed-variant": "#705900",
+                        "surface-container-low": "#eff3ff",
+                        "on-surface-variant": "#466084",
+                        "surface-dim": "#c5dbff",
+                        "on-tertiary-container": "#003a5b",
+                        "on-secondary": "#fff8ee",
+                        "on-primary-fixed-variant": "#004681",
+                        "tertiary-container": "#73bfff",
+                        "on-secondary-container": "#644f00",
+                        "surface-bright": "#f8f9ff",
+                        "primary-fixed-dim": "#7fb6ff",
+                        "outline": "#627ca1",
+                        "on-tertiary-fixed": "#002339",
+                        "on-primary": "#f8f8ff",
+                        "secondary-fixed-dim": "#fad04b",
+                        "surface-container-highest": "#d4e3ff"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Be Vietnam Pro"],
+                        "label": ["Be Vietnam Pro"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Be Vietnam Pro', sans-serif;
+            background-color: #f8f9ff;
+            color: #173355;
+        }
+        .font-plus-jakarta { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- SideNavBar Component -->
+<aside class="h-screen w-64 fixed left-0 top-0 overflow-y-auto bg-slate-50 dark:bg-slate-900 flex flex-col border-r border-slate-200/50 dark:border-slate-800/50 z-40">
+<div class="px-4 py-6 space-y-2 flex-grow">
+<!-- Brand Logo -->
+<div class="px-4 mb-8">
+<h1 class="text-xl font-black text-blue-800 dark:text-blue-200 tracking-tighter">Get in!</h1>
+<p class="text-xs font-medium text-on-surface-variant/70 uppercase tracking-widest mt-1">Academic Concierge</p>
+</div>
+<!-- Profile Mini -->
+<div class="flex items-center gap-3 px-4 py-4 mb-6 bg-surface-container-low rounded-2xl">
+<img alt="Student Profile Photo" class="w-10 h-10 rounded-full object-cover border-2 border-surface-container-lowest shadow-sm" data-alt="Close-up portrait of a smiling young college student with a backpack in a sunlit university library setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNUgp4-kpxTC1uIFBXJiqHQS6M45JtinnvV8zMDwJAbtxSNI55XBBKmFnjAPOIJSICP012SizZMWzKlTxeqTA8USjJGLfAVJBWy0CzpZdO9Q1Tqy3AKVjPnJo55VCO6y2zVV0CvaeI4QG1HJpuoZvstf02-0TDDiQywdS2U_3-_Gc6tIbyEBd58bEcfh1g9kAtnT0LigWwsDiyERcH_9WXARHdXabltZwbKk7A0mb-tNvoboK-7IcTUqzkUwxChGF-wGb2D6lPvZ8"/>
+<div class="overflow-hidden">
+<p class="text-sm font-bold truncate">Alex Rivera</p>
+<p class="text-[10px] text-on-surface-variant font-medium">Class of 2025</p>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="space-y-1">
+<a class="flex items-center gap-3 text-slate-600 dark:text-slate-400 px-4 py-3 hover:translate-x-1 transition-transform hover:bg-white dark:hover:bg-slate-800 rounded-2xl" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-plus-jakarta text-base font-semibold">Home</span>
+</a>
+<a class="flex items-center gap-3 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-100 rounded-2xl px-4 py-3 shadow-inner" href="#">
+<span class="material-symbols-outlined" data-icon="assignment_turned_in" style="font-variation-settings: 'FILL' 1;">assignment_turned_in</span>
+<span class="font-plus-jakarta text-base font-semibold">App Tracker</span>
+</a>
+<a class="flex items-center gap-3 text-slate-600 dark:text-slate-400 px-4 py-3 hover:translate-x-1 transition-transform hover:bg-white dark:hover:bg-slate-800 rounded-2xl" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-plus-jakarta text-base font-semibold">Calendar</span>
+</a>
+<a class="flex items-center gap-3 text-slate-600 dark:text-slate-400 px-4 py-3 hover:translate-x-1 transition-transform hover:bg-white dark:hover:bg-slate-800 rounded-2xl" href="#">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+<span class="font-plus-jakarta text-base font-semibold">Chances</span>
+</a>
+<a class="flex items-center gap-3 text-slate-600 dark:text-slate-400 px-4 py-3 hover:translate-x-1 transition-transform hover:bg-white dark:hover:bg-slate-800 rounded-2xl" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-plus-jakarta text-base font-semibold">Profile</span>
+</a>
+</nav>
+<div class="mt-8 px-4">
+<button class="w-full py-3 bg-primary text-on-primary rounded-full font-bold text-sm shadow-lg shadow-primary/20 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                    New Application
+                </button>
+</div>
+</div>
+<!-- Footer Nav -->
+<div class="p-4 border-t border-slate-200/50 space-y-1">
+<a class="flex items-center gap-3 text-slate-600 dark:text-slate-400 px-4 py-2 hover:bg-white rounded-2xl transition-all" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="settings">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+<a class="flex items-center gap-3 text-slate-600 dark:text-slate-400 px-4 py-2 hover:bg-white rounded-2xl transition-all" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="help">help</span>
+<span class="text-sm font-medium">Help</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 min-h-screen p-12">
+<!-- Header Section -->
+<header class="mb-12 flex justify-between items-end">
+<div class="max-w-2xl">
+<h2 class="font-headline text-[3.5rem] font-extrabold leading-tight tracking-tighter text-on-surface mb-2">Master Pipeline</h2>
+<p class="font-body text-lg text-on-surface-variant leading-relaxed">Your journey to the ivy-covered halls is mapped here. Stay organized, stay inspired, and keep moving forward.</p>
+</div>
+<div class="flex items-center gap-4 bg-surface-container p-2 rounded-full">
+<button class="px-6 py-2 bg-surface-container-lowest shadow-sm rounded-full font-bold text-sm text-primary transition-all">List View</button>
+<button class="px-6 py-2 text-on-surface-variant font-bold text-sm hover:text-primary transition-all">Timeline</button>
+</div>
+</header>
+<!-- Stats Bento Grid -->
+<section class="grid grid-cols-12 gap-6 mb-12">
+<div class="col-span-12 md:col-span-4 bg-surface-container-low rounded-lg p-8 flex flex-col justify-between relative overflow-hidden group">
+<div class="relative z-10">
+<p class="text-on-surface-variant font-semibold text-sm uppercase tracking-widest mb-1">Overall Progress</p>
+<h3 class="font-headline text-5xl font-black text-primary mb-4">65%</h3>
+<div class="w-full bg-surface-container-high h-4 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full w-[65%] transition-all duration-1000"></div>
+</div>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform duration-700">
+<span class="material-symbols-outlined text-[120px]" data-icon="auto_awesome">auto_awesome</span>
+</div>
+</div>
+<div class="col-span-12 md:col-span-3 bg-secondary-container rounded-lg p-8 flex flex-col justify-center border border-secondary-fixed/30">
+<p class="text-on-secondary-container font-semibold text-sm uppercase tracking-widest mb-1">Next Deadline</p>
+<p class="font-headline text-2xl font-bold text-on-secondary-container">Nov 01</p>
+<p class="text-sm text-on-secondary-container/70 font-medium">Stanford Early Action</p>
+</div>
+<div class="col-span-12 md:col-span-5 bg-surface-container-highest rounded-lg p-8 flex items-center gap-6">
+<div class="h-16 w-16 bg-white rounded-2xl flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="edit_note" style="font-variation-settings: 'FILL' 1;">edit_note</span>
+</div>
+<div>
+<h4 class="font-bold text-xl mb-1">Finish Personal Statement</h4>
+<p class="text-sm text-on-surface-variant">420/650 words drafted. Your editorial mentor suggests focusing on the conclusion.</p>
+</div>
+</div>
+</section>
+<!-- The Pipeline Cards -->
+<section class="space-y-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-headline text-2xl font-bold">Active Applications</h3>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-surface-container-high text-primary text-xs font-bold rounded-full">All Schools (4)</span>
+<span class="px-3 py-1 text-on-surface-variant text-xs font-bold rounded-full hover:bg-surface-container transition-all cursor-pointer">Reaching</span>
+<span class="px-3 py-1 text-on-surface-variant text-xs font-bold rounded-full hover:bg-surface-container transition-all cursor-pointer">Safety</span>
+</div>
+</div>
+<!-- School Card 1: Stanford -->
+<div class="group bg-surface-container-lowest rounded-lg p-6 shadow-sm hover:shadow-md transition-all flex items-center justify-between border-l-8 border-primary relative overflow-hidden">
+<div class="flex items-center gap-8 flex-1">
+<div class="w-20 h-20 rounded-lg bg-surface-container overflow-hidden flex-shrink-0">
+<img alt="Stanford University" class="w-full h-full object-cover" data-alt="Abstract view of historic sandstone university architecture with red tile roofs and palm trees against a clear blue sky" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAILI3AGjhgr_xUtQBArBsEVD5QtrQnwnxFlBiMmZ2H8n2kRTItKmxeDBXwKCnhhuvl-0jtoRnH4ee-TR-aKO3f90YTTMUp6hI5Cdsm38y5fdBqWnM3WVKm4U3nL5n4lPaekBbaf0UbDREbF-Y0maJK-h2ufbhwkYjbBuy_yqcpEpNoAGfeepsCSJIR_BvSOY7qZiqlj62fZrfyQFiR88fgxogP31acSBzvwj6GsutP7HlFRdpqB_nmcRHPOTNswQYWpecyQH0n_eE"/>
+</div>
+<div>
+<div class="flex items-center gap-3 mb-1">
+<h4 class="font-headline text-2xl font-bold tracking-tight">Stanford University</h4>
+<span class="px-3 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold uppercase tracking-wider rounded-full">In Progress</span>
+</div>
+<div class="flex items-center gap-4 text-sm text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm" data-icon="schedule">schedule</span> Early Action</span>
+<span class="flex items-center gap-1 font-semibold text-error"><span class="material-symbols-outlined text-sm" data-icon="event">event</span> Nov 01 (14 days left)</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-12">
+<div class="text-right">
+<p class="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant mb-2">Milestone</p>
+<p class="text-sm font-bold">Supplemental Essays</p>
+<div class="mt-2 w-32 bg-surface-container h-1.5 rounded-full">
+<div class="bg-primary h-full rounded-full w-2/3"></div>
+</div>
+</div>
+<button class="h-12 w-12 rounded-full border border-surface-container-high flex items-center justify-center hover:bg-primary hover:text-on-primary transition-all group-hover:scale-110">
+<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- School Card 2: NYU -->
+<div class="group bg-surface-container-lowest rounded-lg p-6 shadow-sm hover:shadow-md transition-all flex items-center justify-between border-l-8 border-secondary-fixed relative overflow-hidden">
+<div class="flex items-center gap-8 flex-1">
+<div class="w-20 h-20 rounded-lg bg-surface-container overflow-hidden flex-shrink-0">
+<img alt="NYU" class="w-full h-full object-cover" data-alt="The arch of Washington Square Park in New York City with purple flags and modern city buildings in the background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXPCkPgVedJuZqBX5ZQIftrUgqwrNm1hYgJEk8a9_esnhLEki7t8EU57pvx5lE5m4olLBmjw0hiHapQJNEtc7LnnBBW7JfGezEqfSwFeQVRmgHvGgxlsGQBXptZg2OURJOgoZ44RifMuB3Z78ky4e3rnzoU4e21cVH3HPcYHGzoqIqeJlDfrUhIZGAn_PPIVdHB_rRbQmL8JBg2Tia7_8lnLNhPqqd1zphWJU_u1d8MdfiMz1WJk-wjdwCLmzP_X6lA5UEEoE7PH8"/>
+</div>
+<div>
+<div class="flex items-center gap-3 mb-1">
+<h4 class="font-headline text-2xl font-bold tracking-tight">New York University</h4>
+<span class="px-3 py-0.5 bg-secondary-container text-on-secondary-container text-[10px] font-bold uppercase tracking-wider rounded-full">Submitted</span>
+</div>
+<div class="flex items-center gap-4 text-sm text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm" data-icon="history">history</span> Regular Decision</span>
+<span class="flex items-center gap-1 text-on-surface-variant/60"><span class="material-symbols-outlined text-sm" data-icon="done_all">done_all</span> Submitted Oct 15</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-12">
+<div class="text-right">
+<p class="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant mb-2">Current Status</p>
+<p class="text-sm font-bold">Awaiting Documents</p>
+<p class="text-[10px] text-on-surface-variant">Portal checked 2h ago</p>
+</div>
+<button class="h-12 w-12 rounded-full border border-surface-container-high flex items-center justify-center hover:bg-primary hover:text-on-primary transition-all group-hover:scale-110">
+<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- School Card 3: UCLA -->
+<div class="group bg-surface-container-lowest rounded-lg p-6 shadow-sm hover:shadow-md transition-all flex items-center justify-between border-l-8 border-tertiary-fixed relative overflow-hidden">
+<div class="flex items-center gap-8 flex-1">
+<div class="w-20 h-20 rounded-lg bg-surface-container overflow-hidden flex-shrink-0">
+<img alt="UCLA" class="w-full h-full object-cover" data-alt="Classic brick and stone university facade with grand stairs and green lawn under a bright sunny California sky" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCr5ApOVwcfZGXQj32TBVQclVPKw50bS9wzrmuIHFILA3cxasOA6vGkHMg2NyLXqnZ78_LqyGjR7IbbFzLKtD_RmiaGnMbBQ-bqyxPUdkw2fUnt67z4aNWsFZdLjDr-r9ovxRHos9pyViu2mIjx2Vi37yeJFOunoe3lK6pxPwPyqs4RS89nLfgb0J0h4hFQ6lidcoEylaZoKFjjbt-MWYQuzTUxxW1rGV-i0Lty54wR8oEW1F6mR9CSpQo0WH5J8eZitcwuePVR5YU"/>
+</div>
+<div>
+<div class="flex items-center gap-3 mb-1">
+<h4 class="font-headline text-2xl font-bold tracking-tight">UCLA</h4>
+<span class="px-3 py-0.5 bg-tertiary-container text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider rounded-full">Reviewing</span>
+</div>
+<div class="flex items-center gap-4 text-sm text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm" data-icon="school">school</span> UC App</span>
+<span class="flex items-center gap-1 text-on-surface-variant"><span class="material-symbols-outlined text-sm" data-icon="visibility">visibility</span> Faculty Review</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-12">
+<div class="text-right">
+<p class="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant mb-2">Estimated Decision</p>
+<p class="text-sm font-bold">Mid-March 2025</p>
+<p class="text-[10px] text-tertiary font-semibold">Track History ›</p>
+</div>
+<button class="h-12 w-12 rounded-full border border-surface-container-high flex items-center justify-center hover:bg-primary hover:text-on-primary transition-all group-hover:scale-110">
+<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- School Card 4: MIT -->
+<div class="group bg-surface-container-lowest rounded-lg p-6 shadow-sm hover:shadow-md transition-all flex items-center justify-between border-l-8 border-error-container relative overflow-hidden">
+<div class="flex items-center gap-8 flex-1">
+<div class="w-20 h-20 rounded-lg bg-surface-container overflow-hidden flex-shrink-0">
+<img alt="MIT" class="w-full h-full object-cover" data-alt="Modern architectural glass dome and geometric university buildings at night with glowing indoor lights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBrdty1xWXFbuiQNsi9h2KVBXH95Ab3FiGsnD2ek2pENysSzptCJlsLdQ_Yosh7G3MAcNBVS27XCl_bE1JhDxAwIHn8HJbr_7b5kNWdELlZFUPWZCtOnSSMbsHbeIIhd4EFs6ds9f-57PTihcQ3C-KrJ2wZnsRiIePZsXy-icqbkxm5cq3vFGQCj7_8CBqBdcAd1RttjXRNgswlxWcWs38uWvgchRzrufZmSmV66shNpFL26WEZL8dGV5qc1FmxRw2apDLn_qWKPQk"/>
+</div>
+<div>
+<div class="flex items-center gap-3 mb-1">
+<h4 class="font-headline text-2xl font-bold tracking-tight">MIT</h4>
+<span class="px-3 py-0.5 bg-error-container/20 text-error text-[10px] font-bold uppercase tracking-wider rounded-full">Action Needed</span>
+</div>
+<div class="flex items-center gap-4 text-sm text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm" data-icon="science">science</span> Regular Action</span>
+<span class="flex items-center gap-1 text-error font-bold"><span class="material-symbols-outlined text-sm" data-icon="warning">warning</span> Missing Transcript</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-12">
+<div class="text-right">
+<p class="text-[10px] uppercase font-bold tracking-widest text-error mb-2">Urgent Task</p>
+<p class="text-sm font-bold">Contact Counselor</p>
+<p class="text-[10px] text-on-surface-variant">Due in 48 hours</p>
+</div>
+<button class="h-12 w-12 rounded-full bg-error text-on-primary flex items-center justify-center hover:scale-110 transition-all shadow-lg shadow-error/20">
+<span class="material-symbols-outlined" data-icon="priority_high">priority_high</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Guidance Banner -->
+<section class="mt-16 bg-primary-container rounded-lg p-10 flex items-center justify-between relative overflow-hidden">
+<div class="max-w-xl relative z-10">
+<h3 class="font-headline text-3xl font-black text-on-primary-container mb-4">You're on the right path, Alex.</h3>
+<p class="text-on-primary-container/80 text-lg mb-8 leading-relaxed">Students who submit their Early Action applications by November 1st have a 12% higher chance of receiving a scholarship offer at these institutions.</p>
+<button class="px-8 py-3 bg-on-primary-container text-surface-container-lowest rounded-full font-bold transition-all hover:bg-primary shadow-xl shadow-on-primary-container/10">View Scholarship Strategy</button>
+</div>
+<div class="hidden lg:block relative z-10">
+<img alt="Success Path" class="w-80 h-48 object-cover rounded-lg shadow-2xl rotate-3" data-alt="Group of diverse, happy students studying together around a table in a bright modern co-working space" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBX_OKZcAgFJ3LHSVbaWLyw2gE-e_1Xx2mrtQA_Z1Vfcy5a9y_NsWhsa7opecJhFIhs8nV8VopY9eI31dED21EsXy48hMKlHltGIeBivmUbPPraaJxz8QIZ5heOcVOtt7v6ooXYknayRq77Gu_3Ld8nDKO25Sb8PGM4YwT5yO6u4jFyuFeoY1GcEqpdTj2I36BoyHDr4AP0xX41W4LkQPhKbwBk3xbz4hZEwLZqT7GpO6mFgkD0pCWwGYsKcjURIIuPSIN3vYOH4Pk"/>
+</div>
+<!-- Decorative circle -->
+<div class="absolute -right-20 -top-20 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+</section>
+</main>
+<!-- Contextual FAB (Hidden by instruction for Tracker screen, but mapped for interaction logic check) -->
+<!-- Suppression logic: "suppress the FAB on Settings, Profile, Details, and Transactional screens." -->
+<!-- While Tracker is a 'Dashboard' type, we follow the "suppress if not main action" rule -->
+</body></html>

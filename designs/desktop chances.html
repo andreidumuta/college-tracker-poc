@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admissions Chances | Get in!</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Be+Vietnam+Pro:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-dim": "#665100",
+                        "on-secondary-fixed-variant": "#705900",
+                        "on-tertiary-fixed": "#002339",
+                        "surface-tint": "#0060ad",
+                        "primary-container": "#9ac3ff",
+                        "error-container": "#f56965",
+                        "secondary-container": "#ffe087",
+                        "inverse-on-surface": "#909eb4",
+                        "surface": "#f8f9ff",
+                        "error": "#ac3434",
+                        "on-error-container": "#65000b",
+                        "tertiary-fixed-dim": "#61b2f3",
+                        "surface-bright": "#f8f9ff",
+                        "tertiary-container": "#73bfff",
+                        "primary-fixed-dim": "#7fb6ff",
+                        "on-surface-variant": "#466084",
+                        "tertiary": "#006499",
+                        "on-surface": "#173355",
+                        "background": "#f8f9ff",
+                        "on-primary-container": "#003d71",
+                        "primary": "#0060ad",
+                        "on-tertiary-fixed-variant": "#004369",
+                        "surface-container-highest": "#d4e3ff",
+                        "on-secondary-fixed": "#4e3d00",
+                        "on-primary-fixed": "#00284e",
+                        "surface-dim": "#c5dbff",
+                        "outline-variant": "#99b4dc",
+                        "on-tertiary": "#f6f9ff",
+                        "surface-container-low": "#eff3ff",
+                        "on-secondary-container": "#644f00",
+                        "tertiary-dim": "#005787",
+                        "on-primary-fixed-variant": "#004681",
+                        "secondary-fixed-dim": "#fad04b",
+                        "on-secondary": "#fff8ee",
+                        "surface-variant": "#d4e3ff",
+                        "surface-container": "#e6eeff",
+                        "primary-fixed": "#9ac3ff",
+                        "inverse-primary": "#68abff",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed": "#73bfff",
+                        "surface-container-high": "#dde9ff",
+                        "outline": "#627ca1",
+                        "error-dim": "#70030f",
+                        "secondary": "#745c00",
+                        "secondary-fixed": "#ffe087",
+                        "primary-dim": "#005498",
+                        "on-tertiary-container": "#003a5b",
+                        "on-primary": "#f8f8ff",
+                        "inverse-surface": "#020f1f",
+                        "on-error": "#fff7f6",
+                        "on-background": "#173355"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Be Vietnam Pro"],
+                        "label": ["Be Vietnam Pro"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .scatter-point {
+            transition: all 0.3s ease;
+        }
+        .scatter-point:hover {
+            transform: scale(1.5);
+            z-index: 50;
+        }
+        .glass-nav {
+            background: rgba(248, 249, 255, 0.8);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface">
+<!-- Side Navigation Shell -->
+<aside class="h-screen w-64 fixed left-0 top-0 overflow-y-auto bg-slate-50 border-r border-slate-200/50 flex flex-col px-4 py-6 space-y-2 z-50">
+<div class="px-4 mb-8">
+<h1 class="text-xl font-black text-blue-800 tracking-tighter">Get in!</h1>
+<p class="text-xs font-medium text-on-surface-variant uppercase tracking-widest">Academic Concierge</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 text-slate-600 px-4 py-3 hover:translate-x-1 transition-transform rounded-2xl hover:bg-white" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-headline font-semibold">Home</span>
+</a>
+<a class="flex items-center gap-3 text-slate-600 px-4 py-3 hover:translate-x-1 transition-transform rounded-2xl hover:bg-white" href="#">
+<span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
+<span class="font-headline font-semibold">App Tracker</span>
+</a>
+<a class="flex items-center gap-3 text-slate-600 px-4 py-3 hover:translate-x-1 transition-transform rounded-2xl hover:bg-white" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-headline font-semibold">Calendar</span>
+</a>
+<a class="flex items-center gap-3 bg-blue-100 text-blue-800 rounded-2xl px-4 py-3 shadow-inner" href="#">
+<span class="material-symbols-outlined" data-icon="query_stats" style="font-variation-settings: 'FILL' 1;">query_stats</span>
+<span class="font-headline font-semibold">Chances</span>
+</a>
+<a class="flex items-center gap-3 text-slate-600 px-4 py-3 hover:translate-x-1 transition-transform rounded-2xl hover:bg-white" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-headline font-semibold">Profile</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-slate-100 space-y-1">
+<button class="w-full flex items-center gap-3 text-slate-600 px-4 py-3 hover:bg-white rounded-2xl transition-all">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-headline font-semibold text-sm">Settings</span>
+</button>
+<button class="w-full flex items-center gap-3 text-slate-600 px-4 py-3 hover:bg-white rounded-2xl transition-all">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="font-headline font-semibold text-sm">Help</span>
+</button>
+<div class="mt-4 p-4 bg-primary-container/20 rounded-2xl">
+<div class="flex items-center gap-3 mb-3">
+<img alt="Student Profile" class="w-10 h-10 rounded-full object-cover" data-alt="close-up portrait of a smiling diverse male college student with glasses in a library setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA61KegnGYbCtmm94M0yRi11gQcxi4KbXDeuP82CgPen2jQEMakxr9rzVzsTQ2gzwm-YrWKSG_AJXnvm0CZuHkby_W91I_9dDFWa1hsvTb11NEcTnosy5sM4JUnfGSGo-fgKPmc0aNXVchwGuBJ8Ndv69QwHvX_mQ5KribGOxcFfdXWXbZzPl8c1J4xI4lb-DphJqeWrdXmga2i4h5EPh8kaybqCp4OMs0-wPVRPrcs7AbelcdE2_vVdMRbYoDN5kZZpTkUSFxIq8Y"/>
+<div class="overflow-hidden">
+<p class="text-sm font-bold truncate">Alex Chen</p>
+<p class="text-[10px] text-on-surface-variant uppercase font-bold tracking-tighter">Class of 2025</p>
+</div>
+</div>
+<button class="w-full py-2 bg-primary text-on-primary rounded-full text-xs font-bold shadow-lg shadow-primary/20">New Application</button>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 min-h-screen p-8 lg:p-12">
+<!-- Header Section -->
+<header class="mb-12 flex justify-between items-end">
+<div class="max-w-2xl">
+<div class="flex items-center gap-2 mb-2">
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-black uppercase tracking-widest rounded-full">Analysis Mode</span>
+</div>
+<h2 class="text-5xl font-headline font-extrabold text-on-background tracking-tighter leading-none mb-4">Admissions Chances</h2>
+<p class="text-lg text-on-surface-variant font-light">Comparing your profile against historic data for <span class="text-primary font-bold">Harvard University</span>. This is an editorial projection based on current admission cycles.</p>
+</div>
+<div class="flex gap-4">
+<button class="p-4 bg-surface-container-lowest rounded-full shadow-sm hover:shadow-md transition-all">
+<span class="material-symbols-outlined text-primary" data-icon="share">share</span>
+</button>
+<button class="p-4 bg-surface-container-lowest rounded-full shadow-sm hover:shadow-md transition-all">
+<span class="material-symbols-outlined text-primary" data-icon="download">download</span>
+</button>
+</div>
+</header>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Main Scatterplot Card -->
+<section class="col-span-12 xl:col-span-8 space-y-8">
+<div class="bg-surface-container-lowest rounded-lg p-8 shadow-sm relative overflow-hidden">
+<div class="flex justify-between items-center mb-10">
+<div>
+<h3 class="text-xl font-headline font-bold text-on-surface">GPA vs. Test Scores</h3>
+<p class="text-sm text-on-surface-variant">Class of 2024 Historical Scatterplot</p>
+</div>
+<div class="flex gap-4 text-xs font-bold uppercase tracking-widest">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+<span>Accepted</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-rose-400"></span>
+<span>Denied</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-primary border-4 border-white ring-2 ring-primary"></span>
+<span>You</span>
+</div>
+</div>
+</div>
+<!-- Visual Scatterplot Mockup -->
+<div class="relative h-[400px] w-full border-l-2 border-b-2 border-surface-container-high ml-8 mb-8">
+<!-- Y-Axis Label -->
+<div class="absolute -left-12 top-1/2 -rotate-90 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Unweighted GPA</div>
+<!-- X-Axis Label -->
+<div class="absolute -bottom-10 left-1/2 -translate-x-1/2 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">SAT / ACT Equivalent</div>
+<!-- Scatter Points -->
+<div class="absolute inset-4 overflow-visible">
+<!-- Background Grid -->
+<div class="absolute inset-0 grid grid-cols-4 grid-rows-4 opacity-10">
+<div class="border-r border-b border-on-surface"></div>
+<div class="border-r border-b border-on-surface"></div>
+<div class="border-r border-b border-on-surface"></div>
+<div class="border-b border-on-surface"></div>
+</div>
+<!-- "You" Point -->
+<div class="absolute bottom-[85%] left-[82%] z-40">
+<div class="relative">
+<div class="w-6 h-6 bg-primary rounded-full border-4 border-white shadow-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-[12px] text-white" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+</div>
+<div class="absolute top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-on-surface text-on-primary px-3 py-1 rounded-full text-[10px] font-bold">
+                                        Your Profile (3.95 / 1540)
+                                    </div>
+</div>
+</div>
+<!-- Accepted Points (Emerald) -->
+<div class="scatter-point absolute w-2 h-2 rounded-full bg-emerald-500/60 top-[5%] left-[90%]"></div>
+<div class="scatter-point absolute w-2 h-2 rounded-full bg-emerald-500/60 top-[8%] left-[85%]"></div>
+<div class="scatter-point absolute w-2 h-2 rounded-full bg-emerald-500/60 top-[12%] left-[78%]"></div>
+<div class="scatter-point absolute w-2 h-2 rounded-full bg-emerald-500/60 top-[2%] left-[95%]"></div>
+<div class="scatter-point absolute w-2 h-2 rounded-full bg-emerald-500/60 top-[20%] left-[82%]"></div>
+<div class="scatter-point absolute w-2 h-2 rounded-full bg-emerald-500/60 top-[15%] left-[70%]"></div>
+<!-- Denied Points (Rose) -->
+<div class="scatter-point absolute w-2 h-2 rounded-full bg-rose-400/40 top-[30%] left-[60%]"></div>
+<div class="scatter-point absolute w-2 h-2 rounded-full bg-rose-400/40 top-[45%] left-[55%]"></div>
+<div class="scatter-point absolute w-2 h-2 rounded-full bg-rose-400/40 top-[10%] left-[75%]"></div>
+<div class="scatter-point absolute w-2 h-2 rounded-full bg-rose-400/40 top-[25%] left-[88%]"></div>
+<div class="scatter-point absolute w-2 h-2 rounded-full bg-rose-400/40 top-[60%] left-[40%]"></div>
+<div class="scatter-point absolute w-2 h-2 rounded-full bg-rose-400/40 top-[5%] left-[65%]"></div>
+<div class="scatter-point absolute w-2 h-2 rounded-full bg-rose-400/40 top-[15%] left-[80%]"></div>
+</div>
+</div>
+</div>
+<!-- Profile Comparison Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-surface-container rounded-lg p-6">
+<p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-4">Academic Strength</p>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-headline font-extrabold">Top 5%</span>
+<span class="text-xs text-emerald-600 font-bold">+0.2 vs Avg</span>
+</div>
+<div class="mt-4 h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[92%] rounded-full"></div>
+</div>
+</div>
+<div class="bg-surface-container rounded-lg p-6">
+<p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-4">Extracurriculars</p>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-headline font-extrabold">Tier 2</span>
+<span class="text-xs text-on-surface-variant font-bold">Strong Leadership</span>
+</div>
+<div class="mt-4 h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-tertiary w-[75%] rounded-full"></div>
+</div>
+</div>
+<div class="bg-surface-container rounded-lg p-6">
+<p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-4">Legacy/Hooks</p>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-headline font-extrabold">None</span>
+<span class="text-xs text-on-surface-variant font-bold">Standard Round</span>
+</div>
+<div class="mt-4 h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-slate-300 w-[10%] rounded-full"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Sidebar & Actions -->
+<section class="col-span-12 xl:col-span-4 space-y-8">
+<!-- Likelihood Gauge Card -->
+<div class="bg-on-surface text-on-primary rounded-lg p-8 shadow-xl relative overflow-hidden group">
+<div class="absolute -right-12 -top-12 w-48 h-48 bg-primary/20 rounded-full blur-3xl group-hover:bg-primary/40 transition-colors"></div>
+<h3 class="text-xs font-black uppercase tracking-[0.2em] opacity-60 mb-8">Admission Likelihood</h3>
+<div class="flex flex-col items-center text-center py-4">
+<div class="relative mb-6">
+<svg class="w-48 h-48 -rotate-90">
+<circle class="text-on-surface-variant/20" cx="96" cy="96" fill="transparent" r="88" stroke="currentColor" stroke-width="8"></circle>
+<circle cx="96" cy="96" fill="transparent" r="88" stroke="url(#gradient)" stroke-dasharray="552.92" stroke-dashoffset="400" stroke-linecap="round" stroke-width="12"></circle>
+<defs>
+<lineargradient id="gradient" x1="0%" x2="100%" y1="0%" y2="0%">
+<stop offset="0%" stop-color="#9ac3ff"></stop>
+<stop offset="100%" stop-color="#0060ad"></stop>
+</lineargradient>
+</defs>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-5xl font-headline font-black tracking-tighter leading-none">REACH</span>
+<span class="text-[10px] font-bold uppercase tracking-widest opacity-60">Estimated 8-12%</span>
+</div>
+</div>
+<p class="text-sm font-light opacity-80 leading-relaxed px-4">
+                            Your stats are in the top quadrant, but Harvard's holistic review makes any application a "Reach" for non-hooked candidates.
+                        </p>
+</div>
+<button class="w-full mt-8 py-4 bg-secondary-container text-on-secondary-container rounded-full font-headline font-bold text-sm hover:scale-[1.02] transition-transform">
+                        How to improve these odds?
+                    </button>
+</div>
+<!-- From Your Tracker Sidebar -->
+<div class="bg-surface-container-low rounded-lg p-6">
+<div class="flex justify-between items-center mb-6">
+<h4 class="text-sm font-black uppercase tracking-widest text-on-surface">From Your Tracker</h4>
+<span class="text-[10px] font-bold text-primary">6 Total</span>
+</div>
+<div class="space-y-3">
+<!-- Tracker Item Active -->
+<div class="bg-surface-container-lowest p-4 rounded-2xl flex items-center justify-between border-2 border-primary ring-4 ring-primary/5 transition-all">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="school">school</span>
+</div>
+<div>
+<p class="text-sm font-bold">Harvard</p>
+<p class="text-[10px] text-on-surface-variant font-medium">Reach</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-primary text-sm" data-icon="chevron_right">chevron_right</span>
+</div>
+<!-- Tracker Item -->
+<div class="bg-surface-container-lowest/50 p-4 rounded-2xl flex items-center justify-between hover:bg-surface-container-lowest transition-all cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="account_balance">account_balance</span>
+</div>
+<div>
+<p class="text-sm font-bold">Stanford</p>
+<p class="text-[10px] text-on-surface-variant font-medium">Reach</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant/30 text-sm" data-icon="chevron_right">chevron_right</span>
+</div>
+<!-- Tracker Item -->
+<div class="bg-surface-container-lowest/50 p-4 rounded-2xl flex items-center justify-between hover:bg-surface-container-lowest transition-all cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="balance">balance</span>
+</div>
+<div>
+<p class="text-sm font-bold">UC Berkeley</p>
+<p class="text-[10px] text-on-surface-variant font-medium">Target</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant/30 text-sm" data-icon="chevron_right">chevron_right</span>
+</div>
+<!-- Tracker Item -->
+<div class="bg-surface-container-lowest/50 p-4 rounded-2xl flex items-center justify-between hover:bg-surface-container-lowest transition-all cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="architecture">architecture</span>
+</div>
+<div>
+<p class="text-sm font-bold">Georgia Tech</p>
+<p class="text-[10px] text-on-surface-variant font-medium">Likely</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant/30 text-sm" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</div>
+<!-- Editorial Insight -->
+<div class="bg-secondary-container/30 border-2 border-dashed border-secondary-container rounded-lg p-6">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-secondary" data-icon="lightbulb">lightbulb</span>
+<h5 class="text-sm font-bold text-on-secondary-container">Concierge Tip</h5>
+</div>
+<p class="text-xs text-on-secondary-container/80 leading-relaxed italic">
+                        "Harvard's recent essay prompts place heavy emphasis on intellectual curiosity. Your current 'Personal Achievement' draft could be pivoted towards a 'Community Impact' angle to increase resonance with their specific values."
+                    </p>
+</div>
+</section>
+</div>
+<!-- Detail Comparison Table (Asymmetric Layout) -->
+<section class="mt-16 bg-surface-container-high rounded-lg p-10">
+<h3 class="text-3xl font-headline font-extrabold mb-8 tracking-tighter">Holistic Profile Comparison</h3>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-separate border-spacing-y-2">
+<thead>
+<tr class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+<th class="px-6 py-4">Criteria</th>
+<th class="px-6 py-4">Your Profile</th>
+<th class="px-6 py-4">Harvard Average</th>
+<th class="px-6 py-4">Verdict</th>
+</tr>
+</thead>
+<tbody class="text-sm font-medium">
+<tr class="bg-surface-container-lowest rounded-xl overflow-hidden">
+<td class="px-6 py-6 border-l-4 border-emerald-400">SAT / ACT (Super)</td>
+<td class="px-6 py-6 font-headline font-bold">1540 / 35</td>
+<td class="px-6 py-6 text-on-surface-variant">1510 / 34</td>
+<td class="px-6 py-6"><span class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-[10px] font-bold">COMPETITIVE</span></td>
+</tr>
+<tr class="bg-surface-container-lowest rounded-xl">
+<td class="px-6 py-6 border-l-4 border-emerald-400">Unweighted GPA</td>
+<td class="px-6 py-6 font-headline font-bold">3.95</td>
+<td class="px-6 py-6 text-on-surface-variant">3.92</td>
+<td class="px-6 py-6"><span class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-[10px] font-bold">COMPETITIVE</span></td>
+</tr>
+<tr class="bg-surface-container-lowest rounded-xl">
+<td class="px-6 py-6 border-l-4 border-primary">Course Rigor</td>
+<td class="px-6 py-6 font-headline font-bold">12 APs</td>
+<td class="px-6 py-6 text-on-surface-variant">10 APs</td>
+<td class="px-6 py-6"><span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-[10px] font-bold">STRONG</span></td>
+</tr>
+<tr class="bg-surface-container-lowest rounded-xl">
+<td class="px-6 py-6 border-l-4 border-secondary">Interviews</td>
+<td class="px-6 py-6 font-headline font-bold">Not Started</td>
+<td class="px-6 py-6 text-on-surface-variant">N/A</td>
+<td class="px-6 py-6"><span class="px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-bold">PENDING</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+<!-- Contextual FAB (Only for main screens) -->
+<button class="fixed bottom-10 right-10 w-16 h-16 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center group hover:scale-110 transition-transform z-[100]">
+<span class="material-symbols-outlined text-3xl" data-icon="add">add</span>
+<div class="absolute right-full mr-4 bg-on-surface text-on-primary px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            New Strategy Session
+        </div>
+</button>
+</body></html>

@@ -1,29 +1,38 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-headline: var(--font-plus-jakarta);
+  --font-body: var(--font-be-vietnam);
+  --font-sans: var(--font-be-vietnam);
+  --border-radius-DEFAULT: 1rem;
+  --border-radius-lg: 2rem;
+  --border-radius-xl: 3rem;
+  --border-radius-full: 9999px;
 }
 
 :root {
-  --background: #0f1117;
-  --foreground: #f8fafc;
-  --card-bg: rgba(30, 41, 59, 0.7);
-  --card-border: rgba(255, 255, 255, 0.1);
-  --accent: #3b82f6;
-  --accent-hover: #60a5fa;
+  --background: #f8f9ff;
+  --foreground: #173355;
+  --primary: #0060ad;
+  --primary-container: #9ac3ff;
+  --secondary: #745c00;
+  --secondary-container: #ffe087;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #eff3ff;
+  --surface-container: #e6eeff;
+  --surface-container-high: #dde9ff;
+  --surface-container-highest: #d4e3ff;
+  --on-surface: #173355;
+  --on-surface-variant: #466084;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
-  background-attachment: fixed;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), sans-serif;
   min-height: 100vh;
 }
+
 
 .glass-card {
   background: var(--card-bg);

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Profile - Get in!</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Be+Vietnam+Pro:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "error-dim": "#70030f",
+              "inverse-surface": "#020f1f",
+              "tertiary-fixed": "#73bfff",
+              "tertiary-fixed-dim": "#61b2f3",
+              "error-container": "#f56965",
+              "surface-container-lowest": "#ffffff",
+              "primary-container": "#9ac3ff",
+              "on-tertiary": "#f6f9ff",
+              "error": "#ac3434",
+              "surface-container": "#e6eeff",
+              "on-error": "#fff7f6",
+              "surface-container-low": "#eff3ff",
+              "primary-fixed": "#9ac3ff",
+              "surface-variant": "#d4e3ff",
+              "background": "#f8f9ff",
+              "secondary-fixed": "#ffe087",
+              "on-surface": "#173355",
+              "on-secondary": "#fff8ee",
+              "surface-tint": "#0060ad",
+              "outline-variant": "#99b4dc",
+              "surface": "#f8f9ff",
+              "on-surface-variant": "#466084",
+              "surface-container-highest": "#d4e3ff",
+              "on-primary": "#f8f8ff",
+              "surface-bright": "#f8f9ff",
+              "on-primary-fixed": "#00284e",
+              "secondary-container": "#ffe087",
+              "inverse-on-surface": "#909eb4",
+              "on-primary-container": "#003d71",
+              "on-tertiary-fixed-variant": "#004369",
+              "on-tertiary-fixed": "#002339",
+              "on-primary-fixed-variant": "#004681",
+              "surface-dim": "#c5dbff",
+              "secondary-fixed-dim": "#fad04b",
+              "secondary": "#745c00",
+              "inverse-primary": "#68abff",
+              "on-secondary-container": "#644f00",
+              "outline": "#627ca1",
+              "on-background": "#173355",
+              "tertiary-container": "#73bfff",
+              "tertiary-dim": "#005787",
+              "primary-fixed-dim": "#7fb6ff",
+              "on-secondary-fixed": "#4e3d00",
+              "secondary-dim": "#665100",
+              "on-error-container": "#65000b",
+              "on-secondary-fixed-variant": "#705900",
+              "tertiary": "#006499",
+              "on-tertiary-container": "#003a5b",
+              "primary-dim": "#005498",
+              "primary": "#0060ad",
+              "surface-container-high": "#dde9ff"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Be Vietnam Pro"],
+              "label": ["Be Vietnam Pro"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Be Vietnam Pro', sans-serif;
+            background-color: #f8f9ff;
+            color: #173355;
+        }
+        .editorial-header {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background min-h-screen pb-32">
+<!-- TopAppBar -->
+<nav class="fixed top-0 w-full z-50 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none">
+<div class="flex items-center justify-between px-6 h-16 w-full max-w-screen-xl mx-auto">
+<div class="flex items-center gap-4">
+<button class="text-blue-700 dark:text-blue-400 active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="menu_open">menu_open</span>
+</button>
+<h1 class="text-xl font-extrabold text-blue-900 dark:text-blue-100 italic font-['Plus_Jakarta_Sans'] tracking-tight">Get in!</h1>
+</div>
+<div class="h-10 w-10 rounded-full overflow-hidden border-2 border-primary-container">
+<img alt="Student Profile Portrait" class="h-full w-full object-cover" data-alt="friendly close-up portrait of a diverse high school student with a warm smile in natural outdoor lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQT33txgA-zr-aYCJNB2NNPHEX-S-qjqImaM-KdvlClTDyXa5OIf1DEeWNUSk7rKjgvGNp8oE0VYDTb6g52FtnsZHQwf2pSQyt5nSA1YDPJo2ArgJVotMIBPkZlinRmlcHn6MOXKRDjCYSBYocCMbahM8tZWE5xXtvtqQCfjl_YX_IqKRmbzMoJR-VzGluqJfNJQCb3vhwB-XLkrNGZgAHrckxkdYNGgFBmTuPlseXCsKvlWOH5KeeZCP8Ya7jJmgcmhwxIoYr7XY"/>
+</div>
+</div>
+</nav>
+<main class="max-w-4xl mx-auto px-6 pt-28 pb-12">
+<!-- Editorial Header Section -->
+<header class="mb-12">
+<p class="text-primary font-semibold tracking-widest uppercase text-xs mb-2">Student Identity</p>
+<h2 class="editorial-header text-5xl font-extrabold tracking-tight text-on-surface mb-4">Profile Settings</h2>
+<p class="text-on-surface-variant text-lg max-w-xl leading-relaxed">
+                Your profile is the blueprint of your college journey. Keep these details updated to get the most accurate "Chances" and tailored application advice.
+            </p>
+</header>
+<form class="space-y-10">
+<!-- Section 1: Personal Details -->
+<section class="bg-surface-container-low rounded-lg p-8">
+<div class="flex items-center gap-3 mb-8">
+<div class="bg-primary-container/30 p-2 rounded-full">
+<span class="material-symbols-outlined text-primary" data-icon="person">person</span>
+</div>
+<h3 class="editorial-header text-2xl font-bold">Personal Details</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant ml-2">Full Name</label>
+<input class="w-full bg-surface-container-high border-none rounded-DEFAULT px-5 py-4 focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest transition-all" type="text" value="Alex Rivera"/>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant ml-2">Email Address</label>
+<input class="w-full bg-surface-container-high border-none rounded-DEFAULT px-5 py-4 focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest transition-all" type="email" value="alex.rivera@example.edu"/>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant ml-2">Date of Birth</label>
+<input class="w-full bg-surface-container-high border-none rounded-DEFAULT px-5 py-4 focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest transition-all" type="date" value="2007-05-14"/>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant ml-2">Zip Code</label>
+<input class="w-full bg-surface-container-high border-none rounded-DEFAULT px-5 py-4 focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest transition-all" type="text" value="90210"/>
+</div>
+</div>
+</section>
+<!-- Section 2: Application Details (Asymmetric Bento Grid) -->
+<section class="space-y-6">
+<div class="flex items-center gap-3 mb-2 px-2">
+<div class="bg-secondary-container/30 p-2 rounded-full">
+<span class="material-symbols-outlined text-secondary" data-icon="school">school</span>
+</div>
+<h3 class="editorial-header text-2xl font-bold">Application Landscape</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<!-- High Impact Large Card -->
+<div class="md:col-span-2 bg-surface-container-lowest p-8 rounded-lg shadow-[0_8px_32px_rgba(0,96,173,0.06)] flex flex-col justify-between min-h-[220px]">
+<div>
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Current Education Level</label>
+<select class="w-full mt-4 text-2xl font-bold editorial-header bg-transparent border-none focus:ring-0 p-0 text-primary">
+<option>HS Freshman</option>
+<option>HS Sophomore</option>
+<option>HS Junior</option>
+<option selected="">HS Senior</option>
+<option>Gap Year</option>
+</select>
+</div>
+<div class="mt-8 pt-6 border-t border-surface-container">
+<p class="text-sm text-on-surface-variant">Your senior year is the most critical time for application tracking.</p>
+</div>
+</div>
+<!-- Toggle Style Cards -->
+<div class="space-y-4">
+<div class="bg-surface-container p-5 rounded-lg flex items-center justify-between">
+<span class="font-semibold">First Gen Student</span>
+<button class="w-12 h-6 bg-primary rounded-full relative transition-colors" type="button">
+<span class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></span>
+</button>
+</div>
+<div class="bg-surface-container p-5 rounded-lg flex items-center justify-between">
+<span class="font-semibold">Under-represented</span>
+<button class="w-12 h-6 bg-surface-variant rounded-full relative transition-colors" type="button">
+<span class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full"></span>
+</button>
+</div>
+<div class="bg-surface-container p-5 rounded-lg flex items-center justify-between">
+<span class="font-semibold">Legacy Status</span>
+<button class="w-12 h-6 bg-surface-variant rounded-full relative transition-colors" type="button">
+<span class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full"></span>
+</button>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="bg-surface-container-low p-6 rounded-lg">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant block mb-4">Primary Application Area</label>
+<div class="flex gap-2">
+<button class="flex-1 py-3 px-4 rounded-full bg-primary text-on-primary font-bold text-sm" type="button">In-State</button>
+<button class="flex-1 py-3 px-4 rounded-full bg-surface-container-lowest text-on-surface font-bold text-sm" type="button">Out-of-State</button>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-lg">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant block mb-4">Seeking Financial Aid?</label>
+<div class="flex gap-2">
+<button class="flex-1 py-2 px-3 rounded-full bg-secondary-container text-on-secondary-container font-bold text-xs uppercase tracking-tighter" type="button">Yes</button>
+<button class="flex-1 py-2 px-3 rounded-full bg-surface-container-lowest text-on-surface font-bold text-xs uppercase tracking-tighter" type="button">No</button>
+<button class="flex-1 py-2 px-3 rounded-full bg-surface-container-lowest text-on-surface font-bold text-xs uppercase tracking-tighter" type="button">Unsure</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 3: Academic Stats (The "Plus Jakarta" Numbers) -->
+<section class="bg-white p-10 rounded-xl shadow-sm border border-outline-variant/10">
+<div class="flex items-center gap-3 mb-10">
+<div class="bg-tertiary-container/20 p-2 rounded-full">
+<span class="material-symbols-outlined text-tertiary" data-icon="analytics">analytics</span>
+</div>
+<h3 class="editorial-header text-2xl font-bold text-on-surface">Academic Performance</h3>
+</div>
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
+<div class="space-y-3">
+<span class="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">GPA (4.0 Scale)</span>
+<input class="editorial-header text-4xl font-extrabold text-primary bg-transparent border-none p-0 focus:ring-0 w-full" type="text" value="3.88"/>
+<div class="h-1.5 w-full bg-secondary-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[97%]" style="border-radius: 9999px;"></div>
+</div>
+</div>
+<div class="space-y-3">
+<span class="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">GPA (5.0 Scale)</span>
+<input class="editorial-header text-4xl font-extrabold text-primary bg-transparent border-none p-0 focus:ring-0 w-full" type="text" value="4.42"/>
+<div class="h-1.5 w-full bg-secondary-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[88%]" style="border-radius: 9999px;"></div>
+</div>
+</div>
+<div class="space-y-3">
+<span class="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">SAT Score</span>
+<input class="editorial-header text-4xl font-extrabold text-primary bg-transparent border-none p-0 focus:ring-0 w-full" type="text" value="1480"/>
+<div class="h-1.5 w-full bg-secondary-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[92%]" style="border-radius: 9999px;"></div>
+</div>
+</div>
+<div class="space-y-3">
+<span class="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">ACT Score</span>
+<input class="editorial-header text-4xl font-extrabold text-primary bg-transparent border-none p-0 focus:ring-0 w-full" type="text" value="33"/>
+<div class="h-1.5 w-full bg-secondary-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[91%]" style="border-radius: 9999px;"></div>
+</div>
+</div>
+</div>
+</section>
+<div class="flex justify-end pt-8">
+<button class="bg-primary text-on-primary px-12 py-5 rounded-full font-bold text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all" type="submit">
+                    Save Changes
+                </button>
+</div>
+</form>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 h-24 bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-t-[2rem] z-50 shadow-[0_-4px_24px_rgba(0,0,0,0.04)]">
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-4 py-1.5 hover:text-blue-600 dark:hover:text-blue-300 active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="home">home</span>
+<span class="font-['Be_Vietnam_Pro'] text-[11px] font-semibold uppercase tracking-wider">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-4 py-1.5 hover:text-blue-600 dark:hover:text-blue-300 active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="assignment_turned_in">assignment_turned_in</span>
+<span class="font-['Be_Vietnam_Pro'] text-[11px] font-semibold uppercase tracking-wider">Tracker</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-4 py-1.5 hover:text-blue-600 dark:hover:text-blue-300 active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="calendar_today">calendar_today</span>
+<span class="font-['Be_Vietnam_Pro'] text-[11px] font-semibold uppercase tracking-wider">Calendar</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-4 py-1.5 hover:text-blue-600 dark:hover:text-blue-300 active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="query_stats">query_stats</span>
+<span class="font-['Be_Vietnam_Pro'] text-[11px] font-semibold uppercase tracking-wider">Chances</span>
+</a>
+<a class="flex flex-col items-center justify-center text-blue-800 dark:text-blue-200 bg-blue-50 dark:bg-blue-900/40 rounded-full px-4 py-1.5 transition-all active:scale-90" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-['Be_Vietnam_Pro'] text-[11px] font-semibold uppercase tracking-wider">Profile</span>
+</a>
+</nav>
+</body></html>

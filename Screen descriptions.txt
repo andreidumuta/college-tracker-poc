@@ -1,0 +1,8 @@
+Screen: Home. Call to action to fill in profile / Get Financing. Calendar: upcoming events
+
+Screen: Schools. View a list of selected schools and add a new school.
+
+Chances: Select a school, either from my schools or any other, and check how I'm stacking against last year entry scores and against other users
+
+Profile: Fill in profile fields as mentioned in the Google Forms pdf file.
+

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Get in! - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Be+Vietnam+Pro:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary-fixed-dim": "#7fb6ff",
+                        "on-background": "#173355",
+                        "on-primary-fixed-variant": "#004681",
+                        "surface-container-low": "#eff3ff",
+                        "secondary-fixed-dim": "#fad04b",
+                        "inverse-on-surface": "#909eb4",
+                        "tertiary-container": "#73bfff",
+                        "surface-dim": "#c5dbff",
+                        "background": "#f8f9ff",
+                        "primary-container": "#9ac3ff",
+                        "secondary": "#745c00",
+                        "on-tertiary-fixed": "#002339",
+                        "on-secondary-container": "#644f00",
+                        "secondary-fixed": "#ffe087",
+                        "on-primary-container": "#003d71",
+                        "inverse-primary": "#68abff",
+                        "surface-tint": "#0060ad",
+                        "primary": "#0060ad",
+                        "surface-container-high": "#dde9ff",
+                        "secondary-dim": "#665100",
+                        "tertiary-dim": "#005787",
+                        "error": "#ac3434",
+                        "on-tertiary-fixed-variant": "#004369",
+                        "on-surface": "#173355",
+                        "on-tertiary": "#f6f9ff",
+                        "tertiary-fixed": "#73bfff",
+                        "surface-container": "#e6eeff",
+                        "outline-variant": "#99b4dc",
+                        "outline": "#627ca1",
+                        "tertiary-fixed-dim": "#61b2f3",
+                        "on-error": "#fff7f6",
+                        "surface-container-highest": "#d4e3ff",
+                        "on-secondary-fixed-variant": "#705900",
+                        "on-primary-fixed": "#00284e",
+                        "primary-dim": "#005498",
+                        "on-tertiary-container": "#003a5b",
+                        "surface": "#f8f9ff",
+                        "primary-fixed": "#9ac3ff",
+                        "surface-variant": "#d4e3ff",
+                        "surface-bright": "#f8f9ff",
+                        "error-dim": "#70030f",
+                        "error-container": "#f56965",
+                        "tertiary": "#006499",
+                        "on-surface-variant": "#466084",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#4e3d00",
+                        "on-secondary": "#fff8ee",
+                        "inverse-surface": "#020f1f",
+                        "on-primary": "#f8f8ff",
+                        "on-error-container": "#65000b",
+                        "secondary-container": "#ffe087"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Be Vietnam Pro"],
+                        "label": ["Be Vietnam Pro"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Be Vietnam Pro', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-signature {
+            background: linear-gradient(135deg, #0060ad 0%, #9ac3ff 100%);
+        }
+        .ambient-glow {
+            box-shadow: 0 8px 32px rgba(23, 51, 85, 0.06);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- SideNavBar Integration -->
+<aside class="h-screen w-64 fixed left-0 top-0 overflow-y-auto bg-slate-100 dark:bg-slate-950 flex flex-col gap-2 p-6 z-40">
+<div class="mb-8">
+<div class="text-xl font-black text-blue-700 dark:text-blue-400">Get in!</div>
+<div class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold opacity-60 mt-1">Your Academic Concierge</div>
+</div>
+<nav class="flex-1 flex flex-col gap-2">
+<!-- Active Tab: Home (Dashboard) -->
+<a class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 text-blue-700 dark:text-blue-300 rounded-full shadow-sm font-semibold active:translate-x-1 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="home" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-semibold">Home</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-full transition-all active:translate-x-1 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
+<span class="font-semibold">App Tracker</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-full transition-all active:translate-x-1 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-semibold">Calendar</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-full transition-all active:translate-x-1 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-semibold">Chances</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-full transition-all active:translate-x-1 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-semibold">Profile</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-slate-200/50 flex flex-col gap-2">
+<button class="w-full py-3 px-4 mb-4 bg-primary text-on-primary rounded-full font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                    New Application
+                </button>
+<a class="flex items-center gap-3 px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 rounded-full transition-all text-sm" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 rounded-full transition-all text-sm" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="contact_support">contact_support</span>
+<span>Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="min-h-screen p-12 ml-64">
+<!-- Welcome Section -->
+<header class="mb-12">
+<h1 class="text-[3.5rem] font-extrabold tracking-tight text-on-background leading-tight">
+                Welcome Back, Alex.
+            </h1>
+<p class="text-on-surface-variant text-lg mt-2">You have 3 deadlines approaching this week. Let's stay focused.</p>
+</header>
+<!-- Bento Layout Grid -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Primary Focus Card (Asymmetric Layout) -->
+<section class="col-span-8 bg-surface-container-low rounded-lg p-10 relative overflow-hidden flex flex-col justify-between min-h-[400px]">
+<div class="relative z-10">
+<span class="px-4 py-1.5 bg-secondary-container text-on-secondary-container rounded-full text-xs font-bold tracking-wider uppercase mb-6 inline-block">
+                        Current Priority
+                    </span>
+<h2 class="text-4xl font-bold text-on-primary-fixed-variant mt-4 leading-snug max-w-md">
+                        Submit Columbia Supplemental Essay
+                    </h2>
+<p class="text-on-surface-variant mt-4 text-lg max-w-sm">
+                        Final review needed for "Why Columbia?" and "Global Perspectives" prompts.
+                    </p>
+</div>
+<div class="mt-8 relative z-10 flex items-center gap-6">
+<button class="bg-primary px-8 py-4 text-on-primary rounded-full font-bold flex items-center gap-3 ambient-glow hover:bg-primary-dim transition-colors">
+                        Continue Writing
+                        <span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+<div class="flex items-center gap-2 text-on-surface-variant font-medium">
+<span class="material-symbols-outlined text-primary" data-icon="timer">timer</span>
+                        4 days left
+                    </div>
+</div>
+<!-- Abstract Decorative Background Element -->
+<div class="absolute -right-20 -bottom-20 w-80 h-80 bg-primary-container/30 rounded-full blur-3xl"></div>
+<img class="absolute right-0 bottom-0 w-1/2 h-full object-cover opacity-20 pointer-events-none rounded-r-lg" data-alt="close-up of a high-end fountain pen on a textured cream paper with elegant handwriting in a sunlit academic library" src="https://lh3.googleusercontent.com/aida-public/AB6AXuASBblYk9EeFQ85LdMJDcR1OK3jK4f0O2XPMpOTnxyBl_9ktgTwM8-kI3RgwWmCl-x6iFEcICwyjmSeU8fiytGIk9hqL2D8PQMZMKuAx80GPS2u-VIsJzLnouNei6OtIS5t2KiLNqn1VicuI5rEvJTrhcgvcBDS6lhPS3yBYavHuUSnxWSfKTHgJ29KYDUIIRA9BCXGx5cRM7vvzWnE4Er4_ceXXaEVp5PiI378X21kQkkBELEWtpWtLVTdxHz94shquXspv_stgBg"/>
+</section>
+<!-- Status Metrics (Stack) -->
+<section class="col-span-4 flex flex-col gap-8">
+<div class="bg-surface-container-lowest p-8 rounded-lg ambient-glow flex items-center justify-between border border-outline-variant/10">
+<div>
+<p class="text-on-surface-variant text-sm font-medium mb-1">Accepted</p>
+<p class="text-4xl font-black text-on-background">02</p>
+</div>
+<div class="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center text-green-700">
+<span class="material-symbols-outlined text-3xl" data-icon="check_circle">check_circle</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-8 rounded-lg ambient-glow flex items-center justify-between border border-outline-variant/10">
+<div>
+<p class="text-on-surface-variant text-sm font-medium mb-1">Pending Review</p>
+<p class="text-4xl font-black text-on-background">05</p>
+</div>
+<div class="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center text-blue-700">
+<span class="material-symbols-outlined text-3xl" data-icon="schedule">schedule</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-8 rounded-lg ambient-glow flex items-center justify-between border border-outline-variant/10">
+<div>
+<p class="text-on-surface-variant text-sm font-medium mb-1">Waitlisted</p>
+<p class="text-4xl font-black text-on-background">01</p>
+</div>
+<div class="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center text-amber-700">
+<span class="material-symbols-outlined text-3xl" data-icon="hourglass_empty">hourglass_empty</span>
+</div>
+</div>
+</section>
+<!-- Deadlines Section -->
+<section class="col-span-12 lg:col-span-7 bg-surface-container-lowest rounded-lg p-10 border border-outline-variant/10">
+<div class="flex items-center justify-between mb-10">
+<h3 class="text-2xl font-bold text-on-background">Upcoming Deadlines</h3>
+<button class="text-primary font-bold text-sm flex items-center gap-1">
+                        View All Calendar
+                        <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<div class="space-y-4">
+<!-- Deadline Item 1 -->
+<div class="group flex items-center justify-between p-6 bg-surface-container hover:bg-surface-container-high rounded-lg transition-colors cursor-pointer">
+<div class="flex items-center gap-6">
+<div class="w-14 h-14 rounded-lg bg-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="account_balance">account_balance</span>
+</div>
+<div>
+<h4 class="font-bold text-lg text-on-surface">Stanford University</h4>
+<p class="text-sm text-on-surface-variant">Regular Decision • Jan 05</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-error font-bold text-lg">22 Days Left</p>
+<div class="w-32 h-2 bg-secondary-container rounded-full mt-2 overflow-hidden">
+<div class="w-3/4 h-full bg-primary rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Deadline Item 2 -->
+<div class="group flex items-center justify-between p-6 bg-surface-container hover:bg-surface-container-high rounded-lg transition-colors cursor-pointer">
+<div class="flex items-center gap-6">
+<div class="w-14 h-14 rounded-lg bg-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="school">school</span>
+</div>
+<div>
+<h4 class="font-bold text-lg text-on-surface">UC Berkeley</h4>
+<p class="text-sm text-on-surface-variant">Application Submission • Nov 30</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-on-surface-variant font-bold text-lg">Submitted</p>
+<span class="text-xs px-3 py-1 bg-green-100 text-green-700 rounded-full font-bold uppercase mt-2 inline-block">Complete</span>
+</div>
+</div>
+<!-- Deadline Item 3 -->
+<div class="group flex items-center justify-between p-6 bg-surface-container hover:bg-surface-container-high rounded-lg transition-colors cursor-pointer">
+<div class="flex items-center gap-6">
+<div class="w-14 h-14 rounded-lg bg-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="location_city">location_city</span>
+</div>
+<div>
+<h4 class="font-bold text-lg text-on-surface">New York University</h4>
+<p class="text-sm text-on-surface-variant">Early Decision II • Jan 01</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-error font-bold text-lg">18 Days Left</p>
+<div class="w-32 h-2 bg-secondary-container rounded-full mt-2 overflow-hidden">
+<div class="w-1/2 h-full bg-primary rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Concierge Picks / Recent Updates -->
+<section class="col-span-12 lg:col-span-5 flex flex-col gap-8">
+<div class="bg-primary text-on-primary p-10 rounded-lg relative overflow-hidden flex-1 ambient-glow">
+<h3 class="text-2xl font-bold mb-4 relative z-10">Concierge Picks</h3>
+<p class="text-on-primary/80 mb-8 relative z-10 text-lg leading-relaxed">
+                        Based on your profile, we suggest focusing on your <strong>Extracurricular Portfolio</strong> this week to stand out for IVY League admissions.
+                    </p>
+<ul class="space-y-4 relative z-10">
+<li class="flex items-center gap-3 bg-white/10 p-4 rounded-lg backdrop-blur-md">
+<span class="material-symbols-outlined text-secondary-fixed" data-icon="lightbulb">lightbulb</span>
+<span class="text-sm font-medium">Highlight your leadership at Chess Club</span>
+</li>
+<li class="flex items-center gap-3 bg-white/10 p-4 rounded-lg backdrop-blur-md">
+<span class="material-symbols-outlined text-secondary-fixed" data-icon="bolt">bolt</span>
+<span class="text-sm font-medium">Add descriptions to volunteer hours</span>
+</li>
+</ul>
+<span class="material-symbols-outlined absolute -top-10 -right-10 text-[15rem] text-white/5 rotate-12" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<div class="bg-surface-container-high p-8 rounded-lg flex flex-col justify-center">
+<div class="flex items-center gap-4 mb-4">
+<img alt="Mentor" class="w-12 h-12 rounded-full border-2 border-white shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmf2VtoZ2gl_tTCsj7PneZS5S3WHPVgiedxliWhH61nNUTR-wrETKrCZmEplyJmf-lwbaxYS4zaSbOuY8n-sIvYeLflALqaKj-QiebTJijnyOdwR9e2yS0uj8KtzX8Q_WOyG9GXZsDDxDuPKfpIvNSkHWHigzoSARdtvWr2KeT0k18p0yN2tBPXBkr0In2THU9_Zc2lVy-EO-JaRlSvISNf5Vo45usx3nu74KxW3bJ7xS6ELelt5pXs-8lj8KNPiz-vF0QBrj_plM"/>
+<div>
+<p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Your Mentor says:</p>
+<p class="font-bold text-on-background">"Your essay structure is 80% there!"</p>
+</div>
+</div>
+<button class="w-full py-3 bg-surface-container-lowest text-primary rounded-full font-bold border border-primary/20 hover:bg-white transition-all">
+                        Open Messages
+                    </button>
+</div>
+</section>
+</div>
+</main>
+<!-- Floating Action for Quick Add (Contextual) -->
+<button class="fixed bottom-12 right-12 w-16 h-16 bg-signature text-on-primary rounded-full flex items-center justify-center shadow-xl z-50 hover:scale-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-3xl" data-icon="chat">chat</span>
+</button>
+</body></html>

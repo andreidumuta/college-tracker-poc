@@ -49,7 +49,7 @@ export default function SchoolsPage() {
         querySnapshot.forEach((doc) => {
           list.push(doc.data() as College);
         });
-        list.sort((a, b) => a.name.localeCompare(b.name));
+        list.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         setColleges(list);
       } catch (err) {
         console.error("Error loading colleges:", err);
@@ -61,9 +61,9 @@ export default function SchoolsPage() {
   // Derived state search results to avoid useEffect-state sync warnings
   const searchResults = searchTerm.trim()
     ? colleges.filter((c) =>
-        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.state.toLowerCase().includes(searchTerm.toLowerCase())
+        (c.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (c.city || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (c.state || "").toLowerCase().includes(searchTerm.toLowerCase())
       ).slice(0, 5)
     : [];
 
@@ -82,7 +82,7 @@ export default function SchoolsPage() {
         user.uid,
         selectedCollege.id,
         selectedCollege.name,
-        `${selectedCollege.city}, ${selectedCollege.state}`,
+        [selectedCollege.city, selectedCollege.state].filter(Boolean).join(", "),
         deadlineType
       );
       setShowAddModal(false);
@@ -339,7 +339,7 @@ export default function SchoolsPage() {
                       >
                         <div>
                           <p className="font-bold text-sm text-[#173355]">{college.name}</p>
-                          <p className="text-xs text-[#466084]">{college.city}, {college.state}</p>
+                          <p className="text-xs text-[#466084]">{[college.city, college.state].filter(Boolean).join(", ")}</p>
                         </div>
                         <Plus className="w-4 h-4 text-[#0060ad]" />
                       </button>
@@ -357,7 +357,7 @@ export default function SchoolsPage() {
                 <div className="bg-[#eff3ff] p-4 rounded-2xl flex justify-between items-center">
                   <div>
                     <h4 className="font-bold text-sm text-[#173355]">{selectedCollege.name}</h4>
-                    <p className="text-xs text-[#466084]">{selectedCollege.city}, {selectedCollege.state}</p>
+                    <p className="text-xs text-[#466084]">{[selectedCollege.city, selectedCollege.state].filter(Boolean).join(", ")}</p>
                   </div>
                   <button 
                     onClick={() => setSelectedCollege(null)}

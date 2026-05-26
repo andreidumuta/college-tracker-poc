@@ -430,8 +430,8 @@ export default function AdminDashboard() {
   }
 
   const filteredColleges = colleges.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.location.toLowerCase().includes(searchTerm.toLowerCase())
+    (c.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (c.location || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (

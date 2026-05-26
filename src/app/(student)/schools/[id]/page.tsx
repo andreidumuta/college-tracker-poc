@@ -118,7 +118,7 @@ export default function SchoolDetailPage() {
       <header className="space-y-4">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#466084]">
           <MapPin className="w-4 h-4 text-[#0060ad]" />
-          <span>{college.city}, {college.state}</span>
+          <span>{[college.city, college.state].filter(Boolean).join(", ")}</span>
           <span className="text-[#99b4dc]/40">•</span>
           <span>{college.isPublic ? "Public Institution" : "Private Institution"}</span>
         </div>

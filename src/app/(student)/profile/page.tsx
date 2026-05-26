@@ -166,7 +166,7 @@ export default function ProfilePage() {
             <div className="bg-[#ffe087]/30 p-2 rounded-full text-[#745c00]">
               <School className="w-5 h-5" />
             </div>
-            <h3 className="text-2xl font-bold tracking-tight font-headline text-[#173355]">Application Landscape</h3>
+            <h3 className="text-2xl font-bold tracking-tight font-headline text-[#173355]">Application Details</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

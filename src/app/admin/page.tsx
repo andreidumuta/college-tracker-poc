@@ -216,7 +216,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleResearch = async (college: College) => {
+  const handleResearch = async (college: College, target: "unweightedGpa" | "weightedGpa" | "policy" | "deadlines" | "all" = "all") => {
     if (college.isHumanVerified) {
       console.log(`Skipping ${college.name} as it is marked Human Verified.`);
       return;
@@ -227,27 +227,52 @@ export default function AdminDashboard() {
       const res = await fetch("/api/research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ collegeName: college.name }),
+        body: JSON.stringify({ collegeName: college.name, target }),
       });
       
       if (!res.ok) throw new Error("Research failed");
       const data = await res.json();
       
-      const updatedData = {
-        isNeedBlind: data.isNeedBlind,
-        isNeedAware: !data.isNeedBlind,
-        offersEarlyAdmission: data.offersEarlyAdmission,
-        isEstimatedDeadlines: data.isEstimatedDeadlines ?? null,
-        averageGpa: data.averageGpa,
-        averageGpaWeighted: data.averageGpaWeighted ?? null,
-        deadlines: {
-          earlyDecision1: data.earlyDecision1 || null,
-          earlyDecision2: data.earlyDecision2 || null,
-          earlyAction: data.earlyAction || null,
-          regularDecision: data.regularDecision || null,
-          rolling: data.rolling || null,
+      const updatedData: Partial<College> = {};
+      if (target === "all" || target === "unweightedGpa") {
+        if (data.averageGpa !== undefined) {
+          updatedData.averageGpa = data.averageGpa;
         }
-      };
+      }
+      if (target === "all" || target === "weightedGpa") {
+        if (data.averageGpaWeighted !== undefined) {
+          updatedData.averageGpaWeighted = data.averageGpaWeighted ?? null;
+        }
+      }
+      if (target === "all" || target === "policy") {
+        if (data.isNeedBlind !== undefined) {
+          updatedData.isNeedBlind = data.isNeedBlind;
+          updatedData.isNeedAware = data.isNeedBlind === null ? null : !data.isNeedBlind;
+        }
+        if (data.offersEarlyAdmission !== undefined) {
+          updatedData.offersEarlyAdmission = data.offersEarlyAdmission;
+        }
+      }
+      if (target === "all" || target === "deadlines") {
+        if (data.isEstimatedDeadlines !== undefined) {
+          updatedData.isEstimatedDeadlines = data.isEstimatedDeadlines ?? null;
+        }
+        if (
+          data.earlyDecision1 !== undefined ||
+          data.earlyDecision2 !== undefined ||
+          data.earlyAction !== undefined ||
+          data.regularDecision !== undefined ||
+          data.rolling !== undefined
+        ) {
+          updatedData.deadlines = {
+            earlyDecision1: data.earlyDecision1 !== undefined ? data.earlyDecision1 || null : (college.deadlines?.earlyDecision1 || null),
+            earlyDecision2: data.earlyDecision2 !== undefined ? data.earlyDecision2 || null : (college.deadlines?.earlyDecision2 || null),
+            earlyAction: data.earlyAction !== undefined ? data.earlyAction || null : (college.deadlines?.earlyAction || null),
+            regularDecision: data.regularDecision !== undefined ? data.regularDecision || "Not published" : (college.deadlines?.regularDecision || "Not published"),
+            rolling: data.rolling !== undefined ? data.rolling || null : (college.deadlines?.rolling || null),
+          };
+        }
+      }
 
       await updateDoc(doc(db, "colleges", college.id), updatedData);
       
@@ -285,6 +310,15 @@ export default function AdminDashboard() {
     );
     if (!confirmRun) return;
 
+    let target: "unweightedGpa" | "weightedGpa" | "policy" | "deadlines" = "deadlines";
+    if (columnKey === "Avg GPA") {
+      target = "unweightedGpa";
+    } else if (columnKey === "Avg Weighted GPA") {
+      target = "weightedGpa";
+    } else if (columnKey === "Need Blind") {
+      target = "policy";
+    }
+
     setResearchingColumn(columnKey);
     try {
       for (const college of filteredColleges) {
@@ -293,7 +327,7 @@ export default function AdminDashboard() {
           continue;
         }
 
-        await handleResearch(college);
+        await handleResearch(college, target);
         // Delay to prevent 429 rate limiting on API
         await new Promise(resolve => setTimeout(resolve, 6500));
       }

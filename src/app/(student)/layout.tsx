@@ -144,6 +144,13 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
               </div>
             )}
           </div>
+          <button
+            onClick={logout}
+            className="p-1 text-red-500 hover:bg-red-50 active:scale-95 transition-all rounded-full flex items-center justify-center cursor-pointer"
+            title="Sign Out"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
         </div>
       </header>
 

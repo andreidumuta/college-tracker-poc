@@ -320,7 +320,9 @@ export default function HomeDashboard() {
             <div className="bg-[#ffe087]/20 p-2 rounded-full text-[#745c00]">
               <TrendingUp className="w-5 h-5" />
             </div>
-            <h3 className="text-xl font-bold font-headline text-[#173355]">Get Financing</h3>
+            <h3 className="text-sm font-extrabold font-headline text-[#745c00] bg-[#ffe087]/30 px-3 py-1 rounded-full uppercase tracking-wider">
+              Get Financing
+            </h3>
           </div>
           
           <div className="space-y-4 text-sm text-[#466084] leading-relaxed">
@@ -337,9 +339,9 @@ export default function HomeDashboard() {
 
           <button 
             onClick={() => alert("This Financing tool is a placeholder for the POC. In production, this will offer FAFSA forms integration.")}
-            className="w-full py-4 bg-[#eff3ff] hover:bg-[#e6eeff] text-[#0060ad] font-bold rounded-full transition-all text-xs uppercase tracking-wider"
+            className="w-full py-4 bg-[#0060ad] hover:opacity-95 text-white font-bold rounded-full transition-all text-xs uppercase tracking-wider shadow-md shadow-[#0060ad]/15"
           >
-            Calculate College Budgets
+            See how much I can get
           </button>
         </div>
 

@@ -62,9 +62,10 @@ async function queryGemini(ai: GoogleGenAI, prompt: string) {
 // 1. Research Unweighted GPA
 async function researchUnweightedGpa(ai: GoogleGenAI, collegeName: string) {
   const prompt = `You are a college admissions expert. Search the web for the average admitted student unweighted GPA (4.0 scale) for ${collegeName}.
+  If the official average unweighted GPA is not published by the college, you MUST look up and provide the commonly accepted average/estimate from reputable third-party sources (such as PrepScholar, CollegeSimply, or similar). Do NOT return null unless there is absolutely no estimate or data available online.
   You MUST return ONLY a raw JSON object with the following exact keys and types, and nothing else.
   {
-    "averageGpa": number or null (The average admitted student unweighted GPA on a 4.0 scale. Use null if not published/unavailable.)
+    "averageGpa": number or null (The average admitted student unweighted GPA on a 4.0 scale.)
   }`;
   return queryGemini(ai, prompt);
 }
@@ -72,9 +73,10 @@ async function researchUnweightedGpa(ai: GoogleGenAI, collegeName: string) {
 // 2. Research Weighted GPA
 async function researchWeightedGpa(ai: GoogleGenAI, collegeName: string) {
   const prompt = `You are a college admissions expert. Search the web for the average admitted student weighted GPA (5.0 scale) for ${collegeName}.
+  If the official average weighted GPA is not published by the college, you MUST look up and provide the commonly accepted average/estimate from reputable third-party sources (such as PrepScholar, CollegeSimply, or similar). Do NOT return null unless there is absolutely no estimate or data available online.
   You MUST return ONLY a raw JSON object with the following exact keys and types, and nothing else.
   {
-    "averageGpaWeighted": number or null (The average admitted student weighted GPA on a 5.0 scale. Use null if not published/unavailable.)
+    "averageGpaWeighted": number or null (The average admitted student weighted GPA on a 5.0 scale.)
   }`;
   return queryGemini(ai, prompt);
 }

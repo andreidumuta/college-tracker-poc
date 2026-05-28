@@ -520,46 +520,52 @@ export default function ChancesPage() {
           </div>
           
           {/* Tab Switcher */}
-          <div className="flex flex-wrap gap-2 bg-[#eff3ff] p-1.5 rounded-3xl w-fit">
-            <button
-              type="button"
-              onClick={() => {
-                setSearchTab("mySchools");
-                setSearchTerm("");
-                if (trackedSchools.length > 0) {
-                  setSelectedCollegeId(trackedSchools[0].collegeId);
-                }
-              }}
-              className={`px-6 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                searchTab === "mySchools" ? "bg-[#0060ad] text-white shadow-md border-transparent" : "text-[#466084] hover:text-[#173355]"
-              }`}
-            >
-              My Schools
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setSearchTab("allSchools");
-                setSearchTerm("");
-              }}
-              className={`px-6 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                searchTab === "allSchools" ? "bg-[#0060ad] text-white shadow-md border-transparent" : "text-[#466084] hover:text-[#173355]"
-              }`}
-            >
-              Search Any School
-            </button>
+          <div className="space-y-3">
+            {/* Line 1: Tab switcher for My Schools / Search Any School */}
+            <div className="flex bg-[#eff3ff] p-1.5 rounded-3xl w-fit">
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchTab("mySchools");
+                  setSearchTerm("");
+                  if (trackedSchools.length > 0) {
+                    setSelectedCollegeId(trackedSchools[0].collegeId);
+                  }
+                }}
+                className={`px-6 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  searchTab === "mySchools" ? "bg-[#0060ad] text-white shadow-md border-transparent" : "text-[#466084] hover:text-[#173355]"
+                }`}
+              >
+                My Schools
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchTab("allSchools");
+                  setSearchTerm("");
+                }}
+                className={`px-6 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  searchTab === "allSchools" ? "bg-[#0060ad] text-white shadow-md border-transparent" : "text-[#466084] hover:text-[#173355]"
+                }`}
+              >
+                Search Any School
+              </button>
+            </div>
+
+            {/* Line 2: Match me! button */}
             <button
               type="button"
               onClick={() => {
                 setSearchTab("matchMe");
                 setSearchTerm("");
               }}
-              className={`px-6 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-6 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer w-fit ${
                 searchTab === "matchMe"
-                  ? "bg-[#ffe087] text-[#745c00] shadow-md border-transparent"
+                  ? "bg-[#ffe087] text-[#745c00] shadow-md border-transparent ring-2 ring-[#ffe087]"
                   : "bg-[#ffe087]/50 text-[#745c00] hover:bg-[#ffe087]/80"
               }`}
             >
+              <Sparkles className="w-3.5 h-3.5" />
               Match me!
             </button>
           </div>

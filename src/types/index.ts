@@ -67,7 +67,7 @@ export interface UserProfile {
   dob?: string; // YYYY-MM-DD
   zipCode?: string;
   educationLevel?: 'HS Freshman' | 'HS Sophomore' | 'HS Junior' | 'HS Senior' | 'Other'; // From Question 2
-  applyStatePreference?: 'In-state' | 'Out of state'; // From Question 4
+  applyStatePreference?: 'In-state' | 'Out of state' | 'Both'; // From Question 4
   oosStatesConsidered?: string; // From Question 5
   isFirstGen?: boolean; // From Question 6
   isUrm?: boolean; // From Question 7
@@ -83,6 +83,7 @@ export interface UserProfile {
 
   mySchools?: string[]; // Array of college IDs
   profileCompleteness?: number; // 0-100 percentage
+  hasSeenIntro?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

@@ -47,6 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           photoURL: currentUser.photoURL || "",
           mySchools: [],
           profileCompleteness: 0,
+          hasSeenIntro: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };

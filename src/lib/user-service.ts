@@ -31,7 +31,7 @@ export async function addApplication(
   collegeId: string,
   collegeName: string,
   location: string,
-  deadlineType: ApplicationInfo["deadlineType"]
+  deadlineType: ApplicationInfo["deadlineType"] = "regularDecision"
 ) {
   try {
     const appRef = doc(db, "users", uid, "applications", collegeId);

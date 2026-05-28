@@ -12,10 +12,14 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/");
+    if (!loading) {
+      if (!user) {
+        router.push("/");
+      } else if (profile && profile.hasSeenIntro === false && pathname !== "/profile") {
+        router.push("/profile");
+      }
     }
-  }, [user, loading, router]);
+  }, [user, profile, loading, pathname, router]);
 
   if (loading) {
     return (
@@ -50,10 +54,11 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       {/* DESKTOP SIDEBAR NAVIGATION (Hidden on mobile) */}
       <aside className="hidden md:flex md:w-64 bg-white border-r border-[#99b4dc]/15 flex-col fixed h-screen z-30">
         {/* Logo */}
-        <div className="h-16 flex items-center px-8 border-b border-[#eff3ff]">
+        <div className="h-16 flex items-center px-8 border-b border-[#eff3ff] gap-2.5">
           <Link href="/home" className="text-[#0060ad] font-extrabold italic text-2xl tracking-tight font-headline">
             Get in!
           </Link>
+          <span className="bg-[#ffe087] text-[#745c00] text-[9px] font-black px-1.5 py-0.5 rounded tracking-wider uppercase font-headline">Beta</span>
         </div>
 
         {/* User Card */}
@@ -118,9 +123,12 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
       {/* MOBILE HEADER (Hidden on desktop) */}
       <header className="md:hidden fixed top-0 w-full z-50 bg-white/90 backdrop-blur-xl border-b border-[#eff3ff] flex items-center justify-between px-6 h-16">
-        <Link href="/home" className="text-xl font-extrabold text-[#0060ad] italic font-headline tracking-tight">
-          Get in!
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/home" className="text-xl font-extrabold text-[#0060ad] italic font-headline tracking-tight">
+            Get in!
+          </Link>
+          <span className="bg-[#ffe087] text-[#745c00] text-[8px] font-black px-1.5 py-0.5 rounded tracking-wider uppercase font-headline">Beta</span>
+        </div>
         <div className="flex items-center gap-4">
           {isAdmin && (
             <Link href="/admin" className="p-1 text-amber-700 hover:bg-amber-50 rounded-full" title="Admin panel">

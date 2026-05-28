@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { collection, query, orderBy, doc, updateDoc, setDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 import { db, auth, googleProvider } from "@/lib/firebase";
 import { signInWithPopup, onAuthStateChanged, User, signOut } from "firebase/auth";
-import { GraduationCap, Search, Wand2, Download, Table as TableIcon, LogOut, FileSpreadsheet, Upload, ListPlus, Database } from "lucide-react";
+import { GraduationCap, Search, Wand2, Download, Table as TableIcon, LogOut, FileSpreadsheet, Upload, ListPlus, Database, Plus, Trash2 } from "lucide-react";
 
 interface CostBreakdown {
   inState: number | null;
@@ -85,6 +85,8 @@ export default function AdminDashboard() {
   const [researchingId, setResearchingId] = useState<string | null>(null);
   const [isResearchingAll, setIsResearchingAll] = useState(false);
   const [isUploadingCSV, setIsUploadingCSV] = useState(false);
+  const [fetchingApiId, setFetchingApiId] = useState<string | null>(null);
+  const [researchingColumn, setResearchingColumn] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -111,9 +113,31 @@ export default function AdminDashboard() {
     
     const q = query(collection(db, "colleges"), orderBy("name", "asc"));
     const unsubscribeColleges = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => doc.data() as College);
+      const data = snapshot.docs.map(doc => {
+        const rawCol = doc.data() as College;
+        const city = rawCol.city || (rawCol.location && rawCol.location.includes(",") ? rawCol.location.split(",")[0].trim() : "");
+        const state = rawCol.state || (rawCol.location && rawCol.location.includes(",") ? rawCol.location.split(",")[1].trim() : rawCol.location || "");
+        return { ...rawCol, city, state };
+      });
       setColleges(data);
       setLoading(false);
+
+      // Background migration check for legacy location fields
+      snapshot.docs.forEach(async (docSnap) => {
+        const rawCol = docSnap.data() as College;
+        const hasCity = rawCol.city !== undefined && rawCol.city !== null && rawCol.city !== "";
+        const hasState = rawCol.state !== undefined && rawCol.state !== null && rawCol.state !== "";
+        if (rawCol.location && (!hasCity || !hasState)) {
+          const parts = rawCol.location.split(",");
+          const city = parts[0]?.trim() || "";
+          const state = parts[1]?.trim() || rawCol.location.trim();
+          try {
+            await updateDoc(docSnap.ref, { city, state });
+          } catch (e) {
+            console.error("Failed to migrate college location:", rawCol.name, e);
+          }
+        }
+      });
     }, (error) => {
       console.error("Error streaming colleges:", error);
       setLoading(false);
@@ -238,7 +262,11 @@ export default function AdminDashboard() {
   const handleResearchAll = async () => {
     setIsResearchingAll(true);
     for (const college of filteredColleges) {
-      if (!college.isHumanVerified) {
+      const hasGpa = college.averageGpa !== null && college.averageGpa !== undefined;
+      const hasRd = college.deadlines?.regularDecision !== null && college.deadlines?.regularDecision !== undefined && college.deadlines.regularDecision !== "";
+      const hasExistingData = hasGpa || hasRd;
+
+      if (!college.isHumanVerified && !hasExistingData) {
         await handleResearch(college);
         await new Promise(resolve => setTimeout(resolve, 6500));
       }
@@ -246,18 +274,155 @@ export default function AdminDashboard() {
     setIsResearchingAll(false);
   };
 
+  const handleResearchColumn = async (columnKey: string) => {
+    if (researchingColumn || isResearchingAll) return;
+
+    const confirmRun = window.confirm(
+      `Are you sure you want to run AI research on the "${columnKey}" column for all ${filteredColleges.length} filtered colleges? This will overwrite existing values and cannot be undone.`
+    );
+    if (!confirmRun) return;
+
+    setResearchingColumn(columnKey);
+    try {
+      for (const college of filteredColleges) {
+        if (college.isHumanVerified) {
+          console.log(`Skipping ${college.name} as it is marked Human Verified.`);
+          continue;
+        }
+
+        await handleResearch(college);
+        // Delay to prevent 429 rate limiting on API
+        await new Promise(resolve => setTimeout(resolve, 6500));
+      }
+    } catch (error) {
+      console.error(`Error researching column ${columnKey}:`, error);
+    } finally {
+      setResearchingColumn(null);
+    }
+  };
+
+  const handleAddCollegeRow = async () => {
+    try {
+      const collegesRef = collection(db, "colleges");
+      const newDocRef = doc(collegesRef);
+      const newId = newDocRef.id;
+      const newCollege = {
+        id: newId,
+        name: "New College",
+        city: "",
+        state: "",
+        location: "",
+        isPublic: false,
+        acceptanceRate: null,
+        isTestOptional: false,
+        averageGpa: null,
+        offersNeedBasedAid: true,
+        isNeedBlind: null,
+        isNeedAware: null,
+        deadlines: {
+          earlyDecision1: null,
+          earlyDecision2: null,
+          earlyAction: null,
+          regularDecision: null,
+          rolling: null
+        },
+        testScores: {
+          satReading: { p25: null, mid: null, p75: null },
+          satMath: { p25: null, mid: null, p75: null },
+          actComposite: { p25: null, mid: null, p75: null },
+          actEnglish: { p25: null, mid: null, p75: null },
+          actMath: { p25: null, mid: null, p75: null }
+        },
+        financialAid: {
+          tuition: { inState: null, outOfState: null },
+          fees: { inState: null, outOfState: null },
+          roomAndBoard: { inState: null, outOfState: null },
+          books: { inState: null, outOfState: null },
+          total: { inState: null, outOfState: null }
+        },
+        isHumanVerified: true
+      };
+      
+      await setDoc(newDocRef, newCollege);
+      alert("New college row added! Search for 'New College' in the search bar to edit it.");
+    } catch (error) {
+      console.error("Error adding new college row:", error);
+      alert("Failed to add new college row.");
+    }
+  };
+
+  const handleDeleteCollege = async (id: string, name: string) => {
+    if (!window.confirm(`Are you sure you want to delete ${name || "this college"}?`)) {
+      return;
+    }
+    try {
+      await deleteDoc(doc(db, "colleges", id));
+      alert("College deleted successfully.");
+    } catch (error) {
+      console.error("Error deleting college:", error);
+      alert("Failed to delete college.");
+    }
+  };
+
+  const fetchSingleCollegeApiData = async (college: College) => {
+    if (!college.name) {
+      alert("College name is required to query the College Scorecard API.");
+      return;
+    }
+    setFetchingApiId(college.id);
+    try {
+      const res = await fetch(`/api/scorecard`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          targets: [{
+            id: college.id,
+            name: college.name,
+            state: college.state || ""
+          }]
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.count > 0) {
+          const mapping = data.results?.[0];
+          if (mapping && mapping.originalId !== mapping.scorecardId) {
+            // Delete the temporary local document to prevent duplicate entries
+            await deleteDoc(doc(db, "colleges", mapping.originalId));
+          }
+          alert(`Successfully fetched and updated data for ${college.name} from College Scorecard API!`);
+        } else {
+          alert(`No Scorecard match found for: "${college.name}"`);
+        }
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(`Failed to fetch API data: ${errData.error || res.statusText}`);
+      }
+    } catch (error) {
+      console.error("Error fetching single college scorecard data:", error);
+      alert("An error occurred while communicating with the College Scorecard API.");
+    } finally {
+      setFetchingApiId(null);
+    }
+  };
+
   const updateCollegeField = async (collegeId: string, fieldPath: string, value: string | number | boolean | null | Record<string, unknown>) => {
     try {
-      // Set human verified when manually edited
-      await updateDoc(doc(db, "colleges", collegeId), {
-        [fieldPath]: value,
-        isHumanVerified: true
-      });
+      const updates: Record<string, unknown> = {
+        [fieldPath]: value
+      };
+      
+      // Set human verified when manually edited, except when toggling verification itself
+      if (fieldPath !== "isHumanVerified") {
+        updates.isHumanVerified = true;
+      }
+      
+      await updateDoc(doc(db, "colleges", collegeId), updates);
       
       setColleges(prev => prev.map(c => {
         if (c.id === collegeId) {
-          // simple shallow update for UI, deep updates might require lodash set
-          return { ...c, [fieldPath]: value, isHumanVerified: true };
+          return { ...c, ...updates };
         }
         return c;
       }));
@@ -431,6 +596,8 @@ export default function AdminDashboard() {
 
   const filteredColleges = colleges.filter(c => 
     (c.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (c.city || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (c.state || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
     (c.location || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -516,6 +683,13 @@ export default function AdminDashboard() {
 
                 <div className="flex items-center gap-3">
                   <button
+                    onClick={handleAddCollegeRow}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-semibold transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add College Row
+                  </button>
+                  <button
                     onClick={copyForGoogleSheets}
                     className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-emerald-400 border border-emerald-500/30 rounded-lg text-sm font-semibold hover:bg-slate-800/80 transition-colors"
                   >
@@ -540,18 +714,115 @@ export default function AdminDashboard() {
                       <thead className="text-xs uppercase bg-slate-800/80 text-slate-400 sticky top-0 z-10 shadow-md">
                         <tr>
                           <th className="px-4 py-3 font-semibold whitespace-nowrap sticky left-0 bg-slate-800/95 z-20">College</th>
-                          <th className="px-4 py-3 font-semibold whitespace-nowrap">Location</th>
+                          <th className="px-4 py-3 font-semibold whitespace-nowrap">City</th>
+                          <th className="px-4 py-3 font-semibold whitespace-nowrap text-center">State</th>
                           <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">Acceptance</th>
-                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">Avg GPA</th>
+                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">
+                            <div className="flex items-center justify-center gap-1">
+                              <span>Avg GPA</span>
+                              <button
+                                onClick={() => handleResearchColumn("Avg GPA")}
+                                disabled={!!researchingColumn || isResearchingAll}
+                                className="text-blue-400 hover:text-blue-300 disabled:opacity-30 disabled:cursor-not-allowed p-0.5 rounded hover:bg-slate-700 transition-colors"
+                                title="Research Avg GPA for all filtered colleges (overwrite)"
+                              >
+                                {researchingColumn === "Avg GPA" ? (
+                                  <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <Wand2 className="w-3 h-3" />
+                                )}
+                              </button>
+                            </div>
+                          </th>
                           <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">SAT Math</th>
                           <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">SAT Read</th>
                           <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">Total Cost (In)</th>
                           <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">Total Cost (Out)</th>
-                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">Need Blind</th>
-                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">RD Deadline</th>
-                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">ED1</th>
-                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">ED2</th>
-                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">EA</th>
+                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">
+                            <div className="flex items-center justify-center gap-1">
+                              <span>Need Blind</span>
+                              <button
+                                onClick={() => handleResearchColumn("Need Blind")}
+                                disabled={!!researchingColumn || isResearchingAll}
+                                className="text-blue-400 hover:text-blue-300 disabled:opacity-30 disabled:cursor-not-allowed p-0.5 rounded hover:bg-slate-700 transition-colors"
+                                title="Research Need Blind for all filtered colleges (overwrite)"
+                              >
+                                {researchingColumn === "Need Blind" ? (
+                                  <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <Wand2 className="w-3 h-3" />
+                                )}
+                              </button>
+                            </div>
+                          </th>
+                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">
+                            <div className="flex items-center justify-center gap-1">
+                              <span>RD Deadline</span>
+                              <button
+                                onClick={() => handleResearchColumn("RD Deadline")}
+                                disabled={!!researchingColumn || isResearchingAll}
+                                className="text-blue-400 hover:text-blue-300 disabled:opacity-30 disabled:cursor-not-allowed p-0.5 rounded hover:bg-slate-700 transition-colors"
+                                title="Research RD Deadline for all filtered colleges (overwrite)"
+                              >
+                                {researchingColumn === "RD Deadline" ? (
+                                  <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <Wand2 className="w-3 h-3" />
+                                )}
+                              </button>
+                            </div>
+                          </th>
+                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">
+                            <div className="flex items-center justify-center gap-1">
+                              <span>ED1</span>
+                              <button
+                                onClick={() => handleResearchColumn("ED1")}
+                                disabled={!!researchingColumn || isResearchingAll}
+                                className="text-blue-400 hover:text-blue-300 disabled:opacity-30 disabled:cursor-not-allowed p-0.5 rounded hover:bg-slate-700 transition-colors"
+                                title="Research ED1 for all filtered colleges (overwrite)"
+                              >
+                                {researchingColumn === "ED1" ? (
+                                  <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <Wand2 className="w-3 h-3" />
+                                )}
+                              </button>
+                            </div>
+                          </th>
+                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">
+                            <div className="flex items-center justify-center gap-1">
+                              <span>ED2</span>
+                              <button
+                                onClick={() => handleResearchColumn("ED2")}
+                                disabled={!!researchingColumn || isResearchingAll}
+                                className="text-blue-400 hover:text-blue-300 disabled:opacity-30 disabled:cursor-not-allowed p-0.5 rounded hover:bg-slate-700 transition-colors"
+                                title="Research ED2 for all filtered colleges (overwrite)"
+                              >
+                                {researchingColumn === "ED2" ? (
+                                  <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <Wand2 className="w-3 h-3" />
+                                )}
+                              </button>
+                            </div>
+                          </th>
+                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">
+                            <div className="flex items-center justify-center gap-1">
+                              <span>EA</span>
+                              <button
+                                onClick={() => handleResearchColumn("EA")}
+                                disabled={!!researchingColumn || isResearchingAll}
+                                className="text-blue-400 hover:text-blue-300 disabled:opacity-30 disabled:cursor-not-allowed p-0.5 rounded hover:bg-slate-700 transition-colors"
+                                title="Research EA for all filtered colleges (overwrite)"
+                              >
+                                {researchingColumn === "EA" ? (
+                                  <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <Wand2 className="w-3 h-3" />
+                                )}
+                              </button>
+                            </div>
+                          </th>
                           <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">Verified</th>
                           <th className="px-4 py-3 font-semibold text-right whitespace-nowrap sticky right-0 bg-slate-800/95 z-20">Actions</th>
                         </tr>
@@ -568,7 +839,22 @@ export default function AdminDashboard() {
                               />
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              {college.city}, {college.state}
+                              <input 
+                                type="text" 
+                                value={college.city || ""}
+                                onChange={e => updateCollegeField(college.id, "city", e.target.value)}
+                                className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 w-32"
+                                placeholder="City"
+                              />
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-center">
+                              <input 
+                                type="text" 
+                                value={college.state || ""}
+                                onChange={e => updateCollegeField(college.id, "state", e.target.value)}
+                                className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 w-12 text-center"
+                                placeholder="ST"
+                              />
                             </td>
                             <td className="px-4 py-3 text-center">
                               <input 
@@ -589,17 +875,83 @@ export default function AdminDashboard() {
                                 placeholder="N/A"
                               />
                             </td>
-                            <td className="px-4 py-3 text-center text-slate-400">
-                              {college.testScores?.satMath?.mid || "---"}
+                            <td className="px-4 py-3 text-center">
+                              <input 
+                                type="number" 
+                                value={college.testScores?.satMath?.mid || ""}
+                                onChange={e => {
+                                  const val = e.target.value === "" ? null : parseInt(e.target.value, 10);
+                                  const newScores = {
+                                    ...college.testScores,
+                                    satMath: {
+                                      p25: val ? val - 50 : null,
+                                      mid: val,
+                                      p75: val ? val + 50 : null
+                                    }
+                                  };
+                                  updateCollegeField(college.id, "testScores", newScores);
+                                }}
+                                className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 w-16 text-center text-slate-300"
+                                placeholder="N/A"
+                              />
                             </td>
-                            <td className="px-4 py-3 text-center text-slate-400">
-                              {college.testScores?.satReading?.mid || "---"}
+                            <td className="px-4 py-3 text-center">
+                              <input 
+                                type="number" 
+                                value={college.testScores?.satReading?.mid || ""}
+                                onChange={e => {
+                                  const val = e.target.value === "" ? null : parseInt(e.target.value, 10);
+                                  const newScores = {
+                                    ...college.testScores,
+                                    satReading: {
+                                      p25: val ? val - 50 : null,
+                                      mid: val,
+                                      p75: val ? val + 50 : null
+                                    }
+                                  };
+                                  updateCollegeField(college.id, "testScores", newScores);
+                                }}
+                                className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 w-16 text-center text-slate-300"
+                                placeholder="N/A"
+                              />
                             </td>
-                            <td className="px-4 py-3 text-center text-emerald-400/80">
-                              ${college.financialAid?.total.inState?.toLocaleString() ?? "---"}
+                            <td className="px-4 py-3 text-center">
+                              <input 
+                                type="number" 
+                                value={college.financialAid?.total.inState || ""}
+                                onChange={e => {
+                                  const val = e.target.value === "" ? null : parseInt(e.target.value, 10);
+                                  const newAid = {
+                                    ...college.financialAid,
+                                    total: {
+                                      inState: val,
+                                      outOfState: college.financialAid?.total.outOfState ?? null
+                                    }
+                                  };
+                                  updateCollegeField(college.id, "financialAid", newAid);
+                                }}
+                                className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 w-24 text-center text-emerald-400 font-semibold"
+                                placeholder="N/A"
+                              />
                             </td>
-                            <td className="px-4 py-3 text-center text-emerald-400/80">
-                              ${college.financialAid?.total.outOfState?.toLocaleString() ?? "---"}
+                            <td className="px-4 py-3 text-center">
+                              <input 
+                                type="number" 
+                                value={college.financialAid?.total.outOfState || ""}
+                                onChange={e => {
+                                  const val = e.target.value === "" ? null : parseInt(e.target.value, 10);
+                                  const newAid = {
+                                    ...college.financialAid,
+                                    total: {
+                                      inState: college.financialAid?.total.inState ?? null,
+                                      outOfState: val
+                                    }
+                                  };
+                                  updateCollegeField(college.id, "financialAid", newAid);
+                                }}
+                                className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 w-24 text-center text-emerald-400 font-semibold"
+                                placeholder="N/A"
+                              />
                             </td>
                             <td className="px-4 py-3 text-center">
                               <select
@@ -669,18 +1021,39 @@ export default function AdminDashboard() {
                               </button>
                             </td>
                             <td className="px-4 py-3 text-right sticky right-0 bg-slate-900 group-hover:bg-slate-800 transition-colors z-10 border-l border-slate-800/50">
-                              <button
-                                onClick={() => handleResearch(college)}
-                                disabled={researchingId === college.id || college.isHumanVerified}
-                                className="text-blue-400 hover:text-blue-300 disabled:opacity-30 disabled:cursor-not-allowed p-1 bg-blue-500/10 rounded-lg hover:bg-blue-500/20 transition-colors"
-                                title={college.isHumanVerified ? "Cannot auto-research a Human Verified college" : "Run AI Research"}
-                              >
-                                {researchingId === college.id ? (
-                                  <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                                ) : (
-                                  <Wand2 className="w-4 h-4" />
-                                )}
-                              </button>
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  onClick={() => fetchSingleCollegeApiData(college)}
+                                  disabled={fetchingApiId === college.id}
+                                  className="text-emerald-400 hover:text-emerald-300 disabled:opacity-30 disabled:cursor-not-allowed px-1.5 py-1 bg-emerald-500/10 rounded-lg hover:bg-emerald-500/20 transition-colors font-bold text-[10px] h-6 flex items-center justify-center"
+                                  title="Fetch College Scorecard API Data"
+                                >
+                                  {fetchingApiId === college.id ? (
+                                    <div className="w-3.5 h-3.5 border border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                                  ) : (
+                                    "API"
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => handleResearch(college)}
+                                  disabled={researchingId === college.id || college.isHumanVerified}
+                                  className="text-blue-400 hover:text-blue-300 disabled:opacity-30 disabled:cursor-not-allowed p-1 bg-blue-500/10 rounded-lg hover:bg-blue-500/20 transition-colors"
+                                  title={college.isHumanVerified ? "Cannot auto-research a Human Verified college" : "Run AI Research"}
+                                >
+                                  {researchingId === college.id ? (
+                                    <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                                  ) : (
+                                    <Wand2 className="w-4 h-4" />
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteCollege(college.id, college.name)}
+                                  className="text-red-400 hover:text-red-300 p-1 bg-red-500/10 rounded-lg hover:bg-red-500/20 transition-colors"
+                                  title="Delete College"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}

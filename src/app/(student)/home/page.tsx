@@ -23,6 +23,42 @@ interface CalendarEvent {
   dateObj: Date | null;
 }
 
+const getEarliestDeadline = (deadlines: College["deadlines"]) => {
+  if (!deadlines) return null;
+
+  const candidateKeys: Array<keyof typeof deadlines> = [
+    "earlyDecision1",
+    "earlyAction",
+    "earlyDecision2",
+    "regularDecision"
+  ];
+
+  const parsedDates: Array<{ type: string; dateStr: string; dateObj: Date }> = [];
+
+  candidateKeys.forEach((key) => {
+    const val = deadlines[key];
+    if (typeof val === "string" && val && val !== "Not published" && val !== "null") {
+      try {
+        const d = new Date(val);
+        if (!isNaN(d.getTime())) {
+          parsedDates.push({
+            type: key,
+            dateStr: val,
+            dateObj: d
+          });
+        }
+      } catch {
+        // Ignore
+      }
+    }
+  });
+
+  if (parsedDates.length === 0) return null;
+
+  parsedDates.sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
+  return parsedDates[0];
+};
+
 export default function HomeDashboard() {
   const { user, profile } = useAuth();
   const [applications, setApplications] = useState<ApplicationInfo[]>([]);
@@ -60,21 +96,32 @@ export default function HomeDashboard() {
     applications.forEach((app) => {
       const col = colleges.find((c) => c.id === app.collegeId);
       if (col && col.deadlines) {
-        const dateStr = col.deadlines[app.deadlineType];
-        if (dateStr && dateStr !== "Not published") {
-          let parsedDate: Date | null = null;
-          try {
-            parsedDate = new Date(dateStr);
-            if (isNaN(parsedDate.getTime())) parsedDate = null;
-          } catch {
-            parsedDate = null;
-          }
-
+        const earliest = getEarliestDeadline(col.deadlines);
+        if (earliest) {
           upcomingEvents.push({
             collegeId: app.collegeId,
             collegeName: app.collegeName,
-            deadlineType: app.deadlineType.replace(/([A-Z])/g, " $1"),
-            dateStr,
+            deadlineType: earliest.type.replace(/([A-Z])/g, " $1"),
+            dateStr: earliest.dateStr,
+            dateObj: earliest.dateObj,
+          });
+        } else {
+          // Fallback if no specific dates are available
+          const fallbackDate = col.deadlines.regularDecision || "Not published";
+          let parsedDate: Date | null = null;
+          try {
+            if (fallbackDate !== "Not published") {
+              parsedDate = new Date(fallbackDate);
+              if (isNaN(parsedDate.getTime())) parsedDate = null;
+            }
+          } catch {
+            parsedDate = null;
+          }
+          upcomingEvents.push({
+            collegeId: app.collegeId,
+            collegeName: app.collegeName,
+            deadlineType: "Regular Decision",
+            dateStr: fallbackDate,
             dateObj: parsedDate,
           });
         }
@@ -156,7 +203,7 @@ export default function HomeDashboard() {
                 <div className="space-y-4">
                   <h3 className="text-3xl font-bold font-headline text-[#173355]">Complete your applicant profile</h3>
                   <p className="text-[#466084] leading-relaxed">
-                    Fill in your scores, GPA, and legacy options. We use this to compute your chances likelihood metrics and compare scores.
+                    Fill in your scores, GPA, and legacy options. We use this to compute your matches likelihood metrics and compare scores.
                   </p>
                   <Link
                     href="/profile"

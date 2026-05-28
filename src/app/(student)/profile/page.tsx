@@ -1,17 +1,150 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { UserProfile } from "@/types";
-import { User, School, Sparkles, Check } from "lucide-react";
+import { User, School, Sparkles, Check, ChevronDown } from "lucide-react";
+
+interface CustomSelectProps {
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+  placeholder?: string;
+  className?: string;
+  placeholderClassName?: string;
+  activeClassName?: string;
+  dropdownWidthClass?: string;
+  required?: boolean;
+}
+
+function CustomSelect({
+  value,
+  onChange,
+  options,
+  placeholder = "Select...",
+  className = "",
+  placeholderClassName = "text-[#466084]/60",
+  activeClassName = "text-[#0060ad]",
+  dropdownWidthClass = "w-full",
+  required = false
+}: CustomSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const selectedOption = options.find((opt) => opt.value === value);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  return (
+    <div className="relative inline-block w-full" ref={containerRef}>
+      {/* Trigger Button */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`flex items-center justify-between w-full text-left bg-transparent border-none p-0 focus:outline-none cursor-pointer transition-all ${className} ${
+          value ? activeClassName : placeholderClassName
+        }`}
+      >
+        <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
+        <ChevronDown className="w-5 h-5 ml-2 flex-shrink-0 text-[#0060ad]/70" />
+      </button>
+
+      {/* Hidden native select for HTML5 form validation */}
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        tabIndex={-1}
+        className="absolute bottom-0 left-0 w-full h-0 opacity-0 pointer-events-none"
+      >
+        <option value="" disabled>Select...</option>
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+
+      {/* Dropdown Menu */}
+      {isOpen && (
+        <div className={`absolute left-0 mt-2 ${dropdownWidthClass} bg-white border border-[#dde9ff] rounded-2xl shadow-xl z-50 overflow-hidden py-1.5 animate-in fade-in slide-in-from-top-2 duration-100`}>
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => {
+                onChange(opt.value);
+                setIsOpen(false);
+              }}
+              className={`w-full text-left px-5 py-3 text-sm font-semibold transition-all cursor-pointer ${
+                opt.value === value
+                  ? "bg-[#0060ad] text-white"
+                  : "text-[#173355] hover:bg-[#eff3ff]"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const educationLevelOptions = [
+  { value: "HS Freshman", label: "HS Freshman (or Parent of)" },
+  { value: "HS Sophomore", label: "HS Sophomore (or Parent of)" },
+  { value: "HS Junior", label: "HS Junior (or Parent of)" },
+  { value: "HS Senior", label: "HS Senior (or Parent of)" },
+  { value: "Other", label: "Other / Gap Year" },
+];
+
+const satScoreOptions = [
+  { value: "1450-1600", label: "1450-1600" },
+  { value: "1300-1449", label: "1300-1449" },
+  { value: "1200-1299", label: "1200-1299" },
+  { value: "1000-1199", label: "1000-1199" },
+  { value: "NA", label: "NA / Did not take" },
+];
+
+const actScoreOptions = [
+  { value: "33-36", label: "33-36" },
+  { value: "28-32", label: "28-32" },
+  { value: "25-27", label: "25-27" },
+  { value: "19-24", label: "19-24" },
+  { value: "NA", label: "NA / Did not take" },
+];
 
 export default function ProfilePage() {
   const { profile, updateUserProfile } = useAuth();
+  const router = useRouter();
   // Keep only edited (dirty) form values to avoid useEffect-state sync warnings
   const [dirtyData, setDirtyData] = useState<Partial<UserProfile>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
   const [showErrors, setShowErrors] = useState(false);
+  const [showIntroModal, setShowIntroModal] = useState(false);
+  const [showCongratsModal, setShowCongratsModal] = useState(false);
+
+  useEffect(() => {
+    if (profile && profile.hasSeenIntro === false) {
+      const timer = setTimeout(() => {
+        setShowIntroModal(true);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [profile]);
 
   const getVal = <K extends keyof UserProfile>(key: K): UserProfile[K] | "" => {
     if (dirtyData[key] !== undefined) return dirtyData[key] as UserProfile[K];
@@ -52,6 +185,33 @@ export default function ProfilePage() {
   const totalCount = appDetailsFields.length;
   const allDetailsCompleted = completedCount === totalCount;
 
+  const calculateCompleteness = (prof: UserProfile): number => {
+    const fieldsToTrack: (keyof UserProfile)[] = [
+      "fullName", "dob", "zipCode", "educationLevel", 
+      "applyStatePreference", "isFirstGen", "isUrm", "isLegacy", 
+      "seekingFinAid", "seekingMeritAid", "workingWithConsultant", 
+      "gpa4", "gpa5", "planToSubmitScores"
+    ];
+    
+    let filled = 0;
+    for (const key of fieldsToTrack) {
+      if (prof[key] !== undefined && prof[key] !== null && prof[key] !== "") {
+        filled++;
+      }
+    }
+    
+    // Add score checks
+    if (prof.planToSubmitScores === "Yes") {
+      if (prof.satScore && prof.satScore !== "NA" && prof.satScore !== "") filled++;
+      if (prof.actScore && prof.actScore !== "NA" && prof.actScore !== "") filled++;
+    } else {
+      filled += 2;
+    }
+
+    const totalFields = fieldsToTrack.length + (prof.planToSubmitScores === "Yes" ? 2 : 0);
+    return Math.round((filled / totalFields) * 100);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!allDetailsCompleted) {
@@ -72,6 +232,12 @@ export default function ProfilePage() {
       setSaveMessage("Profile saved successfully!");
       setDirtyData({}); // Reset dirty data since it's now saved in database profile
       setTimeout(() => setSaveMessage(""), 3500);
+
+      // Check if completeness reaches 100%
+      const comp = calculateCompleteness(finalPayload);
+      if (comp === 100) {
+        setShowCongratsModal(true);
+      }
     } catch (err) {
       console.error(err);
       setSaveMessage("Error saving profile. Please try again.");
@@ -82,11 +248,6 @@ export default function ProfilePage() {
 
   // Helper values for calculating visual progress meters for GPA/SAT/ACT
   const getProgressWidth = (type: "gpa4" | "gpa5" | "sat" | "act", val: unknown) => {
-    const num = Number(val);
-    if (isNaN(num) || num <= 0) return "0%";
-    if (type === "gpa4") return `${Math.min(100, (num / 4.0) * 100)}%`;
-    if (type === "gpa5") return `${Math.min(100, (num / 5.0) * 100)}%`;
-    
     // For SAT range selector
     if (type === "sat") {
       const str = String(val);
@@ -106,6 +267,12 @@ export default function ProfilePage() {
       if (str === "19-24") return "50%";
       return "0%";
     }
+
+    const num = Number(val);
+    if (isNaN(num) || num <= 0) return "0%";
+    if (type === "gpa4") return `${Math.min(100, (num / 4.0) * 100)}%`;
+    if (type === "gpa5") return `${Math.min(100, (num / 5.0) * 100)}%`;
+    
     return "0%";
   };
 
@@ -121,7 +288,7 @@ export default function ProfilePage() {
         </div>
         <h2 className="text-5xl font-extrabold tracking-tight text-[#173355] font-headline">Profile Settings</h2>
         <p className="text-[#466084] text-lg max-w-xl leading-relaxed">
-          Your profile is the blueprint of your college journey. Keep these details updated to get the most accurate &quot;Chances&quot; and tailored application advice.
+          Your profile is the blueprint of your college journey. Keep these details updated to get the most accurate &quot;Matches&quot; and tailored application advice.
         </p>
       </header>
 
@@ -221,19 +388,16 @@ export default function ProfilePage() {
                     <span className="text-[10px] text-red-500 font-bold uppercase tracking-normal">This field is required</span>
                   )}
                 </label>
-                <select
-                  value={getVal("educationLevel")}
-                  onChange={(e) => handleChange("educationLevel", e.target.value)}
-                  className="w-full mt-4 text-2xl font-bold font-headline bg-transparent border-none focus:ring-0 p-0 text-[#0060ad] cursor-pointer"
+                <CustomSelect
+                  value={String(getVal("educationLevel"))}
+                  onChange={(val) => handleChange("educationLevel", val)}
+                  options={educationLevelOptions}
+                  placeholder="Select your status..."
+                  className="w-full mt-4 text-2xl font-bold font-headline h-12"
+                  activeClassName="text-[#0060ad]"
+                  placeholderClassName="text-[#466084]/60"
                   required
-                >
-                  <option value="" disabled>Select your status...</option>
-                  <option value="HS Freshman">HS Freshman (or Parent of)</option>
-                  <option value="HS Sophomore">HS Sophomore (or Parent of)</option>
-                  <option value="HS Junior">HS Junior (or Parent of)</option>
-                  <option value="HS Senior">HS Senior (or Parent of)</option>
-                  <option value="Other">Other / Gap Year</option>
-                </select>
+                />
               </div>
               <div className="mt-8 pt-6 border-t border-[#e6eeff]">
                 <p className="text-sm text-[#466084]">
@@ -316,11 +480,11 @@ export default function ProfilePage() {
                   <span className="text-[10px] text-red-500 font-bold uppercase tracking-normal">Required</span>
                 )}
               </label>
-              <div className="flex gap-2">
+              <div className="flex gap-1.5">
                 <button
                   type="button"
                   onClick={() => handleChange("applyStatePreference", "In-state")}
-                  className={`flex-1 py-3 px-4 rounded-full font-bold text-sm transition-all ${
+                  className={`flex-1 py-3 px-1 rounded-full font-bold text-xs transition-all ${
                     getVal("applyStatePreference") === "In-state" ? "bg-[#0060ad] text-white shadow-sm" : "bg-white text-[#173355] hover:bg-[#eff3ff]"
                   }`}
                 >
@@ -329,11 +493,20 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => handleChange("applyStatePreference", "Out of state")}
-                  className={`flex-1 py-3 px-4 rounded-full font-bold text-sm transition-all ${
+                  className={`flex-1 py-3 px-1 rounded-full font-bold text-xs transition-all ${
                     getVal("applyStatePreference") === "Out of state" ? "bg-[#0060ad] text-white shadow-sm" : "bg-white text-[#173355] hover:bg-[#eff3ff]"
                   }`}
                 >
                   Out-of-State
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleChange("applyStatePreference", "Both")}
+                  className={`flex-1 py-3 px-1 rounded-full font-bold text-xs transition-all ${
+                    getVal("applyStatePreference") === "Both" ? "bg-[#0060ad] text-white shadow-sm" : "bg-white text-[#173355] hover:bg-[#eff3ff]"
+                  }`}
+                >
+                  Both
                 </button>
               </div>
             </div>
@@ -446,7 +619,7 @@ export default function ProfilePage() {
                 max="4.0"
                 value={getVal("gpa4")}
                 onChange={(e) => handleChange("gpa4", e.target.value ? parseFloat(e.target.value) : "")}
-                className="text-4xl font-extrabold font-headline text-[#0060ad] bg-transparent border-none p-0 focus:ring-0 w-full"
+                className="text-3xl font-extrabold font-headline text-[#0060ad] bg-transparent border-none p-0 focus:ring-0 w-full h-12 leading-none"
                 placeholder="0.00"
                 required
               />
@@ -468,7 +641,7 @@ export default function ProfilePage() {
                 max="5.0"
                 value={getVal("gpa5")}
                 onChange={(e) => handleChange("gpa5", e.target.value ? parseFloat(e.target.value) : "")}
-                className="text-4xl font-extrabold font-headline text-[#0060ad] bg-transparent border-none p-0 focus:ring-0 w-full"
+                className="text-3xl font-extrabold font-headline text-[#0060ad] bg-transparent border-none p-0 focus:ring-0 w-full h-12 leading-none"
                 placeholder="0.00"
                 required
               />
@@ -483,19 +656,16 @@ export default function ProfilePage() {
             {/* SAT Score */}
             <div className="space-y-3">
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#466084] block">SAT Score Range *</span>
-              <select
-                value={getVal("satScore")}
-                onChange={(e) => handleChange("satScore", e.target.value)}
-                className="text-2xl font-extrabold font-headline text-[#0060ad] bg-transparent border-none p-0 focus:ring-0 w-full cursor-pointer bg-none"
+              <CustomSelect
+                value={String(getVal("satScore"))}
+                onChange={(val) => handleChange("satScore", val)}
+                options={satScoreOptions}
+                placeholder="Select..."
+                className="text-2xl font-extrabold font-headline h-12"
+                activeClassName="text-[#0060ad]"
+                placeholderClassName="text-[#466084]/60"
                 required
-              >
-                <option value="" disabled>Select...</option>
-                <option value="1450-1600">1450-1600</option>
-                <option value="1300-1449">1300-1449</option>
-                <option value="1200-1299">1200-1299</option>
-                <option value="1000-1199">1000-1199</option>
-                <option value="NA">NA / Did not take</option>
-              </select>
+              />
               <div className="h-1.5 w-full bg-[#ffe087]/30 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-[#ffe087] transition-all duration-300" 
@@ -507,19 +677,16 @@ export default function ProfilePage() {
             {/* ACT Score */}
             <div className="space-y-3">
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#466084] block">ACT Score Range *</span>
-              <select
-                value={getVal("actScore")}
-                onChange={(e) => handleChange("actScore", e.target.value)}
-                className="text-2xl font-extrabold font-headline text-[#0060ad] bg-transparent border-none p-0 focus:ring-0 w-full cursor-pointer bg-none"
+              <CustomSelect
+                value={String(getVal("actScore"))}
+                onChange={(val) => handleChange("actScore", val)}
+                options={actScoreOptions}
+                placeholder="Select..."
+                className="text-2xl font-extrabold font-headline h-12"
+                activeClassName="text-[#0060ad]"
+                placeholderClassName="text-[#466084]/60"
                 required
-              >
-                <option value="" disabled>Select...</option>
-                <option value="33-36">33-36</option>
-                <option value="28-32">28-32</option>
-                <option value="25-27">25-27</option>
-                <option value="19-24">19-24</option>
-                <option value="NA">NA / Did not take</option>
-              </select>
+              />
               <div className="h-1.5 w-full bg-[#ffe087]/30 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-[#ffe087] transition-all duration-300" 
@@ -543,6 +710,100 @@ export default function ProfilePage() {
           </button>
         </div>
       </form>
+
+      {/* Intro Modal Pop-up */}
+      {showIntroModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl border border-[#dde9ff] space-y-6 transform transition-all scale-100 relative">
+            <div className="w-16 h-16 bg-[#eff3ff] rounded-full flex items-center justify-center text-[#0060ad] text-3xl">
+              🎓
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-3xl font-extrabold tracking-tight text-[#173355] font-headline">Welcome to Get in!</h3>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#0060ad]">Your Academic Concierge</p>
+            </div>
+            <p className="text-[#466084] text-sm leading-relaxed">
+              Get in! is a premium, editorial-inspired workspace built to track and optimize your US college admissions journey.
+            </p>
+            <div className="space-y-3 bg-[#eff3ff]/50 p-5 rounded-2xl border border-[#dde9ff]/50">
+              <h4 className="text-xs font-bold text-[#173355] uppercase tracking-wider">How to start:</h4>
+              <ul className="text-xs text-[#466084] space-y-2 leading-relaxed">
+                <li className="flex gap-2">
+                  <span className="text-[#0060ad]">⚡</span>
+                  <span><strong>Match me!</strong>: Match your GPA/scores to unlock tailored target lists.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-[#0060ad]">📊</span>
+                  <span><strong>Compare peers</strong>: Compare your metrics against other applicants on visual scatterplots.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-[#0060ad]">📅</span>
+                  <span><strong>Track dates</strong>: Stay on top of EA, ED, and regular deadlines.</span>
+                </li>
+              </ul>
+            </div>
+            <div className="pt-2 text-center">
+              <p className="text-xs font-semibold text-[#173355] mb-4">
+                Please take a moment to fill out your academic profile first to activate matching.
+              </p>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await updateUserProfile({ hasSeenIntro: true });
+                    setShowIntroModal(false);
+                  } catch (e) {
+                    console.error(e);
+                  }
+                }}
+                className="w-full py-4 bg-[#0060ad] text-white rounded-full font-bold text-sm shadow-lg shadow-[#0060ad]/20 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer"
+              >
+                Continue to Profile
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Congrats Modal Pop-up */}
+      {showCongratsModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-[#dde9ff] space-y-6 text-center transform transition-all scale-100 relative">
+            <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500 text-3xl mx-auto">
+              🎉
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-3xl font-extrabold tracking-tight text-[#173355] font-headline">You are all set!</h3>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-600">Profile 100% Complete</p>
+            </div>
+            <p className="text-[#466084] text-sm leading-relaxed">
+              Awesome job! Your profile details are fully updated, which means your coordinate mappings and chancing criteria are now fully calibrated.
+            </p>
+            <p className="text-[#466084] text-sm leading-relaxed">
+              Let&apos;s go check out **My Schools** to run the matching engine and select target colleges!
+            </p>
+            <div className="pt-2 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCongratsModal(false);
+                  router.push("/schools");
+                }}
+                className="w-full py-4 bg-[#0060ad] text-white rounded-full font-bold text-sm shadow-lg shadow-[#0060ad]/20 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer"
+              >
+                Go to My Schools
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCongratsModal(false)}
+                className="w-full py-3 bg-transparent text-[#466084] hover:text-[#173355] rounded-full font-bold text-xs transition-all cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

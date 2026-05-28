@@ -35,6 +35,7 @@ export async function POST(req: Request) {
     ].join(",");
 
     let addedCount = 0;
+    const results: Array<{ originalId: string; scorecardId: string }> = [];
 
     // Process each target college
     for (const target of targets) {
@@ -54,7 +55,8 @@ export async function POST(req: Request) {
           const keyPrefix = isDemo ? "DEMO_KEY" : `${apiKey.substring(0, 4)}...`;
           return NextResponse.json({ 
             error: `Data.gov API Rate Limit Exceeded. You are currently using API Key: ${keyPrefix}. ${isDemo ? "The DEMO_KEY only allows 40 requests per hour." : "Your real key has hit its hourly limit."} Please check your GitHub Secrets and deployment status.`,
-            count: addedCount
+            count: addedCount,
+            results
           }, { status: 429 });
         }
         
@@ -62,7 +64,8 @@ export async function POST(req: Request) {
           console.error(`Data.gov API is DOWN (HTTP ${res.status})`);
           return NextResponse.json({ 
             error: `The U.S. Government Data.gov API is currently experiencing a nationwide outage (HTTP ${res.status}). Please try again later.`,
-            count: addedCount
+            count: addedCount,
+            results
           }, { status: 502 });
         }
         
@@ -117,6 +120,7 @@ export async function POST(req: Request) {
         const docRef = adminDb.collection("colleges").doc(String(school["id"]));
         await docRef.set(payload, { merge: true });
         addedCount++;
+        results.push({ originalId: target.id, scorecardId: String(school["id"]) });
         
         await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -125,7 +129,7 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, count: addedCount });
+    return NextResponse.json({ success: true, count: addedCount, results });
 
   } catch (error: unknown) {
     console.error(error);

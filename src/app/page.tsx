@@ -1,22 +1,28 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { ArrowRight } from "lucide-react";
 
 export default function LandingPage() {
-  const { user, signInWithGoogle, signInWithApple, loading } = useAuth();
+  const { user, profile, signInWithGoogle, signInWithApple, loading } = useAuth();
   const router = useRouter();
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
 
   const ALLOWED_EMAILS = ["andrei.dumuta@gmail.com", "sorin208@gmail.com"];
   const isAdmin = !!(user && user.email && ALLOWED_EMAILS.includes(user.email));
 
   useEffect(() => {
     if (user && !isAdmin) {
-      router.push("/home");
+      if (profile && profile.hasSeenIntro === false) {
+        router.push("/profile");
+      } else if (profile) {
+        router.push("/home");
+      }
     }
-  }, [user, isAdmin, router]);
+  }, [user, profile, isAdmin, router]);
 
   const handleSignInGoogle = async () => {
     try {
@@ -51,8 +57,9 @@ export default function LandingPage() {
 
       {/* Top Header */}
       <header className="max-w-6xl w-full mx-auto px-6 h-20 flex items-center justify-between z-10">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <span className="text-[#0060ad] font-extrabold italic text-2xl tracking-tight font-headline">Get in!</span>
+          <span className="bg-[#ffe087] text-[#745c00] text-[9px] font-black px-1.5 py-0.5 rounded tracking-wider uppercase font-headline">Beta</span>
         </div>
         {user && isAdmin && (
           <button 
@@ -104,16 +111,19 @@ export default function LandingPage() {
               <div className="space-y-3">
                 <button
                   onClick={() => router.push("/home")}
-                  className="w-full py-4 px-6 rounded-full font-bold bg-[#eff3ff] text-[#173355] hover:bg-[#e6eeff] transition-all flex items-center justify-between group"
+                  className="w-full py-4 px-6 rounded-full font-bold bg-gradient-to-r from-[#0060ad] to-[#9ac3ff] text-white hover:opacity-90 transition-all flex items-center justify-between group shadow-lg shadow-[#0060ad]/20"
                 >
-                  Enter Student Dashboard
+                  <div className="flex items-center gap-2">
+                    <span>Get in!</span>
+                    <span className="bg-[#ffe087] text-[#745c00] text-[9px] font-black px-1.5 py-0.5 rounded tracking-wider uppercase font-headline">Beta</span>
+                  </div>
                   <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
                 </button>
                 <button
                   onClick={() => router.push("/admin")}
-                  className="w-full py-4 px-6 rounded-full font-bold bg-gradient-to-r from-[#0060ad] to-[#9ac3ff] text-white hover:opacity-90 transition-all flex items-center justify-between group shadow-lg shadow-[#0060ad]/20"
+                  className="w-full py-4 px-6 rounded-full font-bold bg-[#eff3ff] text-[#173355] hover:bg-[#e6eeff] transition-all flex items-center justify-between group"
                 >
-                  Manage Database (Admin)
+                  <span>Manage Database (Admin)</span>
                   <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
@@ -127,12 +137,40 @@ export default function LandingPage() {
                 </p>
               </div>
 
+              {/* Consent & Age Gate Checkboxes */}
+              <div className="space-y-4 bg-[#eff3ff]/50 p-5 rounded-2xl border border-[#dde9ff]/50">
+                <label className="flex items-start gap-3 cursor-pointer text-[#466084] text-xs leading-relaxed select-none">
+                  <input
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                    className="w-4 h-4 mt-0.5 rounded text-[#0060ad] border-[#99b4dc] focus:ring-[#0060ad] cursor-pointer"
+                  />
+                  <span>
+                    I accept the <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-[#0060ad] font-bold hover:underline">Terms & Conditions</a> and consent to the anonymous compilation of my admission indicators.
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-3 cursor-pointer text-[#466084] text-xs leading-relaxed select-none">
+                  <input
+                    type="checkbox"
+                    checked={ageConfirmed}
+                    onChange={(e) => setAgeConfirmed(e.target.checked)}
+                    className="w-4 h-4 mt-0.5 rounded text-[#0060ad] border-[#99b4dc] focus:ring-[#0060ad] cursor-pointer"
+                  />
+                  <span>
+                    I certify that I am <strong>13 years of age or older</strong> (complying with online privacy guidelines).
+                  </span>
+                </label>
+              </div>
+
               {/* Action Buttons */}
               <div className="space-y-3">
                 {/* Google Login */}
                 <button
                   onClick={handleSignInGoogle}
-                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border border-[#99b4dc]/35 text-[#173355] rounded-full font-bold hover:bg-[#f8f9ff] active:scale-[0.98] transition-all"
+                  disabled={!termsAccepted || !ageConfirmed}
+                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border border-[#99b4dc]/35 text-[#173355] rounded-full font-bold hover:bg-[#f8f9ff] active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
                 >
                   <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
                   Sign in with Google
@@ -141,7 +179,8 @@ export default function LandingPage() {
                 {/* Apple Login */}
                 <button
                   onClick={handleSignInApple}
-                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-[#173355] text-white rounded-full font-bold hover:bg-[#020f1f] active:scale-[0.98] transition-all"
+                  disabled={!termsAccepted || !ageConfirmed}
+                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-[#173355] text-white rounded-full font-bold hover:bg-[#020f1f] active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
                 >
                   <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
                     <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.17c.66-.81 1.11-1.93.99-3.06-1 .04-2.21.67-2.93 1.49-.62.69-1.16 1.84-1.01 2.96 1.12.09 2.27-.57 2.95-1.39z"/>

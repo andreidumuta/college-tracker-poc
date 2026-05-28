@@ -35,7 +35,10 @@ export default function SchoolDetailPage() {
         const docRef = doc(db, "colleges", collegeId);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          setCollege(docSnap.data() as College);
+          const rawCol = docSnap.data() as College;
+          const city = rawCol.city || (rawCol.location && rawCol.location.includes(",") ? rawCol.location.split(",")[0].trim() : "");
+          const state = rawCol.state || (rawCol.location && rawCol.location.includes(",") ? rawCol.location.split(",")[1].trim() : rawCol.location || "");
+          setCollege({ ...rawCol, city, state });
         } else {
           console.error("College not found");
         }
@@ -106,12 +109,20 @@ export default function SchoolDetailPage() {
           <ArrowLeft className="w-4 h-4" />
           Back
         </button>
-        {trackedApp && (
-          <span className="bg-[#10b981]/15 text-[#10b981] font-bold text-xs px-4 py-1.5 rounded-full flex items-center gap-1.5">
-            <CheckCircle className="w-3.5 h-3.5" />
-            Tracked — {trackedApp.status}
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => router.push(`/chances?collegeId=${collegeId}`)}
+            className="bg-[#0060ad] text-[#f8f8ff] px-5 py-2.5 rounded-full text-xs font-bold transition-all shadow-md shadow-[#0060ad]/15 hover:scale-[1.02] active:scale-95 cursor-pointer"
+          >
+            See my match
+          </button>
+          {trackedApp && (
+            <span className="bg-[#10b981]/15 text-[#10b981] font-bold text-xs px-4 py-2.5 rounded-full flex items-center gap-1.5 shadow-sm">
+              <CheckCircle className="w-3.5 h-3.5" />
+              Tracked — {trackedApp.status}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Main Details Hero */}
@@ -158,10 +169,10 @@ export default function SchoolDetailPage() {
             <GraduationCap className="w-4 h-4 text-[#745c00]" />
           </div>
           <p className="text-4xl font-extrabold text-[#173355] font-headline">
-            {college.averageGpa ? college.averageGpa.toFixed(2) : "3.85 *"}
+            {college.averageGpa ? college.averageGpa.toFixed(2) : "N/A"}
           </p>
           <p className="text-xs text-[#466084]">
-            {college.averageGpa ? "Verified standard score." : "* Estimated average GPA."}
+            {college.averageGpa ? "Verified standard score." : "No published GPA data."}
           </p>
         </div>
 

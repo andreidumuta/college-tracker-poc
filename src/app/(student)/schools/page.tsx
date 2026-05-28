@@ -47,7 +47,10 @@ export default function SchoolsPage() {
         const querySnapshot = await getDocs(collection(db, "colleges"));
         const list: College[] = [];
         querySnapshot.forEach((doc) => {
-          list.push(doc.data() as College);
+          const rawCol = doc.data() as College;
+          const city = rawCol.city || (rawCol.location && rawCol.location.includes(",") ? rawCol.location.split(",")[0].trim() : "");
+          const state = rawCol.state || (rawCol.location && rawCol.location.includes(",") ? rawCol.location.split(",")[1].trim() : rawCol.location || "");
+          list.push({ ...rawCol, city, state });
         });
         list.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         setColleges(list);
@@ -145,7 +148,7 @@ export default function SchoolsPage() {
       {/* Header */}
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div className="max-w-xl space-y-4">
-          <h2 className="text-5xl font-extrabold tracking-tight text-[#173355] font-headline">Master Pipeline</h2>
+          <h2 className="text-5xl font-extrabold tracking-tight text-[#173355] font-headline">My Schools</h2>
           <p className="text-[#466084] text-lg leading-relaxed">
             Your journey to the ivy-covered halls is mapped here. Stay organized, stay inspired, and keep moving forward.
           </p>
@@ -255,14 +258,14 @@ export default function SchoolsPage() {
                 </div>
 
                 {/* status selectors / actions right */}
-                <div className="flex items-center gap-4 flex-wrap md:flex-nowrap">
+                <div className="flex items-end gap-4 flex-wrap md:flex-nowrap">
                   {/* Status Dropdown */}
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold uppercase tracking-wider text-[#466084] block">Change Status</label>
                     <select
                       value={app.status}
                       onChange={(e) => handleStatusChange(app.collegeId, e.target.value as ApplicationInfo["status"])}
-                      className="bg-white border-none rounded-xl px-4 py-2 text-xs font-bold text-[#173355] shadow-sm focus:ring-1 focus:ring-[#0060ad]"
+                      className="bg-white border-none rounded-xl px-4 py-2 text-xs font-bold text-[#173355] shadow-sm focus:ring-1 focus:ring-[#0060ad] h-10 w-36"
                     >
                       <option value="In Progress">In Progress</option>
                       <option value="Submitted">Submitted</option>
@@ -275,7 +278,7 @@ export default function SchoolsPage() {
                   <div className="flex gap-2 items-center pt-4 md:pt-0">
                     <Link
                       href={`/schools/${app.collegeId}`}
-                      className="h-10 px-4 bg-white hover:bg-[#eff3ff] text-[#0060ad] border border-[#dde9ff] rounded-xl flex items-center justify-center gap-1 text-xs font-bold transition-all"
+                      className="h-10 px-4 bg-white hover:bg-[#eff3ff] text-[#0060ad] border border-[#dde9ff] rounded-xl flex items-center justify-center gap-1 text-xs font-bold transition-all w-36"
                     >
                       Details
                       <ChevronRight className="w-4 h-4" />
@@ -388,7 +391,7 @@ export default function SchoolsPage() {
                   onClick={handleAddApp}
                   className="w-full py-4 bg-[#0060ad] text-white rounded-full font-bold text-sm shadow-lg shadow-[#0060ad]/20 hover:opacity-95 transition-all cursor-pointer"
                 >
-                  Add to Master&apos;s Pipeline
+                  Add to My Schools
                 </button>
               </div>
             )}

@@ -27,9 +27,9 @@ export async function POST(req: Request) {
     while (retries > 0) {
       try {
         response = await ai.models.generateContent({
-          model: "gemini-2.5-flash",
+          model: "gemini-3.5-flash",
           contents: [
-            `You are a college admissions expert. Search the web for the most accurate and up-to-date admissions data for ${collegeName} for students applying to start college in Fall 2027 (this means application deadlines are typically in late 2026 or early 2027). Find their exact Need-Blind policy, whether they offer early admission, their application deadlines for the Fall 2027 cycle, and their average admitted student GPA.
+            `You are a college admissions expert. Search the web for the most accurate and up-to-date admissions data for ${collegeName} for students applying to start college in Fall 2027 (this means application deadlines are typically in late 2026 or early 2027). Find their exact Need-Blind policy, whether they offer early admission, their application deadlines for the Fall 2027 cycle, and their average admitted student weighted GPA.
             
             CRITICAL INSTRUCTION: Since Fall 2027 dates might not be officially published yet, you may need to project them based on historical Fall 2026 dates (e.g., if it is always Nov 1, project Nov 1, 2026). If you are projecting dates based on historical patterns rather than finding an explicitly announced Fall 2027 date, you MUST set "isEstimatedDeadlines" to true.
             
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
               "earlyAction": string or null (The exact EA deadline date including the year, e.g. "Nov 1, 2026". Return null if not offered),
               "regularDecision": string (The exact RD deadline date including the year, e.g. "Jan 1, 2027". Return "Not published" if explicitly unknown),
               "rolling": boolean or null (True if they offer rolling admissions, false otherwise),
-              "averageGpa": number or null (e.g. 3.9, use null if not published)
+              "averageGpa": number or null (Provide the weighted average GPA only, e.g. 4.15. If the weighted GPA is not published or unavailable, use null. Do not return unweighted GPA here.)
             }`
           ],
           config: {
@@ -77,6 +77,13 @@ export async function POST(req: Request) {
 
     // Clean up potential markdown formatting just in case
     resultText = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+    // Robust JSON block extraction
+    const startIdx = resultText.indexOf('{');
+    const endIdx = resultText.lastIndexOf('}');
+    if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+      resultText = resultText.substring(startIdx, endIdx + 1);
+    }
 
     const data = JSON.parse(resultText);
     return NextResponse.json(data);

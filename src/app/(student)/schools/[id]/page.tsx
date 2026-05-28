@@ -101,25 +101,25 @@ export default function SchoolDetailPage() {
   return (
     <div className="space-y-10">
       {/* Top action header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <button 
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-sm font-bold text-[#0060ad] hover:underline cursor-pointer"
+          className="flex items-center gap-2 text-sm font-bold text-[#0060ad] hover:underline cursor-pointer w-fit"
         >
           <ArrowLeft className="w-4 h-4" />
           Back
         </button>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() => router.push(`/chances?collegeId=${collegeId}`)}
-            className="bg-[#0060ad] text-[#f8f8ff] px-5 py-2.5 rounded-full text-xs font-bold transition-all shadow-md shadow-[#0060ad]/15 hover:scale-[1.02] active:scale-95 cursor-pointer"
+            className="bg-[#0060ad] text-[#f8f8ff] px-5 h-10 rounded-full text-xs font-bold transition-all shadow-md shadow-[#0060ad]/15 hover:scale-[1.02] active:scale-95 cursor-pointer flex items-center justify-center"
           >
             See my match
           </button>
           {trackedApp && (
-            <span className="bg-[#10b981]/15 text-[#10b981] font-bold text-xs px-4 py-2.5 rounded-full flex items-center gap-1.5 shadow-sm">
-              <CheckCircle className="w-3.5 h-3.5" />
-              Tracked — {trackedApp.status}
+            <span className="bg-[#10b981]/15 text-[#10b981] font-bold text-xs px-5 h-10 rounded-full flex items-center justify-center gap-1.5 shadow-sm">
+              <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>Tracked – {trackedApp.status === "inProgress" ? "In Progress" : trackedApp.status.charAt(0).toUpperCase() + trackedApp.status.slice(1)}</span>
             </span>
           )}
         </div>

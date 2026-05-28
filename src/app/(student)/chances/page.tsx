@@ -813,11 +813,11 @@ export default function ChancesPage() {
                 <div className="flex gap-4 text-[10px] font-bold uppercase tracking-wider flex-wrap">
                   <div className="flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#0060ad]"></span> 
-                    Actual participants
+                    Real Applicants
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#9ac3ff] opacity-60"></span> 
-                    Peer forecast
+                    Projected applicants
                   </div>
                   <div className="flex items-center gap-1.5"><span className="w-4 h-0.5 bg-emerald-500/60"></span> Target Avg (Last Year)</div>
                 </div>
@@ -881,7 +881,7 @@ export default function ChancesPage() {
                         pt.status === "Forecast" ? "bg-[#9ac3ff] opacity-60" : "bg-[#0060ad]"
                       }`}
                       style={{ bottom: style.bottom, left: style.left }}
-                      title={`${pt.status === "Forecast" ? "Forecast Peer" : "Actual Peer"} GPA: ${pt.gpa} / SAT: ${pt.sat}`}
+                      title={`${pt.status === "Forecast" ? "Projected Applicant" : "Real Applicant"} GPA: ${pt.gpa} / SAT: ${pt.sat}`}
                     />
                   );
                 })}

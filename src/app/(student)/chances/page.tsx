@@ -86,6 +86,21 @@ const getSatMidpoint = (range: string): number => {
   if (range === "1000-1199") return 1100;
   return 1000;
 };
+const getStudentSatMidpoint = (profile: UserProfile): number => {
+  if (profile.satScore && profile.satScore !== "NA") {
+    if (profile.satScore === "1450-1600") return 1525;
+    if (profile.satScore === "1300-1449") return 1375;
+    if (profile.satScore === "1200-1299") return 1250;
+    if (profile.satScore === "1000-1199") return 1100;
+  }
+  if (profile.actScore && profile.actScore !== "NA") {
+    if (profile.actScore === "33-36") return 1525;
+    if (profile.actScore === "28-32") return 1370;
+    if (profile.actScore === "25-27") return 1210;
+    if (profile.actScore === "19-24") return 1060;
+  }
+  return 1200; // default midpoint fallback if missing entirely
+};
 const getNormalizedCollegeGpa = (col: College): number | null => {
   if (col.averageGpa !== null && col.averageGpa !== undefined) {
     return col.averageGpa;
@@ -138,39 +153,6 @@ const getCoordinates = (gpa: number, sat: number) => {
   const x = Math.min(100, Math.max(0, ((sat - leftMinSat) / (rightMaxSat - leftMinSat)) * 100));
 
   return { bottom: `${y}%`, left: `${x}%` };
-};
-
-const getSatRangeBounds = (satRange: string): { min: number; max: number } | null => {
-  if (satRange === "1450-1600") return { min: 1450, max: 1600 };
-  if (satRange === "1300-1449") return { min: 1300, max: 1449 };
-  if (satRange === "1200-1299") return { min: 1200, max: 1299 };
-  if (satRange === "1000-1199") return { min: 1000, max: 1199 };
-  return null;
-};
-
-const getActToSatRangeBounds = (actRange: string): { min: number; max: number } | null => {
-  if (actRange === "33-36") return { min: 1450, max: 1600 };
-  if (actRange === "28-32") return { min: 1300, max: 1449 };
-  if (actRange === "25-27") return { min: 1200, max: 1299 };
-  if (actRange === "19-24") return { min: 1000, max: 1199 };
-  return null;
-};
-
-const getColMidSat = (col: College): number => {
-  const p25 = (col.testScores?.satMath?.p25 || 0) + (col.testScores?.satReading?.p25 || 0);
-  const p75 = (col.testScores?.satMath?.p75 || 0) + (col.testScores?.satReading?.p75 || 0);
-  if (p25 && p75) return Math.round((p25 + p75) / 2);
-  const mid = (col.testScores?.satMath?.mid || 0) + (col.testScores?.satReading?.mid || 0);
-  if (mid) return mid;
-  const actMid = col.testScores?.actComposite?.mid || 0;
-  if (actMid) {
-    if (actMid >= 33) return 1525;
-    if (actMid >= 28) return 1370;
-    if (actMid >= 25) return 1210;
-    if (actMid >= 19) return 1060;
-    return 900;
-  }
-  return 1200; // default midpoint fallback if missing entirely
 };
 
 export default function ChancesPage() {
@@ -297,91 +279,163 @@ export default function ChancesPage() {
     if (!profile) return;
 
     const studGpa = profile.gpa4 || (profile.gpa5 ? Math.min(4.0, parseFloat((profile.gpa5 * 0.8).toFixed(2))) : 0);
-    const bounds = profile.satScore && profile.satScore !== "NA"
-      ? getSatRangeBounds(profile.satScore)
-      : (profile.actScore && profile.actScore !== "NA" ? getActToSatRangeBounds(profile.actScore) : null);
+    const studSat = getStudentSatMidpoint(profile);
 
     const homeState = profile.zipCode ? getStateFromZip(profile.zipCode) : "";
     const pref = profile.applyStatePreference || "Both";
+    
+    // Parse OOS states considered
+    const oosStatesList = profile.oosStatesConsidered
+      ? profile.oosStatesConsidered.split(",").map(s => s.trim().toUpperCase()).filter(Boolean)
+      : [];
 
-    const getColGpa = (col: College) => getNormalizedCollegeGpa(col) || 3.85;
+    // Helper to get likelihood for a college
+    const getColLikelihood = (col: College): "Safety" | "Match" | "Reach" => {
+      const colGpa = getNormalizedCollegeGpa(col);
+      const p25SatMath = col.testScores?.satMath?.p25 || 650;
+      const p25SatRead = col.testScores?.satReading?.p25 || 650;
+      const col25Sat = p25SatMath + p25SatRead;
+      const col75Sat = col25Sat + 100;
 
-    const getMatchTier = (col: College): number => {
-      const colGpa = getColGpa(col);
-      const colMidSat = getColMidSat(col);
-      
-      const gpaDist = Math.abs(colGpa - studGpa);
-      let satDist = 0;
-      if (bounds) {
-        if (colMidSat < bounds.min) {
-          satDist = bounds.min - colMidSat;
-        } else if (colMidSat > bounds.max) {
-          satDist = colMidSat - bounds.max;
+      if (colGpa === null || colGpa === undefined) {
+        if (studSat >= col75Sat) return "Safety";
+        if (studSat >= col25Sat - 100) return "Match";
+        return "Reach";
+      }
+
+      if (studGpa >= colGpa + 0.1 && studSat >= col75Sat) return "Safety";
+      if (studGpa >= colGpa - 0.2 && studSat >= col25Sat - 100) return "Match";
+      return "Reach";
+    };
+
+    // Classify all colleges into Safety/Match (Primary) or Reach (Fallback)
+    // and partition geographically
+    const inStatePrimary: College[] = [];
+    const inStateFallback: College[] = [];
+    const oosPreferredPrimary: College[] = [];
+    const oosPreferredFallback: College[] = [];
+    const oosOtherPrimary: College[] = [];
+    const oosOtherFallback: College[] = [];
+
+    colleges.forEach(col => {
+      const isIS = homeState && (col.state || "").toUpperCase() === homeState.toUpperCase();
+      const isOosPref = oosStatesList.includes((col.state || "").toUpperCase());
+      const likelihood = getColLikelihood(col);
+
+      if (isIS) {
+        if (likelihood === "Safety" || likelihood === "Match") {
+          inStatePrimary.push(col);
+        } else {
+          inStateFallback.push(col);
+        }
+      } else {
+        if (likelihood === "Safety" || likelihood === "Match") {
+          if (isOosPref) {
+            oosPreferredPrimary.push(col);
+          } else {
+            oosOtherPrimary.push(col);
+          }
+        } else {
+          if (isOosPref) {
+            oosPreferredFallback.push(col);
+          } else {
+            oosOtherFallback.push(col);
+          }
         }
       }
+    });
 
-      if (gpaDist <= 0.2 && satDist === 0) return 1; // Tier 1: +/- 0.2 GPA and in SAT range
-      if (gpaDist <= 0.4 && satDist === 0) return 2; // Tier 2: Exact SAT, Close GPA
-      if (gpaDist <= 0.2 && satDist <= 100) return 3; // Tier 3: Perfect GPA, Close SAT
-      if (gpaDist <= 0.4 && satDist <= 100) return 4; // Tier 4: Close GPA, Close SAT
-      return 5; // Tier 5: Fallback
-    };
+    // Shuffle helper to introduce variety
+    const shuffle = <T,>(arr: T[]): T[] => [...arr].sort(() => 0.5 - Math.random());
 
-    // Sorting helper that groups by tier, shuffles within tier, and returns the sorted list
-    const sortColleges = (list: College[]): College[] => {
-      const tiers: Record<number, College[]> = { 1: [], 2: [], 3: [], 4: [], 5: [] };
-      for (const col of list) {
-        const tier = getMatchTier(col);
-        tiers[tier].push(col);
-      }
-      
-      const result: College[] = [];
-      for (let t = 1; t <= 5; t++) {
-        const shuffledTier = [...tiers[t]].sort(() => 0.5 - Math.random());
-        result.push(...shuffledTier);
-      }
-      return result;
-    };
+    const shufISPrimary = shuffle(inStatePrimary);
+    const shufISFallback = shuffle(inStateFallback);
+    const shufOosPrefPrimary = shuffle(oosPreferredPrimary);
+    const shufOosOtherPrimary = shuffle(oosOtherPrimary);
+    const shufOosPrefFallback = shuffle(oosPreferredFallback);
+    const shufOosOtherFallback = shuffle(oosOtherFallback);
 
     const selected: College[] = [];
 
-    // Separate in-state and out-of-state pools
-    const inStateColleges = colleges.filter(c => homeState && (c.state || "").toUpperCase() === homeState.toUpperCase());
-    const oosColleges = colleges.filter(c => !homeState || (c.state || "").toUpperCase() !== homeState.toUpperCase());
-
-    const sortedInState = sortColleges(inStateColleges);
-    const sortedOos = sortColleges(oosColleges);
-
-    if (pref === "Both" && homeState) {
-      // Pick 1 in-state
-      if (sortedInState.length > 0) {
-        selected.push(...sortedInState.slice(0, 1));
-      }
-
-      // Pick up to 4 out-of-state
-      const oosNeeded = 5 - selected.length;
-      if (sortedOos.length > 0) {
-        selected.push(...sortedOos.slice(0, oosNeeded));
-      }
-
-      // If we still don't have 5, backfill with remaining in-state
-      if (selected.length < 5 && sortedInState.length > 0) {
-        const remainingInState = sortedInState.filter(c => !selected.some(s => s.id === c.id));
+    if (pref === "In-state") {
+      // Pick up to 5 in-state primary
+      selected.push(...shufISPrimary.slice(0, 5));
+      // Backfill with in-state fallback (Reach)
+      if (selected.length < 5) {
         const needed = 5 - selected.length;
-        selected.push(...remainingInState.slice(0, needed));
+        selected.push(...shufISFallback.slice(0, needed));
       }
-    } else if (pref === "In-state" && homeState) {
-      selected.push(...sortedInState.slice(0, 5));
-    } else if (pref === "Out of state" && homeState) {
-      selected.push(...sortedOos.slice(0, 5));
+    } else if (pref === "Out of state") {
+      // Pick up to 5 OOS preferred primary
+      selected.push(...shufOosPrefPrimary.slice(0, 5));
+      // Backfill with OOS other primary
+      if (selected.length < 5) {
+        const needed = 5 - selected.length;
+        selected.push(...shufOosOtherPrimary.slice(0, needed));
+      }
+      // Backfill with OOS preferred fallback (Reach)
+      if (selected.length < 5) {
+        const needed = 5 - selected.length;
+        selected.push(...shufOosPrefFallback.slice(0, needed));
+      }
+      // Backfill with OOS other fallback (Reach)
+      if (selected.length < 5) {
+        const needed = 5 - selected.length;
+        selected.push(...shufOosOtherFallback.slice(0, needed));
+      }
+    } else { // "Both" or default fallback
+      // 1. First, pick 1 In-state (prioritizing Primary, then Fallback)
+      let selectedIS: College | null = null;
+      if (shufISPrimary.length > 0) {
+        selectedIS = shufISPrimary[0];
+      } else if (shufISFallback.length > 0) {
+        selectedIS = shufISFallback[0];
+      }
+      if (selectedIS) {
+        selected.push(selectedIS);
+      }
+
+      // 2. Pick remaining up to 5 from OOS preferred primary
+      let oosNeeded = 5 - selected.length;
+      selected.push(...shufOosPrefPrimary.slice(0, oosNeeded));
+
+      // 3. Backfill with OOS other primary
+      if (selected.length < 5) {
+        oosNeeded = 5 - selected.length;
+        selected.push(...shufOosOtherPrimary.slice(0, oosNeeded));
+      }
+
+      // 4. Backfill with OOS preferred fallback (Reach)
+      if (selected.length < 5) {
+        oosNeeded = 5 - selected.length;
+        selected.push(...shufOosPrefFallback.slice(0, oosNeeded));
+      }
+
+      // 5. Backfill with OOS other fallback (Reach)
+      if (selected.length < 5) {
+        oosNeeded = 5 - selected.length;
+        selected.push(...shufOosOtherFallback.slice(0, oosNeeded));
+      }
+
+      // 6. Backfill with any remaining in-state primary/fallback if we still don't have 5
+      if (selected.length < 5) {
+        const remainingISPrimary = shufISPrimary.filter(c => !selected.some(s => s.id === c.id));
+        const needed = 5 - selected.length;
+        selected.push(...remainingISPrimary.slice(0, needed));
+      }
+      if (selected.length < 5) {
+        const remainingISFallback = shufISFallback.filter(c => !selected.some(s => s.id === c.id));
+        const needed = 5 - selected.length;
+        selected.push(...remainingISFallback.slice(0, needed));
+      }
     }
 
-    // General fallback: if still less than 5, backfill from all colleges in database
+    // Final general backfill just in case the pool is extremely small
     if (selected.length < 5) {
-      const remainingColColleges = colleges.filter(c => !selected.some(s => s.id === c.id));
-      const sortedRemaining = sortColleges(remainingColColleges);
+      const allShuffled = shuffle(colleges);
+      const remaining = allShuffled.filter(c => !selected.some(s => s.id === c.id));
       const needed = 5 - selected.length;
-      selected.push(...sortedRemaining.slice(0, needed));
+      selected.push(...remaining.slice(0, needed));
     }
 
     const finalSelected = selected.slice(0, 5);
@@ -446,7 +500,7 @@ export default function ChancesPage() {
     }
 
     const studGpa = profile.gpa4 || (profile.gpa5 ? Math.min(4.0, parseFloat((profile.gpa5 * 0.8).toFixed(2))) : 0);
-    const studSat = profile.satScore ? getSatMidpoint(profile.satScore) : 0;
+    const studSat = getStudentSatMidpoint(profile);
 
     const colGpa = getNormalizedCollegeGpa(selectedCollege);
     const p25SatMath = selectedCollege.testScores?.satMath?.p25 || 650;
@@ -461,7 +515,7 @@ export default function ChancesPage() {
           percentage: 85,
           text: "Your test scores are significantly above target averages. Your personal supplements are key."
         };
-      } else if (studSat >= col25Sat - 50) {
+      } else if (studSat >= col25Sat - 100) {
         return {
           category: "Match",
           percentage: 60,
@@ -482,7 +536,7 @@ export default function ChancesPage() {
         percentage: 85,
         text: "Your academic profile is significantly above the historical averages. Highlight your personal fit."
       };
-    } else if (studGpa >= colGpa - 0.15 && studSat >= col25Sat - 50) {
+    } else if (studGpa >= colGpa - 0.2 && studSat >= col25Sat - 100) {
       return {
         category: "Match",
         percentage: 60,
@@ -909,7 +963,7 @@ export default function ChancesPage() {
                 {(profile?.gpa4 || profile?.gpa5) && profile?.satScore && profile?.satScore !== "NA" && (
                   <div 
                     className="absolute w-10 h-10 -translate-x-1/2 translate-y-1/2 flex items-center justify-center z-20"
-                    style={getCoordinates(profile.gpa4 || (profile.gpa5 ? Math.min(4.0, parseFloat((profile.gpa5 * 0.8).toFixed(2))) : 0), getSatMidpoint(profile.satScore))}
+                    style={getCoordinates(profile.gpa4 || (profile.gpa5 ? Math.min(4.0, parseFloat((profile.gpa5 * 0.8).toFixed(2))) : 0), getStudentSatMidpoint(profile))}
                   >
                     <div className="absolute inset-0 bg-[#ffe087] rounded-full animate-ping opacity-35" />
                     <div className="w-7 h-7 bg-[#ffe087] rounded-full flex items-center justify-center text-[#745c00] shadow-lg border-2 border-white">
@@ -975,8 +1029,22 @@ export default function ChancesPage() {
                   {/* SAT comparison */}
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="text-[10px] font-bold text-[#466084] uppercase">Your SAT Range</p>
-                      <p className="text-base font-bold font-headline">{profile?.satScore || "N/A"}</p>
+                      {profile?.satScore && profile.satScore !== "NA" ? (
+                        <>
+                          <p className="text-[10px] font-bold text-[#466084] uppercase">Your SAT Range</p>
+                          <p className="text-base font-bold font-headline">{profile.satScore}</p>
+                        </>
+                      ) : profile?.actScore && profile.actScore !== "NA" ? (
+                        <>
+                          <p className="text-[10px] font-bold text-[#466084] uppercase">Your ACT Range</p>
+                          <p className="text-base font-bold font-headline">{profile.actScore}</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-[10px] font-bold text-[#466084] uppercase">Your SAT Range</p>
+                          <p className="text-base font-bold font-headline">N/A</p>
+                        </>
+                      )}
                     </div>
                     <div className="text-right">
                       <p className="text-[10px] font-bold text-[#466084] uppercase">Midpoint SAT</p>

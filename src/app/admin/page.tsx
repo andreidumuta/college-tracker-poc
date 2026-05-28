@@ -223,12 +223,17 @@ export default function AdminDashboard() {
     }
 
     setResearchingId(college.id);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 35000); // 35 seconds timeout
+
     try {
       const res = await fetch("/api/research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ collegeName: college.name, target }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
       
       if (!res.ok) throw new Error("Research failed");
       const data = await res.json();
@@ -282,6 +287,7 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error("Error researching college:", error);
     } finally {
+      clearTimeout(timeoutId);
       setResearchingId(null);
     }
   };

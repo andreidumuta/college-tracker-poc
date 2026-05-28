@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 
-// Helper function to query Gemini with retry logic and exponential backoff
+// Helper function to query Gemini with retry logic, exponential backoff, and a timeout
 async function queryGemini(ai: GoogleGenAI, prompt: string) {
   let response;
   let retries = 3;
@@ -9,7 +9,7 @@ async function queryGemini(ai: GoogleGenAI, prompt: string) {
   
   while (retries > 0) {
     try {
-      response = await ai.models.generateContent({
+      const callPromise = ai.models.generateContent({
         model: "gemini-3.5-flash",
         contents: [prompt],
         config: {
@@ -17,6 +17,12 @@ async function queryGemini(ai: GoogleGenAI, prompt: string) {
           temperature: 0.1, // Keep it deterministic
         }
       });
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Gemini request timed out")), 25000) // 25 seconds timeout
+      );
+
+      response = await Promise.race([callPromise, timeoutPromise]);
       break; // Exit loop on success
     } catch (err: unknown) {
       const errorStatus = (err as { status?: number }).status;

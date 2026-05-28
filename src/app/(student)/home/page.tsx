@@ -92,8 +92,10 @@ export default function HomeDashboard() {
 
   // Compute upcoming deadlines calendar events directly in render (derived state)
   const upcomingEvents: CalendarEvent[] = [];
-  if (applications.length > 0 && colleges.length > 0) {
-    applications.forEach((app) => {
+  const inProgressApps = applications.filter((a) => a.status === "In Progress");
+
+  if (inProgressApps.length > 0 && colleges.length > 0) {
+    inProgressApps.forEach((app) => {
       const col = colleges.find((c) => c.id === app.collegeId);
       if (col && col.deadlines) {
         const earliest = getEarliestDeadline(col.deadlines);
@@ -228,20 +230,37 @@ export default function HomeDashboard() {
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
-              ) : (
+              ) : inProgressApps.length > 0 ? (
                 /* Displays next upcoming deadline details */
                 <div className="space-y-4">
                   <h3 className="text-3xl font-bold font-headline text-[#173355]">
-                    Submit your application for {upcomingEvents[0]?.collegeName || applications[0]?.collegeName}
+                    Submit your application for {upcomingEvents[0]?.collegeName}
                   </h3>
                   <p className="text-[#466084] leading-relaxed">
-                    The {upcomingEvents[0]?.deadlineType || applications[0]?.deadlineType} deadline is approaching. Ensure your essay prompts and portfolios are locked in.
+                    The {upcomingEvents[0]?.deadlineType} deadline is approaching. Ensure your essay prompts and portfolios are locked in.
                   </p>
                   <Link
-                    href={`/schools/${upcomingEvents[0]?.collegeId || applications[0]?.collegeId}`}
+                    href={`/schools/${upcomingEvents[0]?.collegeId}`}
                     className="bg-[#0060ad] text-white font-bold px-8 py-4 rounded-full flex items-center justify-center gap-2 hover:opacity-95 transition-all w-fit shadow-md shadow-[#0060ad]/15 text-sm"
                   >
                     Review School details
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              ) : (
+                /* All tracked applications are submitted/completed */
+                <div className="space-y-4">
+                  <h3 className="text-3xl font-bold font-headline text-[#173355]">
+                    You are on top of your list!
+                  </h3>
+                  <p className="text-[#466084] leading-relaxed">
+                    All your tracked applications have been submitted. Keep tracking admission decisions and update statuses in your pipeline.
+                  </p>
+                  <Link
+                    href="/schools"
+                    className="bg-[#0060ad] text-white font-bold px-8 py-4 rounded-full flex items-center justify-center gap-2 hover:opacity-95 transition-all w-fit shadow-md shadow-[#0060ad]/15 text-sm"
+                  >
+                    View My Schools
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>

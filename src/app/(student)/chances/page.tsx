@@ -412,12 +412,12 @@ export default function ChancesPage() {
           }
         });
 
+        let finalPoints = [...points];
         if (points.length < 5) {
           const mockPoints = generateMockPeers(selectedCollege);
-          setPeerPoints(mockPoints);
-        } else {
-          setPeerPoints(points);
+          finalPoints = [...finalPoints, ...mockPoints];
         }
+        setPeerPoints(finalPoints);
       } catch (err) {
         console.error("Error fetching peer data:", err);
       }
@@ -498,7 +498,7 @@ export default function ChancesPage() {
     ? selectedCollege.testScores.satMath.mid + selectedCollege.testScores.satReading.mid
     : Math.round((col25Sat + col75Sat) / 2);
 
-  const isForecast = peerPoints.length > 0 && peerPoints[0].status === "Forecast";
+
 
   return (
     <div className="space-y-12">
@@ -810,18 +810,15 @@ export default function ChancesPage() {
                   <h3 className="text-xl font-bold font-headline text-[#173355]">Admissions Scatterplot</h3>
                   <p className="text-xs text-[#466084]">GPA vs. SAT Performance (Aggregated Class data)</p>
                 </div>
-                 <div className="flex gap-4 text-[10px] font-bold uppercase tracking-wider flex-wrap">
-                  {isForecast ? (
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#9ac3ff] opacity-60"></span> 
-                      Peer forecast
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#0060ad]"></span> 
-                      Actual participants
-                    </div>
-                  )}
+                <div className="flex gap-4 text-[10px] font-bold uppercase tracking-wider flex-wrap">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#0060ad]"></span> 
+                    Actual participants
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#9ac3ff] opacity-60"></span> 
+                    Peer forecast
+                  </div>
                   <div className="flex items-center gap-1.5"><span className="w-4 h-0.5 bg-emerald-500/60"></span> Target Avg (Last Year)</div>
                 </div>
               </div>

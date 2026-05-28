@@ -269,6 +269,9 @@ export default function ProfilePage() {
   ];
 
   const checkFieldCompleted = (key: keyof UserProfile): boolean => {
+    if (key === "isFirstGen" || key === "isUrm" || key === "isLegacy") {
+      return true; // Booleans default to No (false) and are always completed
+    }
     const val = getVal(key);
     return val !== undefined && val !== null && val !== "";
   };
@@ -316,6 +319,9 @@ export default function ProfilePage() {
     setShowErrors(false);
     try {
       const finalPayload = {
+        isFirstGen: profile?.isFirstGen ?? false,
+        isUrm: profile?.isUrm ?? false,
+        isLegacy: profile?.isLegacy ?? false,
         ...profile,
         ...dirtyData,
       };

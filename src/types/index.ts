@@ -83,6 +83,7 @@ export interface UserProfile {
   actScore?: '33-36' | '28-32' | '25-27' | '19-24' | 'NA'; // Question 16
 
   mySchools?: string[]; // Array of college IDs
+  matchedSchoolIds?: string[]; // Array of matched college IDs from recommendation engine
   profileCompleteness?: number; // 0-100 percentage
   hasSeenIntro?: boolean;
   hasSeenCongrats?: boolean;

@@ -6,7 +6,7 @@ import { listenToApplications, addApplication, ApplicationInfo } from "@/lib/use
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { College, UserProfile } from "@/types";
-import { Sparkles, User, BarChart2, Search, Plus, Check, ChevronDown } from "lucide-react";
+import { Sparkles, User, BarChart2, Search, Plus, Check, ChevronDown, AlertTriangle } from "lucide-react";
 
 interface PeerPoint {
   gpa: number;
@@ -174,7 +174,7 @@ const getColMidSat = (col: College): number => {
 };
 
 export default function ChancesPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, updateUserProfile } = useAuth();
   const [trackedSchools, setTrackedSchools] = useState<ApplicationInfo[]>([]);
   const [colleges, setColleges] = useState<College[]>([]);
   const [selectedCollegeId, setSelectedCollegeId] = useState<string>(() => {
@@ -190,6 +190,7 @@ export default function ChancesPage() {
   const [isMySchoolsDropdownOpen, setIsMySchoolsDropdownOpen] = useState(false);
   const [matchedSchools, setMatchedSchools] = useState<College[]>([]);
   const [hasMatched, setHasMatched] = useState(false);
+  const [showReMatchConfirmModal, setShowReMatchConfirmModal] = useState(false);
 
   // Derived state to determine the active college ID to show (prioritizing user selection, then first tracked school, then first database school)
   const activeCollegeId = selectedCollegeId || (trackedSchools.length > 0 ? trackedSchools[0].collegeId : (colleges.length > 0 ? colleges[0].id : ""));
@@ -250,31 +251,30 @@ export default function ChancesPage() {
     fetchAllColleges();
   }, []);
 
-  // Load cached Match Me results on mount / user change
+  // Load Match Me results from user profile in Firestore
   useEffect(() => {
-    const loadCache = () => {
+    const syncWithDb = () => {
       if (!user) {
         setMatchedSchools([]);
         setHasMatched(false);
         return;
       }
-      const cachedSchools = localStorage.getItem(`matched_schools_${user.uid}`);
-      const cachedHasMatched = localStorage.getItem(`has_matched_${user.uid}`);
-      if (cachedSchools && cachedHasMatched === "true") {
-        try {
-          setMatchedSchools(JSON.parse(cachedSchools));
-          setHasMatched(true);
-        } catch (e) {
-          console.error("Error parsing cached matched schools:", e);
-        }
+
+      if (profile?.matchedSchoolIds && profile.matchedSchoolIds.length > 0 && colleges.length > 0) {
+        const matched = profile.matchedSchoolIds
+          .map((id) => colleges.find((c) => c.id === id))
+          .filter((c): c is College => !!c);
+        
+        setMatchedSchools(matched);
+        setHasMatched(true);
       } else {
         setMatchedSchools([]);
         setHasMatched(false);
       }
     };
-    const timer = setTimeout(loadCache, 0);
+    const timer = setTimeout(syncWithDb, 0);
     return () => clearTimeout(timer);
-  }, [user]);
+  }, [profile?.matchedSchoolIds, colleges, user]);
 
   const handleTrackSchool = async () => {
     if (!user || !selectedCollege) return;
@@ -389,9 +389,12 @@ export default function ChancesPage() {
     setMatchedSchools(finalSelected);
     setHasMatched(true);
 
-    if (user) {
-      localStorage.setItem(`matched_schools_${user.uid}`, JSON.stringify(finalSelected));
-      localStorage.setItem(`has_matched_${user.uid}`, "true");
+    if (user && updateUserProfile) {
+      updateUserProfile({
+        matchedSchoolIds: finalSelected.map((c) => c.id),
+      }).catch((err) => {
+        console.error("Error saving matched school IDs to Firestore:", err);
+      });
     }
   };
 
@@ -608,9 +611,7 @@ export default function ChancesPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (confirm("Re-matching will generate a new list of colleges. Previously recommended schools will disappear from this tab if you have not added them to My Schools. Do you want to continue?")) {
-                        handleMatchMe();
-                      }
+                      setShowReMatchConfirmModal(true);
                     }}
                     className="bg-[#ffe087] text-[#745c00] hover:scale-[1.02] active:scale-95 px-5 py-2.5 rounded-full font-bold text-xs shadow-md shadow-[#ffe087]/20 transition-all cursor-pointer flex-shrink-0"
                   >
@@ -1008,6 +1009,43 @@ export default function ChancesPage() {
               </p>
             </div>
           </section>
+        </div>
+      )}
+
+      {/* Re-Match Confirmation Modal */}
+      {showReMatchConfirmModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-[#dde9ff] space-y-6 text-center transform transition-all scale-100 relative">
+            <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center text-amber-500 mx-auto">
+              <AlertTriangle className="w-8 h-8" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-3xl font-extrabold tracking-tight text-[#173355] font-headline">Re-match Colleges?</h3>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600">Generate New List</p>
+            </div>
+            <p className="text-[#466084] text-sm leading-relaxed">
+              Re-matching will generate a new list of colleges. Previously recommended schools will disappear from this tab if you have not added them to My Schools. Do you want to continue?
+            </p>
+            <div className="pt-2 flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowReMatchConfirmModal(false);
+                  handleMatchMe();
+                }}
+                className="flex-1 py-4 bg-[#0060ad] text-white rounded-full font-bold text-sm shadow-lg shadow-[#0060ad]/20 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer"
+              >
+                Yes, Continue
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowReMatchConfirmModal(false)}
+                className="flex-1 py-4 bg-[#eff3ff] text-[#173355] hover:bg-[#dde9ff] rounded-full font-bold text-sm transition-all cursor-pointer"
+              >
+                No, Go Back
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -618,7 +618,7 @@ export default function ChancesPage() {
                   </button>
                 </div>
 
-                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                <div className="space-y-3">
                   {matchedSchools.map((col) => {
                     const isTracked = trackedSchools.some(s => s.collegeId === col.id);
                     return (

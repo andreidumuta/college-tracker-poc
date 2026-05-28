@@ -85,6 +85,7 @@ export interface UserProfile {
   mySchools?: string[]; // Array of college IDs
   profileCompleteness?: number; // 0-100 percentage
   hasSeenIntro?: boolean;
+  hasSeenCongrats?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

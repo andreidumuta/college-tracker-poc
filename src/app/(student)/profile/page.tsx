@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { UserProfile } from "@/types";
-import { User, School, Sparkles, Check, ChevronDown } from "lucide-react";
+import { User, School, Sparkles, Check, ChevronDown, AlertTriangle } from "lucide-react";
 
 interface CustomSelectProps {
   value: string;
@@ -136,6 +136,98 @@ export default function ProfilePage() {
   const [showErrors, setShowErrors] = useState(false);
   const [showIntroModal, setShowIntroModal] = useState(false);
   const [showCongratsModal, setShowCongratsModal] = useState(false);
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [pendingNavigationHref, setPendingNavigationHref] = useState<string | null>(null);
+
+  const isNavigatingRef = useRef(false);
+  const hasPushedDummyRef = useRef(false);
+
+  // 1. Intercept browser window closure / reload
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (Object.keys(dirtyData).length > 0) {
+        e.preventDefault();
+        e.returnValue = "";
+        return "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [dirtyData]);
+
+  // 2. Intercept browser back / forward button clicks via popstate
+  useEffect(() => {
+    const hasUnsavedChanges = Object.keys(dirtyData).length > 0;
+
+    // If it becomes clean and we had pushed a dummy state, clean it up
+    if (!hasUnsavedChanges && hasPushedDummyRef.current) {
+      isNavigatingRef.current = true;
+      window.history.back();
+      hasPushedDummyRef.current = false;
+      setTimeout(() => {
+        isNavigatingRef.current = false;
+      }, 50);
+      return;
+    }
+
+    if (!hasUnsavedChanges) return;
+
+    // Push dummy state to intercept the back button
+    if (!hasPushedDummyRef.current) {
+      window.history.pushState({ noBack: true }, "", window.location.href);
+      hasPushedDummyRef.current = true;
+    }
+
+    const handlePopState = () => {
+      if (isNavigatingRef.current) return;
+
+      // Show modal
+      setPendingNavigationHref("BACK");
+      setShowUnsavedModal(true);
+
+      // Re-push dummy state to keep the block in place
+      window.history.pushState({ noBack: true }, "", window.location.href);
+      hasPushedDummyRef.current = true;
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [dirtyData]);
+
+  // 3. Intercept in-app Link clicks via global capture-phase click listener
+  useEffect(() => {
+    const handleAnchorClick = (e: MouseEvent) => {
+      if (isNavigatingRef.current) return;
+      if (Object.keys(dirtyData).length > 0) {
+        const anchor = (e.target as HTMLElement).closest("a");
+        if (anchor) {
+          const href = anchor.getAttribute("href");
+          const target = anchor.getAttribute("target");
+          
+          if (href && !href.startsWith("#") && !href.startsWith("javascript:") && target !== "_blank") {
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+              return;
+            }
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            setPendingNavigationHref(href);
+            setShowUnsavedModal(true);
+          }
+        }
+      }
+    };
+
+    document.addEventListener("click", handleAnchorClick, { capture: true });
+    return () => {
+      document.removeEventListener("click", handleAnchorClick, { capture: true });
+    };
+  }, [dirtyData]);
 
   useEffect(() => {
     if (profile && profile.hasSeenIntro === false) {
@@ -212,12 +304,11 @@ export default function ProfilePage() {
     return Math.round((filled / totalFields) * 100);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const saveProfileData = async (): Promise<boolean> => {
     if (!allDetailsCompleted) {
       setShowErrors(true);
       setSaveMessage("Please complete all required Application Details fields before saving.");
-      return;
+      return false;
     }
 
     setIsSaving(true);
@@ -228,22 +319,82 @@ export default function ProfilePage() {
         ...profile,
         ...dirtyData,
       };
+
+      // Check if completeness reaches 100% and they haven't seen the congrats popup yet
+      const comp = calculateCompleteness(finalPayload);
+      const shouldShowCongrats = comp === 100 && !profile?.hasSeenCongrats;
+      
+      if (shouldShowCongrats) {
+        finalPayload.hasSeenCongrats = true;
+      }
+
       await updateUserProfile(finalPayload);
       setSaveMessage("Profile saved successfully!");
       setDirtyData({}); // Reset dirty data since it's now saved in database profile
       setTimeout(() => setSaveMessage(""), 3500);
 
-      // Check if completeness reaches 100%
-      const comp = calculateCompleteness(finalPayload);
-      if (comp === 100) {
+      if (shouldShowCongrats) {
         setShowCongratsModal(true);
       }
+      return true;
     } catch (err) {
       console.error(err);
       setSaveMessage("Error saving profile. Please try again.");
+      return false;
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await saveProfileData();
+  };
+
+  const handleDiscardAndLeave = () => {
+    setShowUnsavedModal(false);
+    
+    // Mark as navigating and clear dummy ref to prevent useEffect from popping history again
+    isNavigatingRef.current = true;
+    hasPushedDummyRef.current = false;
+    setDirtyData({});
+    
+    if (pendingNavigationHref === "BACK") {
+      window.history.go(-2);
+    } else if (pendingNavigationHref) {
+      window.history.back();
+      const href = pendingNavigationHref;
+      setTimeout(() => {
+        router.push(href);
+      }, 50);
+    }
+    setPendingNavigationHref(null);
+  };
+
+  const handleSaveAndLeave = async () => {
+    const success = await saveProfileData();
+    if (success) {
+      setShowUnsavedModal(false);
+      
+      isNavigatingRef.current = true;
+      hasPushedDummyRef.current = false;
+      
+      if (pendingNavigationHref === "BACK") {
+        window.history.go(-2);
+      } else if (pendingNavigationHref) {
+        window.history.back();
+        const href = pendingNavigationHref;
+        setTimeout(() => {
+          router.push(href);
+        }, 50);
+      }
+      setPendingNavigationHref(null);
+    }
+  };
+
+  const handleBackToPage = () => {
+    setShowUnsavedModal(false);
+    setPendingNavigationHref(null);
   };
 
   // Helper values for calculating visual progress meters for GPA/SAT/ACT
@@ -799,6 +950,47 @@ export default function ProfilePage() {
                 className="w-full py-3 bg-transparent text-[#466084] hover:text-[#173355] rounded-full font-bold text-xs transition-all cursor-pointer"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unsaved Changes Warning Modal */}
+      {showUnsavedModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-[#dde9ff] space-y-6 text-center transform transition-all scale-100 relative">
+            <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center text-amber-500 mx-auto">
+              <AlertTriangle className="w-8 h-8" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-3xl font-extrabold tracking-tight text-[#173355] font-headline">Unsaved Changes</h3>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600">Form Modified</p>
+            </div>
+            <p className="text-[#466084] text-sm leading-relaxed">
+              You have modified your profile details without saving them. Would you like to save your changes before leaving this page?
+            </p>
+            <div className="pt-2 flex flex-col gap-2.5">
+              <button
+                type="button"
+                onClick={handleSaveAndLeave}
+                className="w-full py-4 bg-[#0060ad] text-white rounded-full font-bold text-sm shadow-lg shadow-[#0060ad]/20 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer"
+              >
+                Yes, Save Changes
+              </button>
+              <button
+                type="button"
+                onClick={handleDiscardAndLeave}
+                className="w-full py-3.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-full font-bold text-sm transition-all cursor-pointer"
+              >
+                No, Discard Changes
+              </button>
+              <button
+                type="button"
+                onClick={handleBackToPage}
+                className="w-full py-3 bg-transparent text-[#466084] hover:text-[#173355] rounded-full font-bold text-xs transition-all cursor-pointer"
+              >
+                Back (Stay on Page)
               </button>
             </div>
           </div>

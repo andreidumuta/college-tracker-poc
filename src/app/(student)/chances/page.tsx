@@ -86,6 +86,16 @@ const getSatMidpoint = (range: string): number => {
   if (range === "1000-1199") return 1100;
   return 1000;
 };
+const getNormalizedCollegeGpa = (col: College): number | null => {
+  if (col.averageGpa !== null && col.averageGpa !== undefined) {
+    return col.averageGpa;
+  }
+  if (col.averageGpaWeighted !== null && col.averageGpaWeighted !== undefined) {
+    return Math.min(4.0, parseFloat((col.averageGpaWeighted * 0.8).toFixed(2)));
+  }
+  return null;
+};
+
 const generateMockPeers = (col: College): PeerPoint[] => {
   const list: PeerPoint[] = [];
   const p25SatMath = col.testScores?.satMath?.p25 || 650;
@@ -100,10 +110,10 @@ const generateMockPeers = (col: College): PeerPoint[] => {
     const satVal = Math.round(midSat + (Math.random() - 0.5) * stdDev * 2);
     const sat = Math.max(1000, Math.min(1600, Math.round(satVal / 10) * 10));
     
-    const baseGpa = col.averageGpa || 3.8;
+    const baseGpa = getNormalizedCollegeGpa(col) || 3.8;
     const gpaDiff = (sat - midSat) / 300;
     const randomScatter = (Math.random() - 0.5) * 0.25;
-    const gpa = Math.max(2.5, Math.min(5.0, parseFloat((baseGpa + gpaDiff + randomScatter).toFixed(2))));
+    const gpa = Math.max(2.5, Math.min(4.0, parseFloat((baseGpa + gpaDiff + randomScatter).toFixed(2))));
     
     list.push({
       gpa,
@@ -116,11 +126,11 @@ const generateMockPeers = (col: College): PeerPoint[] => {
 };
 
 
-// Y-axis: GPA range 2.0 to 5.0
+// Y-axis: GPA range 2.0 to 4.0
 // X-axis: SAT range 1000 to 1600
 const getCoordinates = (gpa: number, sat: number) => {
   const bottomMinGpa = 2.0;
-  const topMaxGpa = 5.0;
+  const topMaxGpa = 4.0;
   const leftMinSat = 1000;
   const rightMaxSat = 1600;
 
@@ -286,7 +296,7 @@ export default function ChancesPage() {
   const handleMatchMe = () => {
     if (!profile) return;
 
-    const studGpa = profile.gpa5 || profile.gpa4 || 0;
+    const studGpa = profile.gpa4 || (profile.gpa5 ? Math.min(4.0, parseFloat((profile.gpa5 * 0.8).toFixed(2))) : 0);
     const bounds = profile.satScore && profile.satScore !== "NA"
       ? getSatRangeBounds(profile.satScore)
       : (profile.actScore && profile.actScore !== "NA" ? getActToSatRangeBounds(profile.actScore) : null);
@@ -294,7 +304,7 @@ export default function ChancesPage() {
     const homeState = profile.zipCode ? getStateFromZip(profile.zipCode) : "";
     const pref = profile.applyStatePreference || "Both";
 
-    const getColGpa = (col: College) => col.averageGpa || 3.85;
+    const getColGpa = (col: College) => getNormalizedCollegeGpa(col) || 3.85;
 
     const getMatchTier = (col: College): number => {
       const colGpa = getColGpa(col);
@@ -400,7 +410,7 @@ export default function ChancesPage() {
 
         querySnapshot.forEach((doc) => {
           const u = doc.data() as UserProfile;
-          const peerGpa = u.gpa5 || u.gpa4;
+          const peerGpa = u.gpa4 || (u.gpa5 ? Math.min(4.0, parseFloat((u.gpa5 * 0.8).toFixed(2))) : 0);
           if (peerGpa && u.satScore && u.satScore !== "NA") {
             const mappedSat = getSatMidpoint(u.satScore);
             points.push({
@@ -432,10 +442,10 @@ export default function ChancesPage() {
       return { category: "Unknown", percentage: 0, text: "Fill in your profile to check your matches." };
     }
 
-    const studGpa = profile.gpa5 || profile.gpa4 || 0;
+    const studGpa = profile.gpa4 || (profile.gpa5 ? Math.min(4.0, parseFloat((profile.gpa5 * 0.8).toFixed(2))) : 0);
     const studSat = profile.satScore ? getSatMidpoint(profile.satScore) : 0;
 
-    const colGpa = selectedCollege.averageGpa;
+    const colGpa = getNormalizedCollegeGpa(selectedCollege);
     const p25SatMath = selectedCollege.testScores?.satMath?.p25 || 650;
     const p25SatRead = selectedCollege.testScores?.satReading?.p25 || 650;
     const col25Sat = p25SatMath + p25SatRead;
@@ -487,7 +497,7 @@ export default function ChancesPage() {
   const likelihood = getLikelihoodInfo();
 
   // Get historical database stats for reference lines
-  const colGpa = selectedCollege?.averageGpa;
+  const colGpa = selectedCollege ? getNormalizedCollegeGpa(selectedCollege) : null;
   const p25Math = selectedCollege?.testScores?.satMath?.p25 || 650;
   const p25Read = selectedCollege?.testScores?.satReading?.p25 || 650;
   const p75Math = selectedCollege?.testScores?.satMath?.p75 || 750;
@@ -610,7 +620,7 @@ export default function ChancesPage() {
                         <div className="min-w-0 flex-1">
                           <h4 className="font-bold text-sm text-[#173355] truncate">{col.name}</h4>
                           <p className="text-xs text-[#466084] mt-0.5 truncate">
-                            {[col.city, col.state].filter(Boolean).join(", ")}{col.averageGpa ? ` • Avg GPA: ${col.averageGpa.toFixed(2)}` : ""}
+                            {[col.city, col.state].filter(Boolean).join(", ")}{getNormalizedCollegeGpa(col) ? ` • Avg GPA: ${getNormalizedCollegeGpa(col)!.toFixed(2)}` : ""}
                           </p>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
@@ -827,18 +837,20 @@ export default function ChancesPage() {
               <div className="relative h-[320px] w-[calc(100%-48px)] border-l-2 border-b-2 border-[#dde9ff] ml-10 mb-8 flex-shrink-0">
                 {/* Y-Axis Label */}
                 <div className="absolute -left-12 top-1/2 -translate-y-1/2 -rotate-90 text-[9px] font-bold text-[#466084] uppercase tracking-widest whitespace-nowrap">
-                  GPA (2.0 - 5.0)
+                  GPA (2.0 - 4.0)
                 </div>
 
                 {/* Y-Axis Ticks */}
-                <div className="absolute -left-7 top-0 text-[8px] font-bold text-[#466084] -translate-y-1/2">5.0</div>
-                <div className="absolute -left-7 top-[33.3%] text-[8px] font-bold text-[#466084] -translate-y-1/2">4.0</div>
-                <div className="absolute -left-7 top-[66.7%] text-[8px] font-bold text-[#466084] -translate-y-1/2">3.0</div>
+                <div className="absolute -left-7 top-0 text-[8px] font-bold text-[#466084] -translate-y-1/2">4.0</div>
+                <div className="absolute -left-7 top-[25%] text-[8px] font-bold text-[#466084] -translate-y-1/2">3.5</div>
+                <div className="absolute -left-7 top-[50%] text-[8px] font-bold text-[#466084] -translate-y-1/2">3.0</div>
+                <div className="absolute -left-7 top-[75%] text-[8px] font-bold text-[#466084] -translate-y-1/2">2.5</div>
                 <div className="absolute -left-7 top-[100%] text-[8px] font-bold text-[#466084] -translate-y-1/2">2.0</div>
 
                 {/* Horizontal Grid Lines */}
-                <div className="absolute left-0 right-0 top-[33.3%] border-t border-dashed border-[#dde9ff]/50 pointer-events-none" />
-                <div className="absolute left-0 right-0 top-[66.7%] border-t border-dashed border-[#dde9ff]/50 pointer-events-none" />
+                <div className="absolute left-0 right-0 top-[25%] border-t border-dashed border-[#dde9ff]/50 pointer-events-none" />
+                <div className="absolute left-0 right-0 top-[50%] border-t border-dashed border-[#dde9ff]/50 pointer-events-none" />
+                <div className="absolute left-0 right-0 top-[75%] border-t border-dashed border-[#dde9ff]/50 pointer-events-none" />
 
                 {/* Vertical Grid Lines */}
                 <div className="absolute top-0 bottom-0 left-[25%] border-l border-dashed border-[#dde9ff]/50 pointer-events-none" />
@@ -887,10 +899,10 @@ export default function ChancesPage() {
                 })}
 
                 {/* Student's Gold Star Marker */}
-                {(profile?.gpa5 || profile?.gpa4) && profile?.satScore && profile?.satScore !== "NA" && (
+                {(profile?.gpa4 || profile?.gpa5) && profile?.satScore && profile?.satScore !== "NA" && (
                   <div 
                     className="absolute w-10 h-10 -translate-x-1/2 translate-y-1/2 flex items-center justify-center z-20"
-                    style={getCoordinates(profile.gpa5 || profile.gpa4 || 0, getSatMidpoint(profile.satScore))}
+                    style={getCoordinates(profile.gpa4 || (profile.gpa5 ? Math.min(4.0, parseFloat((profile.gpa5 * 0.8).toFixed(2))) : 0), getSatMidpoint(profile.satScore))}
                   >
                     <div className="absolute inset-0 bg-[#ffe087] rounded-full animate-ping opacity-35" />
                     <div className="w-7 h-7 bg-[#ffe087] rounded-full flex items-center justify-center text-[#745c00] shadow-lg border-2 border-white">
@@ -939,15 +951,17 @@ export default function ChancesPage() {
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="text-[10px] font-bold text-[#466084] uppercase">
-                        Your GPA {profile?.gpa5 ? "(Weighted)" : ""}
+                        Your GPA
                       </p>
                       <p className="text-base font-bold font-headline">
-                        {profile ? (profile.gpa5 || profile.gpa4 || 0) ? (profile.gpa5 || profile.gpa4)!.toFixed(2) : "N/A" : "N/A"}
+                        {profile ? (profile.gpa4 || (profile.gpa5 ? Math.min(4.0, parseFloat((profile.gpa5 * 0.8).toFixed(2))) : 0)) ? (profile.gpa4 || (profile.gpa5 ? Math.min(4.0, parseFloat((profile.gpa5 * 0.8).toFixed(2))) : 0)).toFixed(2) : "N/A" : "N/A"}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="text-[10px] font-bold text-[#466084] uppercase">Target GPA</p>
-                      <p className="text-base font-bold font-headline">{selectedCollege.averageGpa ? selectedCollege.averageGpa.toFixed(2) : "N/A"}</p>
+                      <p className="text-base font-bold font-headline">
+                        {selectedCollege ? getNormalizedCollegeGpa(selectedCollege) ? getNormalizedCollegeGpa(selectedCollege)!.toFixed(2) : "N/A" : "N/A"}
+                      </p>
                     </div>
                   </div>
 

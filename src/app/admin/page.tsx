@@ -35,6 +35,7 @@ interface College {
   acceptanceRate: number | null;
   isTestOptional: boolean;
   averageGpa: number | null;
+  averageGpaWeighted: number | null;
   
   // Financial Aid
   offersNeedBasedAid: boolean;
@@ -238,6 +239,7 @@ export default function AdminDashboard() {
         offersEarlyAdmission: data.offersEarlyAdmission,
         isEstimatedDeadlines: data.isEstimatedDeadlines ?? null,
         averageGpa: data.averageGpa,
+        averageGpaWeighted: data.averageGpaWeighted ?? null,
         deadlines: {
           earlyDecision1: data.earlyDecision1 || null,
           earlyDecision2: data.earlyDecision2 || null,
@@ -262,7 +264,8 @@ export default function AdminDashboard() {
   const handleResearchAll = async () => {
     setIsResearchingAll(true);
     for (const college of filteredColleges) {
-      const hasGpa = college.averageGpa !== null && college.averageGpa !== undefined;
+      const hasGpa = (college.averageGpa !== null && college.averageGpa !== undefined) || 
+                     (college.averageGpaWeighted !== null && college.averageGpaWeighted !== undefined);
       const hasRd = college.deadlines?.regularDecision !== null && college.deadlines?.regularDecision !== undefined && college.deadlines.regularDecision !== "";
       const hasExistingData = hasGpa || hasRd;
 
@@ -316,6 +319,7 @@ export default function AdminDashboard() {
         acceptanceRate: null,
         isTestOptional: false,
         averageGpa: null,
+        averageGpaWeighted: null,
         offersNeedBasedAid: true,
         isNeedBlind: null,
         isNeedAware: null,
@@ -435,7 +439,7 @@ export default function AdminDashboard() {
     if (colleges.length === 0) return;
     
     const headers = [
-      "ID", "Name", "City", "State", "Acceptance Rate", "Avg GPA", 
+      "ID", "Name", "City", "State", "Acceptance Rate", "Avg GPA", "Avg GPA (Weighted)", 
       "Total Cost In-State", "Total Cost Out-State", 
       "SAT Reading (Mid)", "SAT Math (Mid)",
       "RD Deadline", "ED1 Deadline", "ED2 Deadline", "EA Deadline", "Rolling"
@@ -448,6 +452,7 @@ export default function AdminDashboard() {
       c.state, 
       c.acceptanceRate ? (c.acceptanceRate * 100).toFixed(1) + "%" : "",
       c.averageGpa || "",
+      c.averageGpaWeighted || "",
       c.financialAid?.total.inState || "",
       c.financialAid?.total.outOfState || "",
       c.testScores?.satReading?.mid || "",
@@ -475,7 +480,7 @@ export default function AdminDashboard() {
     if (colleges.length === 0) return;
     
     const headers = [
-      "ID", "Name", "City", "State", "Acceptance Rate", "Avg GPA", 
+      "ID", "Name", "City", "State", "Acceptance Rate", "Avg GPA", "Avg GPA (Weighted)", 
       "Total Cost In-State", "Total Cost Out-State", 
       "SAT Reading (Mid)", "SAT Math (Mid)",
       "RD Deadline", "ED1 Deadline", "ED2 Deadline", "EA Deadline", "Rolling"
@@ -489,6 +494,7 @@ export default function AdminDashboard() {
       c.state, 
       c.acceptanceRate ? (c.acceptanceRate * 100).toFixed(1) + "%" : "",
       c.averageGpa || "",
+      c.averageGpaWeighted || "",
       c.financialAid?.total.inState || "",
       c.financialAid?.total.outOfState || "",
       c.testScores?.satReading?.mid || "",
@@ -734,6 +740,23 @@ export default function AdminDashboard() {
                               </button>
                             </div>
                           </th>
+                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">
+                            <div className="flex items-center justify-center gap-1">
+                              <span>Avg Weighted GPA</span>
+                              <button
+                                onClick={() => handleResearchColumn("Avg Weighted GPA")}
+                                disabled={!!researchingColumn || isResearchingAll}
+                                className="text-blue-400 hover:text-blue-300 disabled:opacity-30 disabled:cursor-not-allowed p-0.5 rounded hover:bg-slate-700 transition-colors"
+                                title="Research Avg Weighted GPA for all filtered colleges (overwrite)"
+                              >
+                                {researchingColumn === "Avg Weighted GPA" ? (
+                                  <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <Wand2 className="w-3 h-3" />
+                                )}
+                              </button>
+                            </div>
+                          </th>
                           <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">SAT Math</th>
                           <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">SAT Read</th>
                           <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">Total Cost (In)</th>
@@ -872,6 +895,16 @@ export default function AdminDashboard() {
                                 value={college.averageGpa || ""}
                                 onChange={e => updateCollegeField(college.id, "averageGpa", parseFloat(e.target.value))}
                                 className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 w-16 text-center text-blue-300 font-semibold"
+                                placeholder="N/A"
+                              />
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <input 
+                                type="number" 
+                                step="0.01"
+                                value={college.averageGpaWeighted || ""}
+                                onChange={e => updateCollegeField(college.id, "averageGpaWeighted", parseFloat(e.target.value))}
+                                className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 w-16 text-center text-purple-300 font-semibold"
                                 placeholder="N/A"
                               />
                             </td>

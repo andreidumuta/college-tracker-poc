@@ -29,7 +29,7 @@ export async function POST(req: Request) {
         response = await ai.models.generateContent({
           model: "gemini-3.5-flash",
           contents: [
-            `You are a college admissions expert. Search the web for the most accurate and up-to-date admissions data for ${collegeName} for students applying to start college in Fall 2027 (this means application deadlines are typically in late 2026 or early 2027). Find their exact Need-Blind policy, whether they offer early admission, their application deadlines for the Fall 2027 cycle, and their average admitted student weighted GPA.
+            `You are a college admissions expert. Search the web for the most accurate and up-to-date admissions data for ${collegeName} for students applying to start college in Fall 2027 (this means application deadlines are typically in late 2026 or early 2027). Find their exact Need-Blind policy, whether they offer early admission, their application deadlines for the Fall 2027 cycle, their average admitted student unweighted GPA on a 4.0 scale, and their average admitted student weighted GPA on a 5.0 scale.
             
             CRITICAL INSTRUCTION: Since Fall 2027 dates might not be officially published yet, you may need to project them based on historical Fall 2026 dates (e.g., if it is always Nov 1, project Nov 1, 2026). If you are projecting dates based on historical patterns rather than finding an explicitly announced Fall 2027 date, you MUST set "isEstimatedDeadlines" to true.
             
@@ -43,7 +43,8 @@ export async function POST(req: Request) {
               "earlyAction": string or null (The exact EA deadline date including the year, e.g. "Nov 1, 2026". Return null if not offered),
               "regularDecision": string (The exact RD deadline date including the year, e.g. "Jan 1, 2027". Return "Not published" if explicitly unknown),
               "rolling": boolean or null (True if they offer rolling admissions, false otherwise),
-              "averageGpa": number or null (Provide the weighted average GPA only, e.g. 4.15. If the weighted GPA is not published or unavailable, use null. Do not return unweighted GPA here.)
+              "averageGpa": number or null (The average admitted student unweighted GPA on a 4.0 scale. Use null if not published/unavailable.),
+              "averageGpaWeighted": number or null (The average admitted student weighted GPA on a 5.0 scale. Use null if not published/unavailable.)
             }`
           ],
           config: {

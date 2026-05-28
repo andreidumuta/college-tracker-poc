@@ -168,11 +168,24 @@ export default function SchoolDetailPage() {
             <span>Admitted Avg GPA</span>
             <GraduationCap className="w-4 h-4 text-[#745c00]" />
           </div>
-          <p className="text-4xl font-extrabold text-[#173355] font-headline">
-            {college.averageGpa ? college.averageGpa.toFixed(2) : "N/A"}
-          </p>
-          <p className="text-xs text-[#466084]">
-            {college.averageGpa ? "Verified standard score." : "No published GPA data."}
+          <div className="flex gap-4 items-baseline">
+            <div>
+              <p className="text-4xl font-extrabold text-[#173355] font-headline">
+                {college.averageGpa ? college.averageGpa.toFixed(2) : "N/A"}
+              </p>
+              <span className="text-[9px] text-[#466084] font-bold uppercase">Unweighted (4.0)</span>
+            </div>
+            {college.averageGpaWeighted && (
+              <div className="border-l border-[#dde9ff] pl-4">
+                <p className="text-4xl font-extrabold text-[#0060ad] font-headline">
+                  {college.averageGpaWeighted.toFixed(2)}
+                </p>
+                <span className="text-[9px] text-[#466084] font-bold uppercase">Weighted (5.0)</span>
+              </div>
+            )}
+          </div>
+          <p className="text-xs text-[#466084] mt-1">
+            {college.averageGpa || college.averageGpaWeighted ? "Verified standard score." : "No published GPA data."}
           </p>
         </div>
 

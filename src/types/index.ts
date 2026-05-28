@@ -27,6 +27,7 @@ export interface College {
   acceptanceRate: number | null;
   isTestOptional: boolean;
   averageGpa: number | null;
+  averageGpaWeighted: number | null;
   
   // Financial Aid
   offersNeedBasedAid: boolean;

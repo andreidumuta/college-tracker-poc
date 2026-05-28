@@ -155,6 +155,16 @@ export default function HomeDashboard() {
   const profileCompleteness = profile?.profileCompleteness || 0;
   const isProfileIncomplete = profileCompleteness < 75;
 
+  const nextApp = upcomingEvents[0] || (inProgressApps[0] ? {
+    collegeId: inProgressApps[0].collegeId,
+    collegeName: inProgressApps[0].collegeName,
+    deadlineType: inProgressApps[0].deadlineType 
+      ? inProgressApps[0].deadlineType.replace(/([A-Z])/g, " $1") 
+      : "Regular Decision",
+    dateStr: "Not published",
+    dateObj: null
+  } : null);
+
   return (
     <div className="space-y-12">
       {/* Hero Section */}
@@ -230,17 +240,21 @@ export default function HomeDashboard() {
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
-              ) : inProgressApps.length > 0 ? (
+              ) : inProgressApps.length > 0 && nextApp ? (
                 /* Displays next upcoming deadline details */
                 <div className="space-y-4">
                   <h3 className="text-3xl font-bold font-headline text-[#173355]">
-                    Submit your application for {upcomingEvents[0]?.collegeName}
+                    Submit your application for {nextApp.collegeName}
                   </h3>
                   <p className="text-[#466084] leading-relaxed">
-                    The {upcomingEvents[0]?.deadlineType} deadline is approaching. Ensure your essay prompts and portfolios are locked in.
+                    {nextApp.dateStr && nextApp.dateStr !== "Not published" ? (
+                      `The ${nextApp.deadlineType} deadline is approaching. Ensure your essay prompts and portfolios are locked in.`
+                    ) : (
+                      `Keep working on your application. Ensure your essay prompts and portfolios are locked in.`
+                    )}
                   </p>
                   <Link
-                    href={`/schools/${upcomingEvents[0]?.collegeId}`}
+                    href={`/schools/${nextApp.collegeId}`}
                     className="bg-[#0060ad] text-white font-bold px-8 py-4 rounded-full flex items-center justify-center gap-2 hover:opacity-95 transition-all w-fit shadow-md shadow-[#0060ad]/15 text-sm"
                   >
                     Review School details

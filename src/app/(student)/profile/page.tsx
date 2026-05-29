@@ -263,13 +263,12 @@ export default function ProfilePage() {
     "educationLevel",
     "isFirstGen",
     "isUrm",
-    "isLegacy",
     "applyStatePreference",
     "seekingFinAid"
   ];
 
   const checkFieldCompleted = (key: keyof UserProfile): boolean => {
-    if (key === "isFirstGen" || key === "isUrm" || key === "isLegacy") {
+    if (key === "isFirstGen" || key === "isUrm") {
       return true; // Booleans default to No (false) and are always completed
     }
     const val = getVal(key);
@@ -283,7 +282,7 @@ export default function ProfilePage() {
   const calculateCompleteness = (prof: UserProfile): number => {
     const fieldsToTrack: (keyof UserProfile)[] = [
       "fullName", "dob", "zipCode", "educationLevel", 
-      "applyStatePreference", "isFirstGen", "isUrm", "isLegacy", 
+      "applyStatePreference", "isFirstGen", "isUrm", 
       "seekingFinAid", "seekingMeritAid", "workingWithConsultant", 
       "gpa4", "gpa5", "planToSubmitScores"
     ];
@@ -321,7 +320,6 @@ export default function ProfilePage() {
       const finalPayload = {
         isFirstGen: profile?.isFirstGen ?? false,
         isUrm: profile?.isUrm ?? false,
-        isLegacy: profile?.isLegacy ?? false,
         ...profile,
         ...dirtyData,
       };
@@ -602,25 +600,6 @@ export default function ProfilePage() {
                   className={`w-12 h-6 rounded-full relative transition-colors ${getVal("isUrm") ? "bg-[#0060ad]" : "bg-[#dde9ff]"}`}
                 >
                   <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${getVal("isUrm") ? "right-1" : "left-1"}`} />
-                </button>
-              </div>
-
-              {/* Legacy */}
-              <div className={`p-5 rounded-2xl flex items-center justify-between border ${
-                showErrors && !checkFieldCompleted("isLegacy") ? "bg-red-50/30 border-red-400" : "bg-[#e6eeff] border-transparent"
-              }`}>
-                <div>
-                  <span className="font-semibold text-sm text-[#173355] block">Legacy Student *</span>
-                  {showErrors && !checkFieldCompleted("isLegacy") && (
-                    <span className="text-[9px] text-red-500 font-bold uppercase block">Required</span>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleToggle("isLegacy")}
-                  className={`w-12 h-6 rounded-full relative transition-colors ${getVal("isLegacy") ? "bg-[#0060ad]" : "bg-[#dde9ff]"}`}
-                >
-                  <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${getVal("isLegacy") ? "right-1" : "left-1"}`} />
                 </button>
               </div>
             </div>

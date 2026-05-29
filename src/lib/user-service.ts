@@ -9,6 +9,7 @@ export interface ApplicationInfo {
   status: "In Progress" | "Submitted" | "Accepted" | "Declined";
   deadlineType: "earlyDecision1" | "earlyDecision2" | "earlyAction" | "regularDecision" | "rolling";
   addedAt: string;
+  isLegacy?: boolean;
 }
 
 // Get user profile
@@ -31,7 +32,8 @@ export async function addApplication(
   collegeId: string,
   collegeName: string,
   location: string,
-  deadlineType: ApplicationInfo["deadlineType"] = "regularDecision"
+  deadlineType: ApplicationInfo["deadlineType"] = "regularDecision",
+  isLegacy: boolean = false
 ) {
   try {
     const appRef = doc(db, "users", uid, "applications", collegeId);
@@ -41,7 +43,8 @@ export async function addApplication(
       location,
       status: "In Progress",
       deadlineType,
-      addedAt: new Date().toISOString()
+      addedAt: new Date().toISOString(),
+      isLegacy
     };
     
     await setDoc(appRef, newApp);
@@ -80,6 +83,25 @@ export async function updateApplicationStatus(
     await updateDoc(appRef, updatePayload);
   } catch (error) {
     console.error("Error updating application status:", error);
+    throw error;
+  }
+}
+
+// Update application details (status, round/deadlineType, isLegacy)
+export async function updateApplicationDetails(
+  uid: string,
+  collegeId: string,
+  updates: {
+    status?: ApplicationInfo["status"];
+    deadlineType?: ApplicationInfo["deadlineType"];
+    isLegacy?: boolean;
+  }
+) {
+  try {
+    const appRef = doc(db, "users", uid, "applications", collegeId);
+    await updateDoc(appRef, updates);
+  } catch (error) {
+    console.error("Error updating application details:", error);
     throw error;
   }
 }

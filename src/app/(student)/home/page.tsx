@@ -142,7 +142,6 @@ export default function HomeDashboard() {
     "educationLevel",
     "isFirstGen",
     "isUrm",
-    "isLegacy",
     "applyStatePreference",
     "seekingFinAid"
   ];
@@ -390,6 +389,29 @@ export default function HomeDashboard() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Google Calendar Embed Card */}
+        <div className="md:col-span-12 bg-white rounded-3xl p-8 border border-[#99b4dc]/15 shadow-sm space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <CalendarIcon className="w-5 h-5 text-[#0060ad]" />
+              <h3 className="text-xl font-bold font-headline text-[#173355]">Admissions Event Calendar</h3>
+            </div>
+            <span className="bg-[#eff3ff] text-[#0060ad] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+              Live Google Sync
+            </span>
+          </div>
+
+          <div className="w-full overflow-hidden rounded-2xl border border-[#dde9ff] bg-[#f8f9ff]">
+            <iframe 
+              src="https://calendar.google.com/calendar/embed?src=c_88e752faa93b8a0e0287c5f44cb3b50f754a0e984bb7380cc1f3e1647db1b6cc%40group.calendar.google.com&ctz=Europe%2FBucharest&showTitle=0&showPrint=0&showCalendars=0&showTz=0"
+              style={{ border: 0 }}
+              width="100%"
+              height="550"
+              className="w-full rounded-2xl"
+            />
+          </div>
         </div>
 
       </div>

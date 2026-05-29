@@ -127,7 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const calculateCompleteness = (prof: UserProfile): number => {
     const fieldsToTrack: (keyof UserProfile)[] = [
       "fullName", "dob", "zipCode", "educationLevel", 
-      "applyStatePreference", "isFirstGen", "isUrm", "isLegacy", 
+      "applyStatePreference", "isFirstGen", "isUrm", 
       "seekingFinAid", "seekingMeritAid", "workingWithConsultant", 
       "gpa4", "gpa5", "planToSubmitScores"
     ];

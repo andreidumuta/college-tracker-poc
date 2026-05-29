@@ -6,6 +6,7 @@ import {
   addApplication, 
   removeApplication, 
   updateApplicationStatus, 
+  updateApplicationDetails,
   listenToApplications, 
   ApplicationInfo 
 } from "@/lib/user-service";
@@ -30,6 +31,7 @@ export default function SchoolsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedCollege, setSelectedCollege] = useState<College | null>(null);
   const [deadlineType, setDeadlineType] = useState<ApplicationInfo["deadlineType"]>("regularDecision");
+  const [isLegacy, setIsLegacy] = useState(false);
 
   // Listen to applications in real-time
   useEffect(() => {
@@ -86,11 +88,13 @@ export default function SchoolsPage() {
         selectedCollege.id,
         selectedCollege.name,
         [selectedCollege.city, selectedCollege.state].filter(Boolean).join(", "),
-        deadlineType
+        deadlineType,
+        isLegacy
       );
       setShowAddModal(false);
       setSelectedCollege(null);
       setSearchTerm("");
+      setIsLegacy(false);
     } catch (err) {
       console.error(err);
       alert("Error adding application. Please try again.");
@@ -101,6 +105,24 @@ export default function SchoolsPage() {
     if (!user) return;
     try {
       await updateApplicationStatus(user.uid, collegeId, status);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRoundChange = async (collegeId: string, deadlineType: ApplicationInfo["deadlineType"]) => {
+    if (!user) return;
+    try {
+      await updateApplicationDetails(user.uid, collegeId, { deadlineType });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleLegacyToggle = async (collegeId: string, isLegacy: boolean) => {
+    if (!user) return;
+    try {
+      await updateApplicationDetails(user.uid, collegeId, { isLegacy });
     } catch (err) {
       console.error(err);
     }
@@ -246,6 +268,11 @@ export default function SchoolsPage() {
                     <span className={`px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full ${getStatusBadge(app.status)}`}>
                       {app.status}
                     </span>
+                    {app.isLegacy && (
+                      <span className="px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                        Legacy
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-[#466084] font-medium">
@@ -272,6 +299,35 @@ export default function SchoolsPage() {
                       <option value="Accepted">Accepted</option>
                       <option value="Declined">Declined</option>
                     </select>
+                  </div>
+
+                  {/* Round Dropdown */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-[#466084] block">Change Round</label>
+                    <select
+                      value={app.deadlineType}
+                      onChange={(e) => handleRoundChange(app.collegeId, e.target.value as ApplicationInfo["deadlineType"])}
+                      className="bg-white border-none rounded-xl px-4 py-2 text-xs font-bold text-[#173355] shadow-sm focus:ring-1 focus:ring-[#0060ad] h-10 w-40"
+                    >
+                      <option value="regularDecision">Regular Decision</option>
+                      <option value="earlyAction">Early Action</option>
+                      <option value="earlyDecision1">Early Decision I</option>
+                      <option value="earlyDecision2">Early Decision II</option>
+                      <option value="rolling">Rolling Admissions</option>
+                    </select>
+                  </div>
+
+                  {/* Legacy Toggle */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-[#466084] block text-center">Legacy</label>
+                    <div className="bg-white border-none rounded-xl px-3 flex items-center justify-center shadow-sm h-10 w-20">
+                      <button
+                        onClick={() => handleLegacyToggle(app.collegeId, !app.isLegacy)}
+                        className={`w-10 h-5 rounded-full relative transition-colors ${app.isLegacy ? "bg-[#0060ad]" : "bg-[#dde9ff]"}`}
+                      >
+                        <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${app.isLegacy ? "right-0.5" : "left-0.5"}`} />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Actions */}
@@ -309,7 +365,7 @@ export default function SchoolsPage() {
                 <p className="text-xs text-[#466084] mt-1">Select from your loaded database schools</p>
               </div>
               <button 
-                onClick={() => { setShowAddModal(false); setSelectedCollege(null); setSearchTerm(""); }}
+                onClick={() => { setShowAddModal(false); setSelectedCollege(null); setSearchTerm(""); setIsLegacy(false); }}
                 className="text-sm font-bold text-[#466084] hover:text-[#173355] p-1.5 hover:bg-[#eff3ff] rounded-full"
               >
                 Close
@@ -370,20 +426,36 @@ export default function SchoolsPage() {
                   </button>
                 </div>
 
-                {/* Deadline selection */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-[#466084] ml-1">Application Method</label>
-                  <select
-                    value={deadlineType}
-                    onChange={(e) => setDeadlineType(e.target.value as ApplicationInfo["deadlineType"])}
-                    className="w-full bg-[#eff3ff] border-none rounded-xl px-4 py-3 text-sm text-[#173355]"
-                  >
-                    <option value="regularDecision">Regular Decision</option>
-                    <option value="earlyAction">Early Action</option>
-                    <option value="earlyDecision1">Early Decision I</option>
-                    <option value="earlyDecision2">Early Decision II</option>
-                    <option value="rolling">Rolling Admissions</option>
-                  </select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Deadline selection */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-[#466084] ml-1">Application Round</label>
+                    <select
+                      value={deadlineType}
+                      onChange={(e) => setDeadlineType(e.target.value as ApplicationInfo["deadlineType"])}
+                      className="w-full bg-[#eff3ff] border-none rounded-xl px-4 py-3 text-sm text-[#173355] h-12"
+                    >
+                      <option value="regularDecision">Regular Decision</option>
+                      <option value="earlyAction">Early Action</option>
+                      <option value="earlyDecision1">Early Decision I</option>
+                      <option value="earlyDecision2">Early Decision II</option>
+                      <option value="rolling">Rolling Admissions</option>
+                    </select>
+                  </div>
+
+                  {/* Legacy Toggle */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-[#466084] ml-1">Legacy Student</label>
+                    <div className="bg-[#eff3ff] rounded-xl px-4 py-3 text-sm text-[#173355] flex items-center justify-between h-12">
+                      <span className="font-semibold text-xs text-[#466084]">Legacy Applicant</span>
+                      <button
+                        onClick={() => setIsLegacy(!isLegacy)}
+                        className={`w-10 h-5 rounded-full relative transition-colors ${isLegacy ? "bg-[#0060ad]" : "bg-[#dde9ff]"}`}
+                      >
+                        <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${isLegacy ? "right-0.5" : "left-0.5"}`} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Action button */}

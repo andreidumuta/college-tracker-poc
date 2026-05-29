@@ -127,7 +127,7 @@ const actScoreOptions = [
 ];
 
 export default function ProfilePage() {
-  const { profile, updateUserProfile } = useAuth();
+  const { profile, updateUserProfile, logout } = useAuth();
   const router = useRouter();
   // Keep only edited (dirty) form values to avoid useEffect-state sync warnings
   const [dirtyData, setDirtyData] = useState<Partial<UserProfile>>({});
@@ -138,6 +138,10 @@ export default function ProfilePage() {
   const [showCongratsModal, setShowCongratsModal] = useState(false);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [pendingNavigationHref, setPendingNavigationHref] = useState<string | null>(null);
+
+  // Age gate state
+  const [showAgeGateModal, setShowAgeGateModal] = useState(false);
+  const [previousDob, setPreviousDob] = useState<string>("");
 
   const isNavigatingRef = useRef(false);
   const hasPushedDummyRef = useRef(false);
@@ -251,6 +255,32 @@ export default function ProfilePage() {
     }));
   };
 
+  const getAge = (dateString: string): number => {
+    if (!dateString) return 0;
+    const today = new Date();
+    const birthDate = new Date(dateString);
+    if (isNaN(birthDate.getTime())) return 0;
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const handleDobChange = (value: string) => {
+    const prev = getVal("dob") as string;
+    handleChange("dob", value);
+    
+    if (value.length === 10) {
+      const age = getAge(value);
+      if (age < 13) {
+        setPreviousDob(prev);
+        setShowAgeGateModal(true);
+      }
+    }
+  };
+
   const handleToggle = (key: keyof UserProfile) => {
     const currentVal = dirtyData[key] !== undefined ? dirtyData[key] : profile?.[key];
     setDirtyData((prev) => ({
@@ -307,10 +337,23 @@ export default function ProfilePage() {
   };
 
   const saveProfileData = async (): Promise<boolean> => {
-    if (!allDetailsCompleted) {
+    const fullNameVal = getVal("fullName");
+    const dobVal = getVal("dob");
+    const zipCodeVal = getVal("zipCode");
+
+    if (!fullNameVal || !dobVal || !zipCodeVal || !allDetailsCompleted) {
       setShowErrors(true);
-      setSaveMessage("Please complete all required Application Details fields before saving.");
+      setSaveMessage("Please complete all required fields before saving.");
       return false;
+    }
+
+    if (dobVal) {
+      const age = getAge(dobVal);
+      if (age < 13) {
+        setPreviousDob(profile?.dob || "");
+        setShowAgeGateModal(true);
+        return false;
+      }
     }
 
     setIsSaving(true);
@@ -461,12 +504,19 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Full Name */}
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#466084] ml-2">Full Name</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-[#466084] ml-2 flex justify-between">
+                <span>Full Name *</span>
+                {showErrors && !getVal("fullName") && (
+                  <span className="text-[10px] text-red-500 font-bold uppercase tracking-normal">Required</span>
+                )}
+              </label>
               <input
                 type="text"
                 value={getVal("fullName")}
                 onChange={(e) => handleChange("fullName", e.target.value)}
-                className="w-full bg-[#dde9ff] border-none rounded-xl px-5 py-4 focus:ring-2 focus:ring-[#0060ad] focus:bg-white transition-all text-[#173355]"
+                className={`w-full border-none rounded-xl px-5 py-4 focus:ring-2 focus:ring-[#0060ad] focus:bg-white transition-all text-[#173355] ${
+                  showErrors && !getVal("fullName") ? "bg-red-50 focus:bg-red-50" : "bg-[#dde9ff]"
+                }`}
                 required
               />
             </div>
@@ -484,24 +534,39 @@ export default function ProfilePage() {
 
             {/* Date of Birth */}
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#466084] ml-2">Date of Birth</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-[#466084] ml-2 flex justify-between">
+                <span>Date of Birth *</span>
+                {showErrors && !getVal("dob") && (
+                  <span className="text-[10px] text-red-500 font-bold uppercase tracking-normal">Required</span>
+                )}
+              </label>
               <input
                 type="date"
                 value={getVal("dob")}
-                onChange={(e) => handleChange("dob", e.target.value)}
-                className="w-full bg-[#dde9ff] border-none rounded-xl px-5 py-4 focus:ring-2 focus:ring-[#0060ad] focus:bg-white transition-all text-[#173355]"
+                onChange={(e) => handleDobChange(e.target.value)}
+                className={`w-full border-none rounded-xl px-5 py-4 focus:ring-2 focus:ring-[#0060ad] focus:bg-white transition-all text-[#173355] ${
+                  showErrors && !getVal("dob") ? "bg-red-50 focus:bg-red-50" : "bg-[#dde9ff]"
+                }`}
+                required
               />
             </div>
 
             {/* Zip Code */}
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#466084] ml-2">Zip Code *</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-[#466084] ml-2 flex justify-between">
+                <span>Zip Code *</span>
+                {showErrors && !getVal("zipCode") && (
+                  <span className="text-[10px] text-red-500 font-bold uppercase tracking-normal">Required</span>
+                )}
+              </label>
               <input
                 type="text"
                 value={getVal("zipCode")}
                 onChange={(e) => handleChange("zipCode", e.target.value)}
                 placeholder="e.g. 90210"
-                className="w-full bg-[#dde9ff] border-none rounded-xl px-5 py-4 focus:ring-2 focus:ring-[#0060ad] focus:bg-white transition-all text-[#173355]"
+                className={`w-full border-none rounded-xl px-5 py-4 focus:ring-2 focus:ring-[#0060ad] focus:bg-white transition-all text-[#173355] ${
+                  showErrors && !getVal("zipCode") ? "bg-red-50 focus:bg-red-50" : "bg-[#dde9ff]"
+                }`}
                 required
               />
             </div>
@@ -923,7 +988,8 @@ export default function ProfilePage() {
                 type="button"
                 onClick={() => {
                   setShowCongratsModal(false);
-                  router.push("/schools");
+                  const tab = profile?.applyStatePreference === "Out of state" ? "matchesOutOfState" : "matchesInState";
+                  router.push(`/schools?tab=${tab}&firstTime=true`);
                 }}
                 className="w-full py-4 bg-[#0060ad] text-white rounded-full font-bold text-sm shadow-lg shadow-[#0060ad]/20 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer"
               >
@@ -976,6 +1042,46 @@ export default function ProfilePage() {
                 className="w-full py-3 bg-transparent text-[#466084] hover:text-[#173355] rounded-full font-bold text-xs transition-all cursor-pointer"
               >
                 Back (Stay on Page)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Age Gate Warning Modal */}
+      {showAgeGateModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-[#dde9ff] space-y-6 text-center transform transition-all scale-100 relative">
+            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center text-red-500 mx-auto">
+              <AlertTriangle className="w-8 h-8" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-3xl font-extrabold tracking-tight text-[#173355] font-headline">Age Requirement</h3>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-red-600">Under 13 Alert</p>
+            </div>
+            <p className="text-[#466084] text-sm leading-relaxed">
+              You must be at least 13 years of age to use this application. Please confirm if your date of birth is correct, or go back to correct it if it was a mistake.
+            </p>
+            <div className="pt-2 flex flex-col gap-2.5">
+              <button
+                type="button"
+                onClick={async () => {
+                  setShowAgeGateModal(false);
+                  await logout();
+                }}
+                className="w-full py-4 bg-red-600 text-white rounded-full font-bold text-sm shadow-lg shadow-red-600/20 hover:bg-red-700 active:scale-[0.98] transition-all cursor-pointer"
+              >
+                Confirm (Sign Out)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleChange("dob", previousDob);
+                  setShowAgeGateModal(false);
+                }}
+                className="w-full py-3.5 bg-slate-100 text-[#173355] hover:bg-slate-200 rounded-full font-bold text-sm transition-all cursor-pointer"
+              >
+                Go Back (Correct Date)
               </button>
             </div>
           </div>

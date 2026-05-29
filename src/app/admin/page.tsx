@@ -216,7 +216,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleResearch = async (college: College, target: "unweightedGpa" | "weightedGpa" | "policy" | "deadlines" | "all" = "all") => {
+  const handleResearch = async (college: College, target: "unweightedGpa" | "weightedGpa" | "policy" | "deadlines" | "act" | "all" = "all") => {
     if (college.isHumanVerified) {
       console.log(`Skipping ${college.name} as it is marked Human Verified.`);
       return;
@@ -247,6 +247,23 @@ export default function AdminDashboard() {
       if (target === "all" || target === "weightedGpa") {
         if (data.averageGpaWeighted !== undefined) {
           updatedData.averageGpaWeighted = data.averageGpaWeighted ?? null;
+        }
+      }
+      if (target === "all" || target === "act") {
+        if (data.actComposite !== undefined) {
+          const actVal = data.actComposite ?? null;
+          updatedData.testScores = {
+            satReading: college.testScores?.satReading || { p25: null, mid: null, p75: null },
+            satMath: college.testScores?.satMath || { p25: null, mid: null, p75: null },
+            actEnglish: college.testScores?.actEnglish || { p25: null, mid: null, p75: null },
+            actMath: college.testScores?.actMath || { p25: null, mid: null, p75: null },
+            ...college.testScores,
+            actComposite: {
+              p25: actVal ? Math.max(1, actVal - 3) : null,
+              mid: actVal,
+              p75: actVal ? Math.min(36, actVal + 3) : null
+            }
+          };
         }
       }
       if (target === "all" || target === "policy") {
@@ -316,13 +333,15 @@ export default function AdminDashboard() {
     );
     if (!confirmRun) return;
 
-    let target: "unweightedGpa" | "weightedGpa" | "policy" | "deadlines" = "deadlines";
+    let target: "unweightedGpa" | "weightedGpa" | "policy" | "deadlines" | "act" = "deadlines";
     if (columnKey === "Avg GPA") {
       target = "unweightedGpa";
     } else if (columnKey === "Avg Weighted GPA") {
       target = "weightedGpa";
     } else if (columnKey === "Need Blind") {
       target = "policy";
+    } else if (columnKey === "Avg ACT") {
+      target = "act";
     }
 
     setResearchingColumn(columnKey);
@@ -481,7 +500,7 @@ export default function AdminDashboard() {
     const headers = [
       "ID", "Name", "City", "State", "Acceptance Rate", "Avg GPA", "Avg GPA (Weighted)", 
       "Total Cost In-State", "Total Cost Out-State", 
-      "SAT Reading (Mid)", "SAT Math (Mid)",
+      "SAT Reading (Mid)", "SAT Math (Mid)", "ACT Composite (Mid)",
       "RD Deadline", "ED1 Deadline", "ED2 Deadline", "EA Deadline", "Rolling"
     ];
     
@@ -497,6 +516,7 @@ export default function AdminDashboard() {
       c.financialAid?.total.outOfState || "",
       c.testScores?.satReading?.mid || "",
       c.testScores?.satMath?.mid || "",
+      c.testScores?.actComposite?.mid || "",
       c.deadlines?.regularDecision || "",
       c.deadlines?.earlyDecision1 || "",
       c.deadlines?.earlyDecision2 || "",
@@ -522,7 +542,7 @@ export default function AdminDashboard() {
     const headers = [
       "ID", "Name", "City", "State", "Acceptance Rate", "Avg GPA", "Avg GPA (Weighted)", 
       "Total Cost In-State", "Total Cost Out-State", 
-      "SAT Reading (Mid)", "SAT Math (Mid)",
+      "SAT Reading (Mid)", "SAT Math (Mid)", "ACT Composite (Mid)",
       "RD Deadline", "ED1 Deadline", "ED2 Deadline", "EA Deadline", "Rolling"
     ];
     
@@ -539,6 +559,7 @@ export default function AdminDashboard() {
       c.financialAid?.total.outOfState || "",
       c.testScores?.satReading?.mid || "",
       c.testScores?.satMath?.mid || "",
+      c.testScores?.actComposite?.mid || "",
       c.deadlines?.regularDecision || "",
       c.deadlines?.earlyDecision1 || "",
       c.deadlines?.earlyDecision2 || "",
@@ -799,6 +820,23 @@ export default function AdminDashboard() {
                           </th>
                           <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">SAT Math</th>
                           <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">SAT Read</th>
+                          <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">
+                            <div className="flex items-center justify-center gap-1">
+                              <span>Avg ACT</span>
+                              <button
+                                onClick={() => handleResearchColumn("Avg ACT")}
+                                disabled={!!researchingColumn || isResearchingAll}
+                                className="text-blue-400 hover:text-blue-300 disabled:opacity-30 disabled:cursor-not-allowed p-0.5 rounded hover:bg-slate-700 transition-colors"
+                                title="Research Avg ACT for all filtered colleges (overwrite)"
+                              >
+                                {researchingColumn === "Avg ACT" ? (
+                                  <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <Wand2 className="w-3 h-3" />
+                                )}
+                              </button>
+                            </div>
+                          </th>
                           <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">Total Cost (In)</th>
                           <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">Total Cost (Out)</th>
                           <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">
@@ -985,6 +1023,30 @@ export default function AdminDashboard() {
                                   updateCollegeField(college.id, "testScores", newScores);
                                 }}
                                 className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 w-16 text-center text-slate-300"
+                                placeholder="N/A"
+                              />
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <input 
+                                type="number" 
+                                value={college.testScores?.actComposite?.mid || ""}
+                                onChange={e => {
+                                  const val = e.target.value === "" ? null : parseInt(e.target.value, 10);
+                                  const newScores = {
+                                    satReading: college.testScores?.satReading || { p25: null, mid: null, p75: null },
+                                    satMath: college.testScores?.satMath || { p25: null, mid: null, p75: null },
+                                    actEnglish: college.testScores?.actEnglish || { p25: null, mid: null, p75: null },
+                                    actMath: college.testScores?.actMath || { p25: null, mid: null, p75: null },
+                                    ...college.testScores,
+                                    actComposite: {
+                                      p25: val ? Math.max(1, val - 3) : null,
+                                      mid: val,
+                                      p75: val ? Math.min(36, val + 3) : null
+                                    }
+                                  };
+                                  updateCollegeField(college.id, "testScores", newScores);
+                                }}
+                                className="bg-transparent border-none focus:ring-1 focus:ring-blue-500 rounded px-1 py-0.5 w-16 text-center text-orange-300 font-semibold"
                                 placeholder="N/A"
                               />
                             </td>

@@ -84,6 +84,8 @@ export interface UserProfile {
 
   mySchools?: string[]; // Array of college IDs
   matchedSchoolIds?: string[]; // Array of matched college IDs from recommendation engine
+  matchedSchoolIdsInState?: string[]; // Array of matched in-state college IDs
+  matchedSchoolIdsOutOfState?: string[]; // Array of matched out-of-state college IDs
   profileCompleteness?: number; // 0-100 percentage
   hasSeenIntro?: boolean;
   hasSeenCongrats?: boolean;

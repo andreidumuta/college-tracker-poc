@@ -110,6 +110,17 @@ async function researchDeadlines(ai: GoogleGenAI, collegeName: string) {
   return queryGemini(ai, prompt);
 }
 
+// 5. Research ACT Score
+async function researchAct(ai: GoogleGenAI, collegeName: string) {
+  const prompt = `You are a college admissions expert. Search the web for the average admitted student ACT composite score (or the midpoint / 25th-75th percentile ACT composite score) for ${collegeName}.
+  If the official average/midpoint ACT composite score is not published by the college, you MUST look up and provide the commonly accepted average/estimate from reputable third-party sources (such as PrepScholar, CollegeSimply, or similar). Do NOT return null unless there is absolutely no estimate or data available online.
+  You MUST return ONLY a raw JSON object with the following exact keys and types, and nothing else.
+  {
+    "actComposite": number or null (The average or midpoint admitted student ACT composite score as a number between 1 and 36.)
+  }`;
+  return queryGemini(ai, prompt);
+}
+
 export async function POST(req: Request) {
   try {
     const { collegeName, target = "all" } = await req.json();
@@ -128,7 +139,7 @@ export async function POST(req: Request) {
 
     if (target === "all") {
       // Execute all sub-prompts in parallel to decrease latency
-      const [unweightedGpaRes, weightedGpaRes, policyRes, deadlinesRes] = await Promise.all([
+      const [unweightedGpaRes, weightedGpaRes, policyRes, deadlinesRes, actRes] = await Promise.all([
         researchUnweightedGpa(ai, collegeName).catch(err => {
           console.error("Error researching unweighted GPA:", err);
           return { averageGpa: null };
@@ -151,6 +162,10 @@ export async function POST(req: Request) {
             regularDecision: "Not published",
             rolling: null
           };
+        }),
+        researchAct(ai, collegeName).catch(err => {
+          console.error("Error researching ACT:", err);
+          return { actComposite: null };
         })
       ]);
 
@@ -158,7 +173,8 @@ export async function POST(req: Request) {
         ...unweightedGpaRes,
         ...weightedGpaRes,
         ...policyRes,
-        ...deadlinesRes
+        ...deadlinesRes,
+        ...actRes
       };
       
       return NextResponse.json(data);
@@ -174,6 +190,8 @@ export async function POST(req: Request) {
       data = await researchPolicy(ai, collegeName);
     } else if (target === "deadlines") {
       data = await researchDeadlines(ai, collegeName);
+    } else if (target === "act") {
+      data = await researchAct(ai, collegeName);
     } else {
       return NextResponse.json({ error: `Invalid target: ${target}` }, { status: 400 });
     }

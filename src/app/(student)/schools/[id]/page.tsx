@@ -119,7 +119,7 @@ export default function SchoolDetailPage() {
           {trackedApp && (
             <span className="bg-[#10b981]/15 text-[#10b981] font-bold text-xs px-5 h-10 rounded-full flex items-center justify-center gap-1.5 shadow-sm">
               <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" />
-              <span>Tracked – {trackedApp.status === "inProgress" ? "In Progress" : trackedApp.status.charAt(0).toUpperCase() + trackedApp.status.slice(1)}</span>
+              <span>Tracked – {trackedApp.status}</span>
             </span>
           )}
         </div>

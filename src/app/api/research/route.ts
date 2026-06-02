@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
+import { verifyAuth } from "@/lib/api-auth";
 
 // Helper function to query Gemini with retry logic, exponential backoff, and a timeout
 async function queryGemini(ai: GoogleGenAI, prompt: string) {
@@ -123,11 +124,33 @@ async function researchAct(ai: GoogleGenAI, collegeName: string) {
 
 export async function POST(req: Request) {
   try {
-    const { collegeName, target = "all" } = await req.json();
+    const authResult = await verifyAuth(req, true); // Admin required
+    if ("error" in authResult) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+    }
+
+    const body = await req.json();
+    const target = body.target || "all";
+    let collegeName = body.collegeName;
 
     if (!collegeName) {
       return NextResponse.json({ error: "collegeName is required" }, { status: 400 });
     }
+
+    if (typeof collegeName !== "string") {
+      return NextResponse.json({ error: "collegeName must be a string" }, { status: 400 });
+    }
+    const sanitizedCollegeName = collegeName.trim();
+    if (sanitizedCollegeName.length === 0 || sanitizedCollegeName.length > 100) {
+      return NextResponse.json({ error: "collegeName length must be between 1 and 100 characters" }, { status: 400 });
+    }
+    // Allow alphanumeric, spaces, hyphens, periods, commas, single quotes/apostrophes, parentheses, and ampersands
+    const validPattern = /^[a-zA-Z0-9\s\-\.\,\'\(\)\&]+$/;
+    if (!validPattern.test(sanitizedCollegeName)) {
+      return NextResponse.json({ error: "collegeName contains invalid characters" }, { status: 400 });
+    }
+
+    collegeName = sanitizedCollegeName;
 
     if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json({ error: "GEMINI_API_KEY is not configured" }, { status: 500 });

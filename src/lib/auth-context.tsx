@@ -9,6 +9,7 @@ import { UserProfile } from "@/types";
 interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
+  isAdmin: boolean;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
@@ -21,6 +22,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Sync auth state
@@ -38,8 +40,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (!currentUser) {
         setProfile(null);
+        setIsAdmin(false);
         setLoading(false);
         return;
+      }
+
+      // Sync custom claims to check for admin claim
+      try {
+        const idTokenResult = await currentUser.getIdTokenResult();
+        setIsAdmin(!!idTokenResult.claims.admin);
+      } catch (err) {
+        console.error("Failed to fetch custom claims:", err);
+        setIsAdmin(false);
       }
 
       // Sync Firestore profile
@@ -95,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithApple = async () => {
     // For now, let's mock Apple Sign-In or show a prompt since Firebase Apple Auth needs Apple developer setup.
     // We will do a simulated/mock login as a demo student or notify the user.
-    alert("Apple Sign-In is configured as a placeholder. Signing in using a demo Apple Account...");
+    alert("Apple Sign-In is currently in demo mode. Signing in using a Google fallback account...");
     try {
       // We will perform Google Sign-in as a fallback or log in as a simulated user
       await signInWithPopup(auth, googleProvider);
@@ -115,6 +127,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateUserProfile = async (data: Partial<UserProfile>) => {
     if (!user) return;
+    
+    // Validate profile schema before writing
+    if (!validateProfileData(data)) {
+      throw new Error("Invalid profile fields or types submitted.");
+    }
+
     try {
       const userRef = doc(db, "users", user.uid);
       const updatedData = {
@@ -168,6 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         profile,
+        isAdmin,
         loading,
         signInWithGoogle,
         signInWithApple,
@@ -178,6 +197,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
+}
+
+// UserProfile field whitelist and basic type validation
+function validateProfileData(data: Partial<UserProfile>): boolean {
+  const allowedKeys = new Set<keyof UserProfile>([
+    "uid", "email", "displayName", "photoURL",
+    "fullName", "dob", "zipCode", "educationLevel",
+    "applyStatePreference", "oosStatesConsidered",
+    "isFirstGen", "isUrm", "isLegacy",
+    "seekingFinAid", "seekingMeritAid", "workingWithConsultant",
+    "gpa4", "gpa5", "planToSubmitScores", "satScore", "actScore",
+    "mySchools", "matchedSchoolIds", "matchedSchoolIdsInState", "matchedSchoolIdsOutOfState",
+    "profileCompleteness", "hasSeenIntro", "hasSeenCongrats",
+    "createdAt", "updatedAt"
+  ]);
+
+  for (const key of Object.keys(data)) {
+    if (!allowedKeys.has(key as keyof UserProfile)) {
+      console.warn(`Validation failed: key "${key}" is not allowed in UserProfile`);
+      return false;
+    }
+  }
+
+  if (data.fullName !== undefined && typeof data.fullName !== "string") return false;
+  if (data.dob !== undefined && typeof data.dob !== "string") return false;
+  if (data.zipCode !== undefined && typeof data.zipCode !== "string") return false;
+  if (data.oosStatesConsidered !== undefined && typeof data.oosStatesConsidered !== "string") return false;
+  if (data.gpa4 !== undefined && (typeof data.gpa4 !== "number" || isNaN(data.gpa4))) return false;
+  if (data.gpa5 !== undefined && (typeof data.gpa5 !== "number" || isNaN(data.gpa5))) return false;
+  if (data.profileCompleteness !== undefined && (typeof data.profileCompleteness !== "number" || isNaN(data.profileCompleteness))) return false;
+  if (data.isFirstGen !== undefined && typeof data.isFirstGen !== "boolean") return false;
+  if (data.isUrm !== undefined && typeof data.isUrm !== "boolean") return false;
+  if (data.isLegacy !== undefined && typeof data.isLegacy !== "boolean") return false;
+  if (data.hasSeenIntro !== undefined && typeof data.hasSeenIntro !== "boolean") return false;
+  if (data.hasSeenCongrats !== undefined && typeof data.hasSeenCongrats !== "boolean") return false;
+  if (data.mySchools !== undefined && !Array.isArray(data.mySchools)) return false;
+  if (data.matchedSchoolIds !== undefined && !Array.isArray(data.matchedSchoolIds)) return false;
+  if (data.matchedSchoolIdsInState !== undefined && !Array.isArray(data.matchedSchoolIdsInState)) return false;
+  if (data.matchedSchoolIdsOutOfState !== undefined && !Array.isArray(data.matchedSchoolIdsOutOfState)) return false;
+  
+  return true;
 }
 
 export function useAuth() {

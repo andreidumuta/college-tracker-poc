@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { listenToApplications, addApplication, ApplicationInfo } from "@/lib/user-service";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { College, UserProfile } from "@/types";
 import { Sparkles, User, BarChart2, Search, Plus, Check, ChevronDown } from "lucide-react";
@@ -251,51 +251,34 @@ export default function ChancesPage() {
 
   // Fetch peer application stats for scatter plot
   useEffect(() => {
-    if (!activeCollegeId || !selectedCollege) return;
+    if (!activeCollegeId || !selectedCollege || !user) return;
     
     const fetchPeerData = async () => {
       try {
-        const q = query(
-          collection(db, "users"), 
-          where("mySchools", "array-contains", activeCollegeId)
-        );
-        const querySnapshot = await getDocs(q);
-        const points: PeerPoint[] = [];
-
-        querySnapshot.forEach((doc) => {
-          const u = doc.data() as UserProfile;
-          const peerGpa = u.gpa4 || (u.gpa5 ? Math.min(4.0, parseFloat((u.gpa5 * 0.8).toFixed(2))) : 0);
-          if (peerGpa && ((u.satScore && u.satScore !== "NA") || (u.actScore && u.actScore !== "NA"))) {
-            let sat = 1200;
-            let act = 24;
-            if (u.satScore && u.satScore !== "NA") {
-              sat = getSatMidpoint(u.satScore);
-              act = satToAct(sat);
-            }
-            if (u.actScore && u.actScore !== "NA") {
-              act = getActMidpoint(u.actScore);
-              if (!u.satScore || u.satScore === "NA") {
-                sat = actToSat(act);
-              }
-            }
-            points.push({
-              gpa: peerGpa,
-              sat,
-              act,
-              isCurrentUser: u.uid === user?.uid,
-              status: "Actual"
-            });
+        const token = await user.getIdToken();
+        const res = await fetch(`/api/peers?collegeId=${activeCollegeId}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
           }
         });
+        
+        if (!res.ok) {
+          throw new Error(`Failed to fetch peer statistics (HTTP ${res.status})`);
+        }
+        
+        const points = await res.json() as PeerPoint[];
 
         let finalPoints = [...points];
         if (points.length < 5) {
           const mockPoints = generateMockPeers(selectedCollege);
-          finalPoints = [...finalPoints, ...mockPoints];
+          const hasActualCurrentUser = points.some(p => p.isCurrentUser);
+          const filteredMock = hasActualCurrentUser ? mockPoints.filter(p => !p.isCurrentUser) : mockPoints;
+          finalPoints = [...points, ...filteredMock];
         }
+
         setPeerPoints(finalPoints);
-      } catch (err) {
-        console.error("Error fetching peer data:", err);
+      } catch (error) {
+        console.error("Error fetching peer data:", error);
       }
     };
 

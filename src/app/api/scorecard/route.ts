@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { verifyAuth } from "@/lib/api-auth";
 
 interface TargetCollege {
   id: string;
@@ -13,10 +14,19 @@ export async function POST(req: Request) {
   let currentApiKey = "DEMO_KEY";
 
   try {
+    const authResult = await verifyAuth(req, true); // Admin required
+    if ("error" in authResult) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+    }
+
     const { targets } = await req.json() as { targets: TargetCollege[] };
 
     if (!targets || targets.length === 0) {
       return NextResponse.json({ error: "No target colleges provided" }, { status: 400 });
+    }
+
+    if (targets.length > 20) {
+      return NextResponse.json({ error: "Payload too large. Maximum of 20 target colleges can be processed per request." }, { status: 400 });
     }
 
     const apiKey = process.env.COLLEGE_SCORECARD_API_KEY || "DEMO_KEY";
@@ -139,9 +149,8 @@ export async function POST(req: Request) {
     if (err && typeof err === "object") {
       if (err.status === 429) {
         const isDemo = currentApiKey === "DEMO_KEY";
-        const keyPrefix = isDemo ? "DEMO_KEY" : `${currentApiKey.substring(0, 4)}...`;
         return NextResponse.json({ 
-          error: `Data.gov API Rate Limit Exceeded. You are currently using API Key: ${keyPrefix}. ${isDemo ? "The DEMO_KEY only allows 40 requests per hour." : "Your real key has hit its hourly limit."} Please check your GitHub Secrets and deployment status.`,
+          error: `Data.gov API Rate Limit Exceeded. ${isDemo ? "The DEMO_KEY only allows 40 requests per hour." : "Your API key has hit its hourly limit."} Please check your configuration and deployment status.`,
           count: addedCount,
           results
         }, { status: 429 });

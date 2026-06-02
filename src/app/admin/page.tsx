@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { collection, query, orderBy, doc, updateDoc, setDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 import { db, auth, googleProvider } from "@/lib/firebase";
-import { signInWithPopup, onAuthStateChanged, User, signOut } from "firebase/auth";
+import { signInWithPopup, signOut } from "firebase/auth";
+import { useAuth } from "@/lib/auth-context";
 import { GraduationCap, Search, Wand2, Download, Table as TableIcon, LogOut, FileSpreadsheet, Upload, ListPlus, Database, Plus, Trash2 } from "lucide-react";
 
 interface CostBreakdown {
@@ -71,13 +72,12 @@ interface TargetCollege {
   state: string;
 }
 
-const ALLOWED_EMAILS = ["andrei.dumuta@gmail.com", "sorin208@gmail.com"];
-
 export default function AdminDashboard() {
-  const [user, setUser] = useState<User | null>(null);
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const [colleges, setColleges] = useState<College[]>([]);
   const [targetColleges, setTargetColleges] = useState<TargetCollege[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [collegesLoading, setCollegesLoading] = useState(true);
+  const loading = authLoading || (user && isAdmin && collegesLoading);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<"database" | "whitelist">("database");
   
@@ -89,28 +89,9 @@ export default function AdminDashboard() {
   const [fetchingApiId, setFetchingApiId] = useState<string | null>(null);
   const [researchingColumn, setResearchingColumn] = useState<string | null>(null);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        if (currentUser.email && ALLOWED_EMAILS.includes(currentUser.email)) {
-          setUser(currentUser);
-        } else {
-          alert(`Unauthorized: ${currentUser.email} does not have admin access.`);
-          await signOut(auth);
-          setUser(null);
-          setLoading(false);
-        }
-      } else {
-        setUser(null);
-        setLoading(false);
-      }
-    });
-    return () => unsubscribe();
-  }, []);
-
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isAdmin) return;
     
     const q = query(collection(db, "colleges"), orderBy("name", "asc"));
     const unsubscribeColleges = onSnapshot(q, (snapshot) => {
@@ -121,7 +102,7 @@ export default function AdminDashboard() {
         return { ...rawCol, city, state };
       });
       setColleges(data);
-      setLoading(false);
+      setCollegesLoading(false);
 
       // Background migration check for legacy location fields
       snapshot.docs.forEach(async (docSnap) => {
@@ -141,7 +122,7 @@ export default function AdminDashboard() {
       });
     }, (error) => {
       console.error("Error streaming colleges:", error);
-      setLoading(false);
+      setCollegesLoading(false);
     });
 
     const targetQ = query(collection(db, "target_colleges"), orderBy("name", "asc"));
@@ -156,7 +137,7 @@ export default function AdminDashboard() {
       unsubscribeColleges();
       unsubscribeTargets();
     };
-  }, [user]);
+  }, [user, isAdmin]);
 
 
   const handleLogin = async () => {
@@ -175,6 +156,7 @@ export default function AdminDashboard() {
   // --- API Integrations ---
 
   const fetchScorecardData = async () => {
+    if (!user) return;
     if (targetColleges.length === 0) {
       alert("Your whitelist is empty. Please upload target colleges first!");
       return;
@@ -188,9 +170,13 @@ export default function AdminDashboard() {
       // You can close the window after clicking this; the server will continue until the Cloud Run timeout.
       alert("Fetch initiated! The server will now process all 250 colleges in the background. This will take ~3-4 minutes. You can safely close the window or wait for the confirmation.");
       
+      const token = await user.getIdToken();
       const res = await fetch(`/api/scorecard`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ targets: targetColleges })
       });
       
@@ -217,8 +203,7 @@ export default function AdminDashboard() {
   };
 
   const handleResearch = async (college: College, target: "unweightedGpa" | "weightedGpa" | "policy" | "deadlines" | "act" | "all" = "all") => {
-    if (college.isHumanVerified) {
-      console.log(`Skipping ${college.name} as it is marked Human Verified.`);
+    if (college.isHumanVerified || !user) {
       return;
     }
 
@@ -227,9 +212,13 @@ export default function AdminDashboard() {
     const timeoutId = setTimeout(() => controller.abort(), 35000); // 35 seconds timeout
 
     try {
+      const token = await user.getIdToken();
       const res = await fetch("/api/research", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({ collegeName: college.name, target }),
         signal: controller.signal,
       });
@@ -348,7 +337,6 @@ export default function AdminDashboard() {
     try {
       for (const college of filteredColleges) {
         if (college.isHumanVerified) {
-          console.log(`Skipping ${college.name} as it is marked Human Verified.`);
           continue;
         }
 
@@ -428,15 +416,19 @@ export default function AdminDashboard() {
   };
 
   const fetchSingleCollegeApiData = async (college: College) => {
-    if (!college.name) {
-      alert("College name is required to query the College Scorecard API.");
+    if (!college.name || !user) {
+      alert("College name and user session are required to query the College Scorecard API.");
       return;
     }
     setFetchingApiId(college.id);
     try {
+      const token = await user.getIdToken();
       const res = await fetch(`/api/scorecard`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           targets: [{
             id: college.id,
@@ -644,19 +636,32 @@ export default function AdminDashboard() {
     );
   }
 
-  if (!user) {
+  if (!user || !isAdmin) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-900">
         <GraduationCap className="w-20 h-20 text-blue-500 mb-6" />
         <h1 className="text-3xl font-bold text-white mb-2">College Data Admin</h1>
-        <p className="text-slate-400 mb-8">Secure access required to manage the database.</p>
-        <button
-          onClick={handleLogin}
-          className="flex items-center gap-3 px-8 py-4 bg-white text-slate-900 rounded-xl font-bold hover:bg-slate-100 transition-colors shadow-xl"
-        >
-          <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
-          Sign in with Google
-        </button>
+        <p className="text-slate-400 mb-8">
+          {!user 
+            ? "Secure access required to manage the database." 
+            : `Unauthorized: ${user.email} does not have admin access.`}
+        </p>
+        {!user ? (
+          <button
+            onClick={handleLogin}
+            className="flex items-center gap-3 px-8 py-4 bg-white text-slate-900 rounded-xl font-bold hover:bg-slate-100 transition-colors shadow-xl"
+          >
+            <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
+            Sign in with Google
+          </button>
+        ) : (
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-8 py-4 bg-red-600 text-white rounded-xl font-bold hover:bg-red-500 transition-colors shadow-xl"
+          >
+            Sign Out
+          </button>
+        )}
       </div>
     );
   }

@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Home, ClipboardCheck, BarChart3, User, LogOut, Shield } from "lucide-react";
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
-  const { user, profile, loading, logout } = useAuth();
+  const { user, profile, loading, logout, isAdmin } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -43,7 +43,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
 
 
-  const isAdmin = user.email && ["andrei.dumuta@gmail.com", "sorin208@gmail.com"].includes(user.email);
+
 
   return (
     <div className="min-h-screen bg-[#f8f9ff] text-[#173355] font-body flex flex-col md:flex-row relative">

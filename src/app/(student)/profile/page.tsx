@@ -323,11 +323,10 @@ export default function ProfilePage() {
         filled++;
       }
     }
-    
     // Add score checks
     if (prof.planToSubmitScores === "Yes") {
-      if (prof.satScore && prof.satScore !== "NA" && prof.satScore !== "") filled++;
-      if (prof.actScore && prof.actScore !== "NA" && prof.actScore !== "") filled++;
+      if (prof.satScore && prof.satScore !== "NA") filled++;
+      if (prof.actScore && prof.actScore !== "NA") filled++;
     } else {
       filled += 2;
     }
@@ -360,10 +359,10 @@ export default function ProfilePage() {
     setSaveMessage("");
     setShowErrors(false);
     try {
-      const finalPayload = {
+      const finalPayload: UserProfile = {
         isFirstGen: profile?.isFirstGen ?? false,
         isUrm: profile?.isUrm ?? false,
-        ...profile,
+        ...(profile as UserProfile),
         ...dirtyData,
       };
 

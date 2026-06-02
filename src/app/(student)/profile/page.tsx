@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { UserProfile } from "@/types";
 import { User, School, Sparkles, Check, ChevronDown, AlertTriangle } from "lucide-react";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
 
 interface CustomSelectProps {
   value: string;
@@ -127,7 +129,7 @@ const actScoreOptions = [
 ];
 
 export default function ProfilePage() {
-  const { profile, updateUserProfile, logout } = useAuth();
+  const { user, profile, updateUserProfile, logout } = useAuth();
   const router = useRouter();
   // Keep only edited (dirty) form values to avoid useEffect-state sync warnings
   const [dirtyData, setDirtyData] = useState<Partial<UserProfile>>({});
@@ -142,6 +144,10 @@ export default function ProfilePage() {
   // Age gate state
   const [showAgeGateModal, setShowAgeGateModal] = useState(false);
   const [previousDob, setPreviousDob] = useState<string>("");
+
+  // Privacy controls state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const isNavigatingRef = useRef(false);
   const hasPushedDummyRef = useRef(false);
@@ -333,6 +339,70 @@ export default function ProfilePage() {
 
     const totalFields = fieldsToTrack.length + (prof.planToSubmitScores === "Yes" ? 2 : 0);
     return Math.round((filled / totalFields) * 100);
+  };
+
+  const handleExportData = async () => {
+    if (!user || !profile) return;
+    
+    try {
+      const appsCollectionRef = collection(db, "users", user.uid, "applications");
+      const querySnapshot = await getDocs(appsCollectionRef);
+      const applications = querySnapshot.docs.map(docSnap => docSnap.data());
+
+      const dataToExport = {
+        profile,
+        applications,
+        exportedAt: new Date().toISOString(),
+        formatVersion: "1.0"
+      };
+
+      const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
+        JSON.stringify(dataToExport, null, 2)
+      )}`;
+      
+      const downloadAnchor = document.createElement("a");
+      downloadAnchor.setAttribute("href", jsonString);
+      downloadAnchor.setAttribute("download", `get_in_profile_export_${user.uid}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    } catch (error) {
+      console.error("Data export failed:", error);
+      alert("Failed to export data. Please try again.");
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    setIsDeletingAccount(true);
+    try {
+      // 1. Delete all application subcollection documents
+      const appsCollectionRef = collection(db, "users", user.uid, "applications");
+      const querySnapshot = await getDocs(appsCollectionRef);
+      const deletePromises = querySnapshot.docs.map(docSnap => deleteDoc(docSnap.ref));
+      await Promise.all(deletePromises);
+
+      // 2. Delete profile document
+      const userRef = doc(db, "users", user.uid);
+      await deleteDoc(userRef);
+
+      // 3. Delete auth user account
+      await user.delete();
+      
+      alert("Your account and all associated data have been permanently deleted.");
+      router.push("/");
+    } catch (error: unknown) {
+      console.error("Account deletion failed:", error);
+      const authError = error as { code?: string };
+      if (authError.code === "auth/requires-recent-login") {
+        alert("For security reasons, this action requires a recent sign-in. Please log out, sign back in, and try again.");
+      } else {
+        alert("An error occurred while deleting your account. Please try again.");
+      }
+    } finally {
+      setIsDeletingAccount(false);
+      setShowDeleteModal(false);
+    }
   };
 
   const saveProfileData = async (): Promise<boolean> => {
@@ -911,6 +981,34 @@ export default function ProfilePage() {
         </div>
       </form>
 
+      {/* Privacy & Account Management Section */}
+      <div className="mt-12 pt-8 border-t border-[#99b4dc]/15 space-y-6">
+        <h3 className="text-xl font-extrabold text-[#173355] font-headline">Privacy & Data Controls</h3>
+        <p className="text-sm text-[#466084] leading-relaxed">
+          Manage your personal information. Under data protection regulations (including GDPR and CCPA), you have the right to download a copy of your records or permanently erase your academic profile at any time.
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-4 pt-2">
+          {/* Export Data Button */}
+          <button
+            type="button"
+            onClick={handleExportData}
+            className="flex-1 py-4 px-6 rounded-full font-bold bg-[#eff3ff] text-[#0060ad] hover:bg-[#dde9ff] transition-all flex items-center justify-center gap-2 group cursor-pointer border border-[#dde9ff]"
+          >
+            <span>Download My Data (JSON)</span>
+          </button>
+
+          {/* Delete Account Button */}
+          <button
+            type="button"
+            onClick={() => setShowDeleteModal(true)}
+            className="flex-1 py-4 px-6 rounded-full font-bold bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all flex items-center justify-center gap-2 cursor-pointer border border-rose-100"
+          >
+            <span>Delete My Account Permanently</span>
+          </button>
+        </div>
+      </div>
+
       {/* Intro Modal Pop-up */}
       {showIntroModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-6">
@@ -1000,6 +1098,42 @@ export default function ProfilePage() {
                 className="w-full py-3 bg-transparent text-[#466084] hover:text-[#173355] rounded-full font-bold text-xs transition-all cursor-pointer"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-rose-100 space-y-6 text-center transform transition-all scale-100 relative">
+            <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 mx-auto animate-pulse">
+              <AlertTriangle className="w-8 h-8" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-3xl font-extrabold tracking-tight text-[#173355] font-headline">Delete Account</h3>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-rose-600">This action is irreversible</p>
+            </div>
+            <p className="text-[#466084] text-sm leading-relaxed">
+              Are you absolutely sure you want to delete your profile? This will permanently delete your academic profile and all tracked application deadlines from our database.
+            </p>
+            <div className="pt-2 flex flex-col gap-2">
+              <button
+                type="button"
+                disabled={isDeletingAccount}
+                onClick={handleDeleteAccount}
+                className="w-full py-4 bg-rose-600 text-white rounded-full font-bold text-sm shadow-lg shadow-rose-600/20 hover:bg-rose-700 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
+              >
+                {isDeletingAccount ? "Deleting Data..." : "Yes, Delete Permanently"}
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingAccount}
+                onClick={() => setShowDeleteModal(false)}
+                className="w-full py-3 bg-transparent text-[#466084] hover:text-[#173355] rounded-full font-bold text-xs transition-all cursor-pointer"
+              >
+                Cancel
               </button>
             </div>
           </div>

@@ -453,7 +453,7 @@ export default function SchoolsPage() {
           }`}
         >
           <span className="text-sm">My Matches</span>
-          <span className="text-[10px] font-semibold opacity-85 leading-none mt-0.5">ooS</span>
+          <span className="text-[10px] font-semibold opacity-85 leading-none mt-0.5">out of State</span>
         </button>
       </div>
 

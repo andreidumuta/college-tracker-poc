@@ -584,11 +584,14 @@ export default function SchoolsPage() {
                             <option value="rolling">Rolling Admissions</option>
                           </select>
                         </div>
+                      </div>
 
+                      {/* Actions Group (Legacy, Details, Delete) */}
+                      <div className="flex items-end gap-2.5 w-full md:w-auto">
                         {/* Legacy Toggle */}
                         <div className="space-y-1">
                           <label className="text-[10px] font-bold uppercase tracking-wider text-[#466084] block text-center">Legacy</label>
-                          <div className="bg-white border-none rounded-xl px-3 flex items-center justify-center shadow-sm h-10 w-20">
+                          <div className="bg-white border border-[#dde9ff] rounded-xl px-3 flex items-center justify-center shadow-sm h-10 w-20">
                             <button
                               onClick={() => handleLegacyToggle(app.collegeId, !app.isLegacy)}
                               className={`w-10 h-5 rounded-full relative transition-colors ${app.isLegacy ? "bg-[#0060ad]" : "bg-[#dde9ff]"}`}
@@ -597,25 +600,30 @@ export default function SchoolsPage() {
                             </button>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Actions */}
-                      <div className="flex gap-2 items-center">
-                        <Link
-                          href={`/schools/${app.collegeId}`}
-                          className="h-10 px-4 bg-white hover:bg-[#eff3ff] text-[#0060ad] border border-[#dde9ff] rounded-xl flex items-center justify-center gap-1 text-xs font-bold transition-all w-36"
-                        >
-                          Details
-                          <ChevronRight className="w-4 h-4" />
-                        </Link>
+                        {/* Details Link */}
+                        <div className="space-y-1 flex-1 md:flex-none">
+                          <label className="hidden md:block text-[10px] font-bold uppercase tracking-wider text-transparent select-none">&nbsp;</label>
+                          <Link
+                            href={`/schools/${app.collegeId}`}
+                            className="h-10 px-4 bg-white hover:bg-[#eff3ff] text-[#0060ad] border border-[#dde9ff] rounded-xl flex items-center justify-center gap-1 text-xs font-bold transition-all w-full md:w-36"
+                          >
+                            Details
+                            <ChevronRight className="w-4 h-4" />
+                          </Link>
+                        </div>
                         
-                        <button
-                          onClick={() => handleRemoveApp(app.collegeId)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
-                          title="Remove College"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {/* Delete Button */}
+                        <div className="space-y-1">
+                          <label className="hidden md:block text-[10px] font-bold uppercase tracking-wider text-transparent select-none">&nbsp;</label>
+                          <button
+                            onClick={() => handleRemoveApp(app.collegeId)}
+                            className="h-10 w-10 flex items-center justify-center text-red-500 hover:bg-red-50 bg-white border border-[#dde9ff] rounded-xl transition-all cursor-pointer"
+                            title="Remove College"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -1,4 +1,4 @@
-import { doc, getDoc, updateDoc, setDoc, deleteDoc, collection, query, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, updateDoc, setDoc, deleteDoc, collection, query, onSnapshot, arrayUnion, arrayRemove } from "firebase/firestore";
 import { db } from "./firebase";
 import { UserProfile } from "@/types";
 
@@ -49,18 +49,11 @@ export async function addApplication(
     
     await setDoc(appRef, newApp);
 
-    // Sync mySchools array in profile
+    // Sync mySchools array in profile atomically
     const userRef = doc(db, "users", uid);
-    const userSnap = await getDoc(userRef);
-    if (userSnap.exists()) {
-      const data = userSnap.data() as UserProfile;
-      const currentSchools = data.mySchools || [];
-      if (!currentSchools.includes(collegeId)) {
-        await updateDoc(userRef, {
-          mySchools: [...currentSchools, collegeId]
-        });
-      }
-    }
+    await updateDoc(userRef, {
+      mySchools: arrayUnion(collegeId)
+    });
   } catch (error) {
     console.error("Error adding application:", error);
     throw error;
@@ -112,16 +105,11 @@ export async function removeApplication(uid: string, collegeId: string) {
     const appRef = doc(db, "users", uid, "applications", collegeId);
     await deleteDoc(appRef);
 
-    // Sync mySchools array in profile
+    // Sync mySchools array in profile atomically
     const userRef = doc(db, "users", uid);
-    const userSnap = await getDoc(userRef);
-    if (userSnap.exists()) {
-      const data = userSnap.data() as UserProfile;
-      const currentSchools = data.mySchools || [];
-      await updateDoc(userRef, {
-        mySchools: currentSchools.filter(id => id !== collegeId)
-      });
-    }
+    await updateDoc(userRef, {
+      mySchools: arrayRemove(collegeId)
+    });
   } catch (error) {
     console.error("Error removing application:", error);
     throw error;

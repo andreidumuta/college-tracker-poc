@@ -25,7 +25,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Sync auth state
   useEffect(() => {
+    let unsubscribeProfile: (() => void) | null = null;
+
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
+      // Unsubscribe from previous user's profile listener if active
+      if (unsubscribeProfile) {
+        unsubscribeProfile();
+        unsubscribeProfile = null;
+      }
+
       setUser(currentUser);
       
       if (!currentUser) {
@@ -56,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Realtime listener for profile changes
-      const unsubscribeProfile = onSnapshot(userRef, (snapshot) => {
+      unsubscribeProfile = onSnapshot(userRef, (snapshot) => {
         if (snapshot.exists()) {
           setProfile(snapshot.data() as UserProfile);
         }
@@ -65,11 +73,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error("Error listening to profile document:", error);
         setLoading(false);
       });
-
-      return () => unsubscribeProfile();
     });
 
-    return () => unsubscribeAuth();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeProfile) {
+        unsubscribeProfile();
+      }
+    };
   }, []);
 
   const signInWithGoogle = async () => {

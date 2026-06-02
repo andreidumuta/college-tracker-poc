@@ -8,6 +8,10 @@ interface TargetCollege {
 }
 
 export async function POST(req: Request) {
+  let addedCount = 0;
+  const results: Array<{ originalId: string; scorecardId: string }> = [];
+  let currentApiKey = "DEMO_KEY";
+
   try {
     const { targets } = await req.json() as { targets: TargetCollege[] };
 
@@ -16,6 +20,7 @@ export async function POST(req: Request) {
     }
 
     const apiKey = process.env.COLLEGE_SCORECARD_API_KEY || "DEMO_KEY";
+    currentApiKey = apiKey;
     const fields = [
       "id",
       "school.name",
@@ -34,104 +39,121 @@ export async function POST(req: Request) {
       "latest.admissions.sat_scores.75th_percentile.math",
     ].join(",");
 
-    let addedCount = 0;
-    const results: Array<{ originalId: string; scorecardId: string }> = [];
+    const chunkSize = 3;
+    for (let i = 0; i < targets.length; i += chunkSize) {
+      const chunk = targets.slice(i, i + chunkSize);
 
-    // Process each target college
-    for (const target of targets) {
-      const encodedName = encodeURIComponent(target.name);
-      let url = `https://api.data.gov/ed/collegescorecard/v1/schools.json?school.name=${encodedName}&fields=${fields}&per_page=1&api_key=${apiKey}`;
-      
-      if (target.state && target.state.trim().length === 2) {
-        url += `&school.state=${target.state.trim().toUpperCase()}`;
-      }
+      await Promise.all(
+        chunk.map(async (target) => {
+          const encodedName = encodeURIComponent(target.name);
+          let url = `https://api.data.gov/ed/collegescorecard/v1/schools.json?school.name=${encodedName}&fields=${fields}&per_page=1&api_key=${apiKey}`;
 
-      try {
-        const res = await fetch(url);
-        
-        if (res.status === 429) {
-          console.error("Data.gov API Rate Limit Exceeded (429)");
-          const isDemo = apiKey === "DEMO_KEY";
-          const keyPrefix = isDemo ? "DEMO_KEY" : `${apiKey.substring(0, 4)}...`;
-          return NextResponse.json({ 
-            error: `Data.gov API Rate Limit Exceeded. You are currently using API Key: ${keyPrefix}. ${isDemo ? "The DEMO_KEY only allows 40 requests per hour." : "Your real key has hit its hourly limit."} Please check your GitHub Secrets and deployment status.`,
-            count: addedCount,
-            results
-          }, { status: 429 });
-        }
-        
-        if (res.status >= 500) {
-          console.error(`Data.gov API is DOWN (HTTP ${res.status})`);
-          return NextResponse.json({ 
-            error: `The U.S. Government Data.gov API is currently experiencing a nationwide outage (HTTP ${res.status}). Please try again later.`,
-            count: addedCount,
-            results
-          }, { status: 502 });
-        }
-        
-        if (!res.ok) {
-          console.warn(`Failed to fetch ${target.name}: HTTP ${res.status}`);
-          continue;
-        }
-
-        const data = await res.json();
-        if (!data.results || data.results.length === 0) {
-          console.log(`No Scorecard match found for: ${target.name}`);
-          continue;
-        }
-
-        const school = data.results[0];
-        
-        const payload = {
-          id: String(school["id"]),
-          name: school["school.name"],
-          city: school["school.city"],
-          state: school["school.state"],
-          location: `${school["school.city"]}, ${school["school.state"]}`,
-          acceptanceRate: school["latest.admissions.admission_rate.overall"] || null,
-          financialAid: {
-            tuition: {
-              inState: school["latest.cost.tuition.in_state"] || null,
-              outOfState: school["latest.cost.tuition.out_of_state"] || null,
-            },
-            roomAndBoard: {
-              inState: school["latest.cost.roomboard.oncampus"] || null,
-              outOfState: school["latest.cost.roomboard.oncampus"] || null,
-            },
-            total: {
-              inState: school["latest.cost.attendance.academic_year"] || null,
-              outOfState: school["latest.cost.attendance.academic_year"] || null,
-            }
-          },
-          testScores: {
-            satReading: {
-              p25: school["latest.admissions.sat_scores.25th_percentile.critical_reading"] || null,
-              mid: school["latest.admissions.sat_scores.midpoint.critical_reading"] || null,
-              p75: school["latest.admissions.sat_scores.75th_percentile.critical_reading"] || null,
-            },
-            satMath: {
-              p25: school["latest.admissions.sat_scores.25th_percentile.math"] || null,
-              mid: school["latest.admissions.sat_scores.midpoint.math"] || null,
-              p75: school["latest.admissions.sat_scores.75th_percentile.math"] || null,
-            }
+          if (target.state && target.state.trim().length === 2) {
+            url += `&school.state=${target.state.trim().toUpperCase()}`;
           }
-        };
 
-        const docRef = adminDb.collection("colleges").doc(String(school["id"]));
-        await docRef.set(payload, { merge: true });
-        addedCount++;
-        results.push({ originalId: target.id, scorecardId: String(school["id"]) });
-        
-        await new Promise(resolve => setTimeout(resolve, 500));
+          try {
+            const res = await fetch(url);
 
-      } catch (err) {
-        console.error(`Error processing ${target.name}:`, err);
+            if (res.status === 429) {
+              console.error("Data.gov API Rate Limit Exceeded (429)");
+              throw { status: 429 };
+            }
+
+            if (res.status >= 500) {
+              console.error(`Data.gov API is DOWN (HTTP ${res.status})`);
+              throw { status: 502, responseStatus: res.status };
+            }
+
+            if (!res.ok) {
+              console.warn(`Failed to fetch ${target.name}: HTTP ${res.status}`);
+              return;
+            }
+
+            const data = await res.json();
+            if (!data.results || data.results.length === 0) {
+              console.log(`No Scorecard match found for: ${target.name}`);
+              return;
+            }
+
+            const school = data.results[0];
+
+            const payload = {
+              id: String(school["id"]),
+              name: school["school.name"],
+              city: school["school.city"],
+              state: school["school.state"],
+              location: `${school["school.city"]}, ${school["school.state"]}`,
+              acceptanceRate: school["latest.admissions.admission_rate.overall"] || null,
+              financialAid: {
+                tuition: {
+                  inState: school["latest.cost.tuition.in_state"] || null,
+                  outOfState: school["latest.cost.tuition.out_of_state"] || null,
+                },
+                roomAndBoard: {
+                  inState: school["latest.cost.roomboard.oncampus"] || null,
+                  outOfState: school["latest.cost.roomboard.oncampus"] || null,
+                },
+                total: {
+                  inState: school["latest.cost.attendance.academic_year"] || null,
+                  outOfState: school["latest.cost.attendance.academic_year"] || null,
+                }
+              },
+              testScores: {
+                satReading: {
+                  p25: school["latest.admissions.sat_scores.25th_percentile.critical_reading"] || null,
+                  mid: school["latest.admissions.sat_scores.midpoint.critical_reading"] || null,
+                  p75: school["latest.admissions.sat_scores.75th_percentile.critical_reading"] || null,
+                },
+                satMath: {
+                  p25: school["latest.admissions.sat_scores.25th_percentile.math"] || null,
+                  mid: school["latest.admissions.sat_scores.midpoint.math"] || null,
+                  p75: school["latest.admissions.sat_scores.75th_percentile.math"] || null,
+                }
+              }
+            };
+
+            const docRef = adminDb.collection("colleges").doc(String(school["id"]));
+            await docRef.set(payload, { merge: true });
+            addedCount++;
+            results.push({ originalId: target.id, scorecardId: String(school["id"]) });
+
+          } catch (err) {
+            if (err && typeof err === "object" && "status" in err) {
+              throw err;
+            }
+            console.error(`Error processing ${target.name}:`, err);
+          }
+        })
+      );
+
+      if (i + chunkSize < targets.length) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
       }
     }
 
     return NextResponse.json({ success: true, count: addedCount, results });
 
   } catch (error: unknown) {
+    const err = error as { status?: number; responseStatus?: number };
+    if (err && typeof err === "object") {
+      if (err.status === 429) {
+        const isDemo = currentApiKey === "DEMO_KEY";
+        const keyPrefix = isDemo ? "DEMO_KEY" : `${currentApiKey.substring(0, 4)}...`;
+        return NextResponse.json({ 
+          error: `Data.gov API Rate Limit Exceeded. You are currently using API Key: ${keyPrefix}. ${isDemo ? "The DEMO_KEY only allows 40 requests per hour." : "Your real key has hit its hourly limit."} Please check your GitHub Secrets and deployment status.`,
+          count: addedCount,
+          results
+        }, { status: 429 });
+      }
+      if (err.status === 502) {
+        return NextResponse.json({ 
+          error: `The U.S. Government Data.gov API is currently experiencing a nationwide outage (HTTP ${err.responseStatus}). Please try again later.`,
+          count: addedCount,
+          results
+        }, { status: 502 });
+      }
+    }
     console.error(error);
     const message = error instanceof Error ? error.message : "Internal Server Error";
     return NextResponse.json({ error: message }, { status: 500 });

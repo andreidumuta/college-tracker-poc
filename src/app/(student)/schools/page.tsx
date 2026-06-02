@@ -539,11 +539,6 @@ export default function SchoolsPage() {
                         >
                           {app.collegeName}
                         </Link>
-                        {app.isLegacy && (
-                          <span className="px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-amber-100 text-amber-800 border border-amber-200">
-                            Legacy
-                          </span>
-                        )}
                       </div>
 
                       <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-[#466084] font-medium">

@@ -704,9 +704,9 @@ export default function SchoolsPage() {
                     </div>
                     <button
                       onClick={() => runMatchEngine(activeTab)}
-                      className="bg-[#eff3ff] text-[#0060ad] hover:bg-[#dde9ff] px-6 py-3 rounded-full font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5 self-start sm:self-auto"
+                      className="bg-[#ffe087] text-[#745c00] hover:opacity-95 px-8 py-3.5 rounded-full font-bold text-sm shadow-lg shadow-[#ffe087]/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer flex items-center gap-2 self-start sm:self-auto"
                     >
-                      <Sparkles className="w-4 h-4" />
+                      <Sparkles className="w-5 h-5" />
                       Re-match me!
                     </button>
                   </div>

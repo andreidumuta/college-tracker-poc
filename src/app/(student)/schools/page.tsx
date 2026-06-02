@@ -451,17 +451,27 @@ export default function SchoolsPage() {
 
       {activeTab === "mySchools" ? (
         <div className="space-y-8">
-          {/* Add School Button */}
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="bg-[#ffe087] text-[#745c00] hover:opacity-95 px-4 sm:px-6 py-2 rounded-full font-bold shadow-lg shadow-[#ffe087]/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer flex flex-col items-center justify-center w-fit"
-          >
-            <span className="text-sm flex items-center gap-1.5">
-              <Plus className="w-4 h-4" />
-              Add School
-            </span>
-            <span className="text-[10px] font-semibold text-transparent select-none leading-none mt-0.5">&nbsp;</span>
-          </button>
+          {/* Section Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#dde9ff]/50">
+            <div>
+              <h3 className="text-2xl font-bold font-headline text-[#173355]">
+                Tracked Applications
+              </h3>
+              <p className="text-xs text-[#466084] mt-1">Manage and update your active college pipeline</p>
+            </div>
+            
+            {/* Add School Button */}
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="bg-[#ffe087] text-[#745c00] hover:opacity-95 px-4 sm:px-6 py-2 rounded-full font-bold shadow-lg shadow-[#ffe087]/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer flex flex-col items-center justify-center w-fit self-start sm:self-auto"
+            >
+              <span className="text-sm flex items-center gap-1.5">
+                <Plus className="w-4 h-4" />
+                Add School
+              </span>
+              <span className="text-[10px] font-semibold text-transparent select-none leading-none mt-0.5">&nbsp;</span>
+            </button>
+          </div>
 
           {/* Stats Bento Grid */}
           <section className="grid grid-cols-1 md:grid-cols-12 gap-6">

@@ -410,14 +410,6 @@ export default function SchoolsPage() {
             Your journey to the ivy-covered halls is mapped here. Stay organized, stay inspired, and keep moving forward.
           </p>
         </div>
-
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="bg-[#0060ad] text-white font-bold px-6 py-4 rounded-full flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-[#0060ad]/15 cursor-pointer flex-shrink-0"
-        >
-          <Plus className="w-5 h-5" />
-          Add School
-        </button>
       </header>
 
       {/* Tab Switcher */}
@@ -458,7 +450,19 @@ export default function SchoolsPage() {
       </div>
 
       {activeTab === "mySchools" ? (
-        <>
+        <div className="space-y-8">
+          {/* Add School Button */}
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="bg-[#ffe087] text-[#745c00] hover:opacity-95 px-4 sm:px-6 py-2 rounded-full font-bold shadow-lg shadow-[#ffe087]/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer flex flex-col items-center justify-center w-fit"
+          >
+            <span className="text-sm flex items-center gap-1.5">
+              <Plus className="w-4 h-4" />
+              Add School
+            </span>
+            <span className="text-[10px] font-semibold text-transparent select-none leading-none mt-0.5">&nbsp;</span>
+          </button>
+
           {/* Stats Bento Grid */}
           <section className="grid grid-cols-1 md:grid-cols-12 gap-6">
             {/* Progress Card */}
@@ -629,7 +633,7 @@ export default function SchoolsPage() {
               </div>
             )}
           </section>
-        </>
+        </div>
       ) : (
         /* Recommendation Matches tab view */
         <section className="space-y-6">

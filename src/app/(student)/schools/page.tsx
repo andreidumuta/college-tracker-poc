@@ -403,13 +403,8 @@ export default function SchoolsPage() {
   return (
     <div className="space-y-12">
       {/* Header */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-        <div className="max-w-xl space-y-4">
-          <h2 className="text-5xl font-extrabold tracking-tight text-[#173355] font-headline">My Schools</h2>
-          <p className="text-[#466084] text-lg leading-relaxed">
-            Your journey to the ivy-covered halls is mapped here. Stay organized, stay inspired, and keep moving forward.
-          </p>
-        </div>
+      <header>
+        <h2 className="text-5xl font-extrabold tracking-tight text-[#173355] font-headline">My Schools</h2>
       </header>
 
       {/* Tab Switcher */}

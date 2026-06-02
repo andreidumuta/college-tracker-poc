@@ -424,33 +424,36 @@ export default function SchoolsPage() {
       <div className="flex bg-[#eff3ff] p-1.5 rounded-3xl w-fit border border-[#dde9ff]/50 shadow-inner">
         <button
           onClick={() => setActiveTab("mySchools")}
-          className={`px-6 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+          className={`px-4 sm:px-6 py-2 rounded-full font-bold transition-all cursor-pointer whitespace-nowrap flex flex-col items-center justify-center ${
             activeTab === "mySchools"
               ? "bg-[#0060ad] text-white shadow"
               : "text-[#466084] hover:text-[#173355]"
           }`}
         >
-          My Schools
+          <span className="text-sm">My Schools</span>
+          <span className="text-[10px] font-semibold text-transparent select-none leading-none mt-0.5">&nbsp;</span>
         </button>
         <button
           onClick={() => setActiveTab("matchesInState")}
-          className={`px-6 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+          className={`px-4 sm:px-6 py-2 rounded-full font-bold transition-all cursor-pointer whitespace-nowrap flex flex-col items-center justify-center ${
             activeTab === "matchesInState"
               ? "bg-[#0060ad] text-white shadow"
               : "text-[#466084] hover:text-[#173355]"
           }`}
         >
-          Matches In State
+          <span className="text-sm">My Matches</span>
+          <span className="text-[10px] font-semibold opacity-85 leading-none mt-0.5">in State</span>
         </button>
         <button
           onClick={() => setActiveTab("matchesOutOfState")}
-          className={`px-6 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+          className={`px-4 sm:px-6 py-2 rounded-full font-bold transition-all cursor-pointer whitespace-nowrap flex flex-col items-center justify-center ${
             activeTab === "matchesOutOfState"
               ? "bg-[#0060ad] text-white shadow"
               : "text-[#466084] hover:text-[#173355]"
           }`}
         >
-          Matches Out of State
+          <span className="text-sm">My Matches</span>
+          <span className="text-[10px] font-semibold opacity-85 leading-none mt-0.5">ooS</span>
         </button>
       </div>
 

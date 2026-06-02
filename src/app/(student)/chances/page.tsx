@@ -526,7 +526,7 @@ export default function ChancesPage() {
           {/* Hero Header */}
           <section className="space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <h1 className="text-5xl font-extrabold tracking-tight text-[#173355] font-headline">
+              <h1 className="text-2xl font-bold font-headline text-[#173355]">
                 {selectedCollege.name}
               </h1>
               

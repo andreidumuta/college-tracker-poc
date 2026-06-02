@@ -60,6 +60,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Let's first make sure a document exists for them. If not, create it.
       const docSnap = await getDoc(userRef);
       if (!docSnap.exists()) {
+        const consentGiven = typeof window !== "undefined" ? localStorage.getItem("marketing_consent_opt_in") === "true" : false;
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("marketing_consent_opt_in");
+        }
+
         const newProfile: UserProfile = {
           uid: currentUser.uid,
           email: currentUser.email || "",
@@ -68,11 +73,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           mySchools: [],
           profileCompleteness: 0,
           hasSeenIntro: false,
+          marketingConsent: consentGiven,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
         await setDoc(userRef, newProfile);
         setProfile(newProfile);
+      } else {
+        // Sync marketing preference if passed at login
+        if (typeof window !== "undefined") {
+          const loginConsent = localStorage.getItem("marketing_consent_opt_in");
+          if (loginConsent !== null) {
+            const consentGiven = loginConsent === "true";
+            localStorage.removeItem("marketing_consent_opt_in");
+            await setDoc(userRef, { marketingConsent: consentGiven }, { merge: true });
+          }
+        }
       }
 
       // Realtime listener for profile changes
@@ -209,7 +225,7 @@ function validateProfileData(data: Partial<UserProfile>): boolean {
     "seekingFinAid", "seekingMeritAid", "workingWithConsultant",
     "gpa4", "gpa5", "planToSubmitScores", "satScore", "actScore",
     "mySchools", "matchedSchoolIds", "matchedSchoolIdsInState", "matchedSchoolIdsOutOfState",
-    "profileCompleteness", "hasSeenIntro", "hasSeenCongrats",
+    "profileCompleteness", "hasSeenIntro", "hasSeenCongrats", "marketingConsent",
     "createdAt", "updatedAt"
   ]);
 
@@ -236,6 +252,7 @@ function validateProfileData(data: Partial<UserProfile>): boolean {
   if (data.matchedSchoolIds !== undefined && !Array.isArray(data.matchedSchoolIds)) return false;
   if (data.matchedSchoolIdsInState !== undefined && !Array.isArray(data.matchedSchoolIdsInState)) return false;
   if (data.matchedSchoolIdsOutOfState !== undefined && !Array.isArray(data.matchedSchoolIdsOutOfState)) return false;
+  if (data.marketingConsent !== undefined && typeof data.marketingConsent !== "boolean") return false;
   
   return true;
 }

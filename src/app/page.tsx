@@ -10,6 +10,7 @@ export default function LandingPage() {
   const router = useRouter();
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const [marketingConsent, setMarketingConsent] = useState(false);
 
   useEffect(() => {
     if (user && !isAdmin) {
@@ -23,6 +24,9 @@ export default function LandingPage() {
 
   const handleSignInGoogle = async () => {
     try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("marketing_consent_opt_in", String(marketingConsent));
+      }
       await signInWithGoogle();
     } catch (err) {
       console.error(err);
@@ -31,6 +35,9 @@ export default function LandingPage() {
 
   const handleSignInApple = async () => {
     try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("marketing_consent_opt_in", String(marketingConsent));
+      }
       await signInWithApple();
     } catch (err) {
       console.error(err);
@@ -157,6 +164,18 @@ export default function LandingPage() {
                   />
                   <span>
                     I certify that I am <strong>13 years of age or older</strong> (complying with online privacy guidelines).
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-3 cursor-pointer text-[#466084] text-xs leading-relaxed select-none">
+                  <input
+                    type="checkbox"
+                    checked={marketingConsent}
+                    onChange={(e) => setMarketingConsent(e.target.checked)}
+                    className="w-4 h-4 mt-0.5 rounded text-[#0060ad] border-[#99b4dc] focus:ring-[#0060ad] cursor-pointer"
+                  />
+                  <span>
+                    I consent to receiving email updates about resources, academic services, and marketing campaigns. (Optional)
                   </span>
                 </label>
               </div>

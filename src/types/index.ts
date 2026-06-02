@@ -89,6 +89,7 @@ export interface UserProfile {
   profileCompleteness?: number; // 0-100 percentage
   hasSeenIntro?: boolean;
   hasSeenCongrats?: boolean;
+  marketingConsent?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

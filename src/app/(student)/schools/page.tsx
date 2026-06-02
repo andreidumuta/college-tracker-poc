@@ -128,6 +128,7 @@ export default function SchoolsPage() {
   const [activeTab, setActiveTab] = useState<"mySchools" | "matchesInState" | "matchesOutOfState">("mySchools");
   const [isMatching, setIsMatching] = useState(false);
   const [showFirstTimePopup, setShowFirstTimePopup] = useState(false);
+  const [schoolToRemove, setSchoolToRemove] = useState<string | null>(null);
 
   // Derived matched schools (computed on every render)
   const matchedSchoolsInState = (() => {
@@ -368,13 +369,18 @@ export default function SchoolsPage() {
     }
   };
 
-  const handleRemoveApp = async (collegeId: string) => {
-    if (!user) return;
-    if (!confirm("Are you sure you want to remove this school from your tracker?")) return;
+  const handleRemoveApp = (collegeId: string) => {
+    setSchoolToRemove(collegeId);
+  };
+
+  const confirmRemoveApp = async () => {
+    if (!user || !schoolToRemove) return;
     try {
-      await removeApplication(user.uid, collegeId);
+      await removeApplication(user.uid, schoolToRemove);
     } catch (err) {
       console.error(err);
+    } finally {
+      setSchoolToRemove(null);
     }
   };
 
@@ -844,6 +850,40 @@ export default function SchoolsPage() {
                 className="w-full py-3 bg-transparent text-[#466084] hover:text-[#173355] rounded-full font-bold text-xs transition-all cursor-pointer"
               >
                 Not Now, Browse Schools
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remove School Confirmation Modal */}
+      {schoolToRemove && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-[#dde9ff] space-y-6 text-center transform transition-all scale-100 relative">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-500 mx-auto">
+              <Trash2 className="w-8 h-8" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-3xl font-extrabold tracking-tight text-[#173355] font-headline">Remove School?</h3>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-red-600">Action Required</p>
+            </div>
+            <p className="text-[#466084] text-sm leading-relaxed">
+              Are you sure you want to remove <strong>{applications.find(a => a.collegeId === schoolToRemove)?.collegeName}</strong> from your active pipeline? This will delete all tracked rounds, statuses, and history for this school.
+            </p>
+            <div className="pt-2 flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={confirmRemoveApp}
+                className="flex-1 py-4 bg-red-500 text-white rounded-full font-bold text-sm shadow-lg shadow-red-500/20 hover:opacity-95 active:scale-[0.98] transition-all cursor-pointer"
+              >
+                Yes, Remove
+              </button>
+              <button
+                type="button"
+                onClick={() => setSchoolToRemove(null)}
+                className="flex-1 py-4 bg-[#eff3ff] text-[#173355] hover:bg-[#dde9ff] rounded-full font-bold text-sm transition-all cursor-pointer"
+              >
+                Cancel
               </button>
             </div>
           </div>

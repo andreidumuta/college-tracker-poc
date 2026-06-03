@@ -187,6 +187,9 @@ export default function SchoolsPage() {
         const studGpa = profile.gpa4 || (profile.gpa5 ? Math.min(4.0, parseFloat((profile.gpa5 * 0.8).toFixed(2))) : 0);
         const studSat = getStudentSatMidpoint(profile);
         const homeState = profile.zipCode ? getStateFromZip(profile.zipCode) : "";
+        const consideredStates = profile.oosStatesConsidered
+          ? profile.oosStatesConsidered.split(",").map(s => s.trim().toUpperCase()).filter(Boolean)
+          : [];
 
         const getColLikelihood = (col: College): "Safety" | "Match" | "Reach" => {
           const colGpa = getNormalizedCollegeGpa(col);
@@ -216,14 +219,23 @@ export default function SchoolsPage() {
 
           colleges.forEach(col => {
             const isIS = homeState && (col.state || "").toUpperCase() === homeState.toUpperCase();
+            const colStateUpper = (col.state || "").toUpperCase();
+            const isInConsideredOos = consideredStates.length > 0 && consideredStates.includes(colStateUpper);
+
             const isTarget = oos ? !isIS : isIS;
             const likelihood = getColLikelihood(col);
 
             if (isTarget) {
-              if (likelihood === "Safety" || likelihood === "Match") {
+              const isPreferredOos = oos && consideredStates.length > 0 ? isInConsideredOos : true;
+
+              if (isPreferredOos && (likelihood === "Safety" || likelihood === "Match")) {
                 primary.push(col);
-              } else {
+              } else if (isPreferredOos) {
                 fallback.push(col);
+              } else if (likelihood === "Safety" || likelihood === "Match") {
+                secondaryOosPrimary.push(col);
+              } else {
+                secondaryOosFallback.push(col);
               }
             } else {
               if (likelihood === "Safety" || likelihood === "Match") {

@@ -340,7 +340,7 @@ export default function HomeDashboard() {
             onClick={() => alert("This Financing tool is a placeholder for the POC. In production, this will offer FAFSA forms integration.")}
             className="w-full py-4 bg-[#0060ad] hover:opacity-95 text-white font-bold rounded-full transition-all text-xs uppercase tracking-wider shadow-md shadow-[#0060ad]/15"
           >
-            See how much I can get
+            See how much you can get
           </button>
         </div>
 

@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { UserProfile } from "@/types";
 import { User, School, Sparkles, Check, ChevronDown, AlertTriangle } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, deleteField } from "firebase/firestore";
 
 interface CustomSelectProps {
   value: string;
@@ -376,28 +376,32 @@ export default function ProfilePage() {
     if (!user) return;
     setIsDeletingAccount(true);
     try {
-      // 1. Delete all application subcollection documents
-      const appsCollectionRef = collection(db, "users", user.uid, "applications");
-      const querySnapshot = await getDocs(appsCollectionRef);
-      const deletePromises = querySnapshot.docs.map(docSnap => deleteDoc(docSnap.ref));
-      await Promise.all(deletePromises);
-
-      // 2. Delete profile document
+      // 1. Anonymize the profile document by clearing personal details
+      // but keeping academic scores, GPA, and school application history (mySchools list)
       const userRef = doc(db, "users", user.uid);
-      await deleteDoc(userRef);
+      await updateDoc(userRef, {
+        fullName: deleteField(),
+        email: deleteField(),
+        displayName: deleteField(),
+        photoURL: deleteField(),
+        dob: deleteField(),
+        zipCode: deleteField(),
+        marketingConsent: false,
+        profileCompleteness: 0
+      });
 
-      // 3. Delete auth user account
+      // 2. Delete auth user account from Firebase Authentication
       await user.delete();
       
-      alert("Your account and all associated data have been permanently deleted.");
+      alert("Your personal details have been permanently deleted. Your academic scores and tracked schools have been anonymized.");
       router.push("/");
     } catch (error: unknown) {
-      console.error("Account deletion failed:", error);
+      console.error("Account deletion/anonymization failed:", error);
       const authError = error as { code?: string };
       if (authError.code === "auth/requires-recent-login") {
         alert("For security reasons, this action requires a recent sign-in. Please log out, sign back in, and try again.");
       } else {
-        alert("An error occurred while deleting your account. Please try again.");
+        alert("An error occurred while deleting your personal details. Please try again.");
       }
     } finally {
       setIsDeletingAccount(false);
@@ -798,7 +802,7 @@ export default function ProfilePage() {
               showErrors && !checkFieldCompleted("seekingFinAid") ? "bg-red-50/10 border-red-500" : "bg-[#eff3ff] border-transparent"
             }`}>
               <label className="text-xs font-bold uppercase tracking-wider text-[#466084] flex justify-between items-center">
-                <span>Financial Aid *</span>
+                <span>Are you considering financial aid? *</span>
                 {showErrors && !checkFieldCompleted("seekingFinAid") && (
                   <span className="text-[10px] text-red-500 font-bold uppercase tracking-normal">Required</span>
                 )}
@@ -1004,7 +1008,7 @@ export default function ProfilePage() {
             onClick={() => setShowDeleteModal(true)}
             className="flex-1 py-4 px-6 rounded-full font-bold bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all flex items-center justify-center gap-2 cursor-pointer border border-rose-100"
           >
-            <span>Delete My Account Permanently</span>
+            <span>Delete My Personal Details</span>
           </button>
         </div>
       </div>
@@ -1112,11 +1116,11 @@ export default function ProfilePage() {
               <AlertTriangle className="w-8 h-8" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-3xl font-extrabold tracking-tight text-[#173355] font-headline">Delete Account</h3>
+              <h3 className="text-3xl font-extrabold tracking-tight text-[#173355] font-headline">Delete Personal Details</h3>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-rose-600">This action is irreversible</p>
             </div>
-            <p className="text-[#466084] text-sm leading-relaxed">
-              Are you absolutely sure you want to delete your profile? This will permanently delete your academic profile and all tracked application deadlines from our database.
+            <p className="text-[#466084] text-sm leading-relaxed text-left">
+              Are you absolutely sure you want to delete your personal details? This will permanently delete your personal identification info (name, date of birth, zip code, and email) and delete your login account. Your academic stats and tracked schools list will be kept stored anonymously to support comparison stats.
             </p>
             <div className="pt-2 flex flex-col gap-2">
               <button
@@ -1125,7 +1129,7 @@ export default function ProfilePage() {
                 onClick={handleDeleteAccount}
                 className="w-full py-4 bg-rose-600 text-white rounded-full font-bold text-sm shadow-lg shadow-rose-600/20 hover:bg-rose-700 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
               >
-                {isDeletingAccount ? "Deleting Data..." : "Yes, Delete Permanently"}
+                {isDeletingAccount ? "Deleting Data..." : "Yes, Delete Personal Details"}
               </button>
               <button
                 type="button"

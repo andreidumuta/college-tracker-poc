@@ -262,16 +262,19 @@ export default function SchoolsPage() {
             selected.push(...shufFallback.slice(0, needed));
           }
 
-          // 3. Backfill with secondary primary
-          if (selected.length < 5) {
-            const needed = 5 - selected.length;
-            selected.push(...shufSecPrimary.slice(0, needed));
-          }
+          // 3. Backfill with secondary primary (only if not skipping secondary backfill)
+          const skipSecondaryBackfill = !oos || (oos && consideredStates.length > 0);
+          if (!skipSecondaryBackfill) {
+            if (selected.length < 5) {
+              const needed = 5 - selected.length;
+              selected.push(...shufSecPrimary.slice(0, needed));
+            }
 
-          // 4. Backfill with secondary fallback
-          if (selected.length < 5) {
-            const needed = 5 - selected.length;
-            selected.push(...shufSecFallback.slice(0, needed));
+            // 4. Backfill with secondary fallback
+            if (selected.length < 5) {
+              const needed = 5 - selected.length;
+              selected.push(...shufSecFallback.slice(0, needed));
+            }
           }
 
           return selected.slice(0, 5).map(c => c.id);

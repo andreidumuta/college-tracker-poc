@@ -236,23 +236,74 @@ function validateProfileData(data: Partial<UserProfile>): boolean {
     }
   }
 
-  if (data.fullName !== undefined && typeof data.fullName !== "string") return false;
-  if (data.dob !== undefined && typeof data.dob !== "string") return false;
-  if (data.zipCode !== undefined && typeof data.zipCode !== "string") return false;
-  if (data.oosStatesConsidered !== undefined && typeof data.oosStatesConsidered !== "string") return false;
-  if (data.gpa4 !== undefined && (typeof data.gpa4 !== "number" || isNaN(data.gpa4))) return false;
-  if (data.gpa5 !== undefined && (typeof data.gpa5 !== "number" || isNaN(data.gpa5))) return false;
-  if (data.profileCompleteness !== undefined && (typeof data.profileCompleteness !== "number" || isNaN(data.profileCompleteness))) return false;
-  if (data.isFirstGen !== undefined && typeof data.isFirstGen !== "boolean") return false;
-  if (data.isUrm !== undefined && typeof data.isUrm !== "boolean") return false;
-  if (data.isLegacy !== undefined && typeof data.isLegacy !== "boolean") return false;
-  if (data.hasSeenIntro !== undefined && typeof data.hasSeenIntro !== "boolean") return false;
-  if (data.hasSeenCongrats !== undefined && typeof data.hasSeenCongrats !== "boolean") return false;
-  if (data.mySchools !== undefined && !Array.isArray(data.mySchools)) return false;
-  if (data.matchedSchoolIds !== undefined && !Array.isArray(data.matchedSchoolIds)) return false;
-  if (data.matchedSchoolIdsInState !== undefined && !Array.isArray(data.matchedSchoolIdsInState)) return false;
-  if (data.matchedSchoolIdsOutOfState !== undefined && !Array.isArray(data.matchedSchoolIdsOutOfState)) return false;
-  if (data.marketingConsent !== undefined && typeof data.marketingConsent !== "boolean") return false;
+  if (data.fullName !== undefined && typeof data.fullName !== "string") {
+    console.warn("Validation failed: fullName must be a string");
+    return false;
+  }
+  if (data.dob !== undefined && typeof data.dob !== "string") {
+    console.warn("Validation failed: dob must be a string");
+    return false;
+  }
+  if (data.zipCode !== undefined && typeof data.zipCode !== "string") {
+    console.warn("Validation failed: zipCode must be a string");
+    return false;
+  }
+  if (data.oosStatesConsidered !== undefined && typeof data.oosStatesConsidered !== "string") {
+    console.warn("Validation failed: oosStatesConsidered must be a string");
+    return false;
+  }
+  if (data.gpa4 !== undefined && data.gpa4 !== null && (data.gpa4 as any) !== "" && (typeof data.gpa4 !== "number" || isNaN(data.gpa4))) {
+    console.warn("Validation failed: gpa4 must be a number");
+    return false;
+  }
+  if (data.gpa5 !== undefined && data.gpa5 !== null && (data.gpa5 as any) !== "" && (typeof data.gpa5 !== "number" || isNaN(data.gpa5))) {
+    console.warn("Validation failed: gpa5 must be a number");
+    return false;
+  }
+  if (data.profileCompleteness !== undefined && (typeof data.profileCompleteness !== "number" || isNaN(data.profileCompleteness))) {
+    console.warn("Validation failed: profileCompleteness must be a number");
+    return false;
+  }
+  if (data.isFirstGen !== undefined && typeof data.isFirstGen !== "boolean") {
+    console.warn("Validation failed: isFirstGen must be a boolean");
+    return false;
+  }
+  if (data.isUrm !== undefined && typeof data.isUrm !== "boolean") {
+    console.warn("Validation failed: isUrm must be a boolean");
+    return false;
+  }
+  if (data.isLegacy !== undefined && typeof data.isLegacy !== "boolean") {
+    console.warn("Validation failed: isLegacy must be a boolean");
+    return false;
+  }
+  if (data.hasSeenIntro !== undefined && typeof data.hasSeenIntro !== "boolean") {
+    console.warn("Validation failed: hasSeenIntro must be a boolean");
+    return false;
+  }
+  if (data.hasSeenCongrats !== undefined && typeof data.hasSeenCongrats !== "boolean") {
+    console.warn("Validation failed: hasSeenCongrats must be a boolean");
+    return false;
+  }
+  if (data.mySchools !== undefined && !Array.isArray(data.mySchools)) {
+    console.warn("Validation failed: mySchools must be an array");
+    return false;
+  }
+  if (data.matchedSchoolIds !== undefined && !Array.isArray(data.matchedSchoolIds)) {
+    console.warn("Validation failed: matchedSchoolIds must be an array");
+    return false;
+  }
+  if (data.matchedSchoolIdsInState !== undefined && !Array.isArray(data.matchedSchoolIdsInState)) {
+    console.warn("Validation failed: matchedSchoolIdsInState must be an array");
+    return false;
+  }
+  if (data.matchedSchoolIdsOutOfState !== undefined && !Array.isArray(data.matchedSchoolIdsOutOfState)) {
+    console.warn("Validation failed: matchedSchoolIdsOutOfState must be an array");
+    return false;
+  }
+  if (data.marketingConsent !== undefined && typeof data.marketingConsent !== "boolean") {
+    console.warn("Validation failed: marketingConsent must be a boolean");
+    return false;
+  }
   
   return true;
 }

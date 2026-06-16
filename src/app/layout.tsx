@@ -18,6 +18,11 @@ const beVietnamPro = Be_Vietnam_Pro({
 export const metadata: Metadata = {
   title: "Get In!",
   description: "Your personalized editorial college application concierge.",
+  icons: {
+    icon: "/app-logo.png",
+    apple: "/app-logo.png",
+  },
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({

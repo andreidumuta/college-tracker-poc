@@ -1,0 +1,18 @@
+{
+  "short_name": "Get In!",
+  "name": "Get In! College Tracker",
+  "description": "Your personalized editorial college application concierge.",
+  "icons": [
+    {
+      "src": "/app-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/home",
+  "background_color": "#f8f9ff",
+  "theme_color": "#0060ad",
+  "display": "standalone",
+  "orientation": "portrait"
+}

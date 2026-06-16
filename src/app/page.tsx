@@ -62,6 +62,7 @@ export default function LandingPage() {
       {/* Top Header */}
       <header className="max-w-6xl w-full mx-auto px-6 h-20 flex items-center justify-between z-10">
         <div className="flex items-center gap-2.5">
+          <img src="/app-logo.png" alt="Get In Logo" className="w-8 h-8 rounded-xl object-cover" />
           <span className="text-[#0060ad] font-extrabold italic text-2xl tracking-tight font-headline">Get in!</span>
           <span className="bg-[#ffe087] text-[#745c00] text-[9px] font-black px-1.5 py-0.5 rounded tracking-wider uppercase font-headline">Beta</span>
         </div>

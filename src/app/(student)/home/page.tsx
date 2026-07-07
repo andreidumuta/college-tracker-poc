@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { listenToApplications, ApplicationInfo } from "@/lib/user-service";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { College, UserProfile } from "@/types";
 import Link from "next/link";
 import { 
@@ -73,22 +71,31 @@ export default function HomeDashboard() {
     return () => unsubscribe();
   }, [user]);
 
-  // Load college details to extract deadline dates
+  // Load college details for tracked applications only via batch API (extremely scalable)
   useEffect(() => {
+    if (applications.length === 0 || !user) {
+      setColleges([]);
+      return;
+    }
     const fetchColleges = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "colleges"));
-        const list: College[] = [];
-        querySnapshot.forEach((doc) => {
-          list.push(doc.data() as College);
+        const token = await user.getIdToken();
+        const collegeIds = applications.map((app) => app.collegeId).join(",");
+        const res = await fetch(`/api/colleges/batch?ids=${encodeURIComponent(collegeIds)}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
         });
-        setColleges(list);
+        if (res.ok) {
+          const list = await res.json() as College[];
+          setColleges(list);
+        }
       } catch (err) {
-        console.error("Error loading colleges:", err);
+        console.error("Error loading colleges batch:", err);
       }
     };
     fetchColleges();
-  }, []);
+  }, [applications, user]);
 
   // Compute upcoming deadlines calendar events directly in render (derived state)
   const upcomingEvents: CalendarEvent[] = [];

@@ -56,6 +56,7 @@ export async function GET(req: Request) {
     const snapshot = await adminDb
       .collection("users")
       .where("mySchools", "array-contains", collegeId)
+      .limit(50) // Capped at 50 to prevent billing and loading performance spikes
       .get();
 
     const points: Array<{

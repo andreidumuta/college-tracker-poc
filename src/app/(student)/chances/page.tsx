@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { listenToApplications, addApplication, ApplicationInfo } from "@/lib/user-service";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { College, UserProfile } from "@/types";
 import { Sparkles, User, BarChart2, Search, Plus, Check, ChevronDown } from "lucide-react";
@@ -155,7 +155,7 @@ const getCoordinates = (gpa: number, score: number, type: "sat" | "act" = "sat")
 export default function ChancesPage() {
   const { user, profile } = useAuth();
   const [trackedSchools, setTrackedSchools] = useState<ApplicationInfo[]>([]);
-  const [colleges, setColleges] = useState<College[]>([]);
+  const [selectedCollege, setSelectedCollege] = useState<College | null>(null);
   const [selectedCollegeId, setSelectedCollegeId] = useState<string>(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -165,24 +165,13 @@ export default function ChancesPage() {
   });
   const [peerPoints, setPeerPoints] = useState<PeerPoint[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState<College[]>([]);
   const [searchTab, setSearchTab] = useState<"mySchools" | "allSchools">("mySchools");
   const [isMySchoolsDropdownOpen, setIsMySchoolsDropdownOpen] = useState(false);
   const [chartType, setChartType] = useState<"sat" | "act">("sat");
 
-  // Derived state to determine the active college ID to show (prioritizing user selection, then first tracked school, then first database school)
-  const activeCollegeId = selectedCollegeId || (trackedSchools.length > 0 ? trackedSchools[0].collegeId : (colleges.length > 0 ? colleges[0].id : ""));
-
-  // Derived state to avoid react-hooks/set-state-in-effect on selectedCollege
-  const selectedCollege = colleges.find(c => c.id === activeCollegeId) || null;
-
-  // Derived state search results to avoid useEffect-state sync warnings
-  const searchResults = searchTerm.trim()
-    ? colleges.filter((c) =>
-        (c.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (c.city || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (c.state || "").toLowerCase().includes(searchTerm.toLowerCase())
-      ).slice(0, 5)
-    : [];
+  // Derived state to determine the active college ID to show (prioritizing user selection, then first tracked school)
+  const activeCollegeId = selectedCollegeId || (trackedSchools.length > 0 ? trackedSchools[0].collegeId : "");
 
   // Load user's tracked applications
   useEffect(() => {
@@ -207,26 +196,54 @@ export default function ChancesPage() {
     return () => unsubscribe();
   }, [user]);
 
-  // Load all colleges for search capability
+  // Load active college details directly from Firestore (single doc read, highly scalable)
   useEffect(() => {
-    const fetchAllColleges = async () => {
+    if (!activeCollegeId) {
+      setSelectedCollege(null);
+      return;
+    }
+    const fetchSelectedCollege = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "colleges"));
-        const list: College[] = [];
-        querySnapshot.forEach((doc) => {
-          const rawCol = doc.data() as College;
-          const city = rawCol.city || (rawCol.location && rawCol.location.includes(",") ? rawCol.location.split(",")[0].trim() : "");
-          const state = rawCol.state || (rawCol.location && rawCol.location.includes(",") ? rawCol.location.split(",")[1].trim() : rawCol.location || "");
-          list.push({ ...rawCol, city, state });
-        });
-        list.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-        setColleges(list);
+        const docSnap = await getDoc(doc(db, "colleges", activeCollegeId));
+        if (docSnap.exists()) {
+          const data = docSnap.data() as College;
+          const city = data.city || (data.location && data.location.includes(",") ? data.location.split(",")[0].trim() : "");
+          const state = data.state || (data.location && data.location.includes(",") ? data.location.split(",")[1].trim() : data.location || "");
+          setSelectedCollege({ ...data, id: docSnap.id, city, state });
+        } else {
+          setSelectedCollege(null);
+        }
       } catch (err) {
-        console.error("Error loading all colleges:", err);
+        console.error("Error loading selected college details:", err);
       }
     };
-    fetchAllColleges();
-  }, []);
+    fetchSelectedCollege();
+  }, [activeCollegeId]);
+
+  // Fetch search results asynchronously from cache endpoint
+  useEffect(() => {
+    if (!searchTerm.trim() || !user) {
+      setSearchResults([]);
+      return;
+    }
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch(`/api/colleges/search?q=${encodeURIComponent(searchTerm)}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSearchResults(data);
+        }
+      } catch (err) {
+        console.error("Search failed:", err);
+      }
+    }, 300); // 300ms debounce
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm, user]);
 
 
 

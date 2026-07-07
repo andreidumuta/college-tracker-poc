@@ -10,8 +10,6 @@ import {
   listenToApplications, 
   ApplicationInfo 
 } from "@/lib/user-service";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { College } from "@/types";
 import Link from "next/link";
 import { 
@@ -119,6 +117,7 @@ export default function SchoolsPage() {
   const [applications, setApplications] = useState<ApplicationInfo[]>([]);
   const [colleges, setColleges] = useState<College[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState<College[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedCollege, setSelectedCollege] = useState<College | null>(null);
   const [deadlineType, setDeadlineType] = useState<ApplicationInfo["deadlineType"]>("regularDecision");
@@ -177,156 +176,104 @@ export default function SchoolsPage() {
   }, []);
 
   const runMatchEngine = async (targetTab: "matchesInState" | "matchesOutOfState" | "both") => {
-    if (!user || !profile || colleges.length === 0) return;
+    if (!user || !profile) return;
 
     setIsMatching(true);
     setShowFirstTimePopup(false);
 
-    setTimeout(async () => {
-      try {
-        const studGpa = profile.gpa4 || (profile.gpa5 ? Math.min(4.0, parseFloat((profile.gpa5 * 0.8).toFixed(2))) : 0);
-        const studSat = getStudentSatMidpoint(profile);
-        const homeState = profile.zipCode ? getStateFromZip(profile.zipCode) : "";
-        const consideredStates = profile.oosStatesConsidered
-          ? profile.oosStatesConsidered.split(",").map(s => s.trim().toUpperCase()).filter(Boolean)
-          : [];
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch("/api/colleges/match", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ mode: targetTab })
+      });
 
-        const getColLikelihood = (col: College): "Safety" | "Match" | "Reach" => {
-          const colGpa = getNormalizedCollegeGpa(col);
-          const p25SatMath = col.testScores?.satMath?.p25 || 650;
-          const p25SatRead = col.testScores?.satReading?.p25 || 650;
-          const col25Sat = p25SatMath + p25SatRead;
-          const col75Sat = col25Sat + 100;
-
-          if (colGpa === null || colGpa === undefined) {
-            if (studSat >= col75Sat) return "Safety";
-            if (studSat >= col25Sat - 100) return "Match";
-            return "Reach";
-          }
-
-          if (studGpa >= colGpa + 0.1 && studSat >= col75Sat) return "Safety";
-          if (studGpa >= colGpa - 0.2 && studSat >= col25Sat - 100) return "Match";
-          return "Reach";
-        };
-
-        const shuffle = <T,>(arr: T[]): T[] => [...arr].sort(() => 0.5 - Math.random());
-
-        const calculateForStateMode = (oos: boolean): string[] => {
-          const primary: College[] = [];
-          const fallback: College[] = [];
-          const secondaryOosPrimary: College[] = [];
-          const secondaryOosFallback: College[] = [];
-
-          colleges.forEach(col => {
-            const isIS = homeState && (col.state || "").toUpperCase() === homeState.toUpperCase();
-            const colStateUpper = (col.state || "").toUpperCase();
-            const isInConsideredOos = consideredStates.length > 0 && consideredStates.includes(colStateUpper);
-
-            const isTarget = oos ? !isIS : isIS;
-            const likelihood = getColLikelihood(col);
-
-            if (isTarget) {
-              const isPreferredOos = oos && consideredStates.length > 0 ? isInConsideredOos : true;
-
-              if (isPreferredOos && (likelihood === "Safety" || likelihood === "Match")) {
-                primary.push(col);
-              } else if (isPreferredOos) {
-                fallback.push(col);
-              } else if (likelihood === "Safety" || likelihood === "Match") {
-                secondaryOosPrimary.push(col);
-              } else {
-                secondaryOosFallback.push(col);
-              }
-            } else {
-              if (likelihood === "Safety" || likelihood === "Match") {
-                secondaryOosPrimary.push(col);
-              } else {
-                secondaryOosFallback.push(col);
-              }
-            }
-          });
-
-          const shufPrimary = shuffle(primary);
-          const shufFallback = shuffle(fallback);
-          const shufSecPrimary = shuffle(secondaryOosPrimary);
-          const shufSecFallback = shuffle(secondaryOosFallback);
-
-          const selected: College[] = [];
-
-          // 1. Pick Primary first
-          selected.push(...shufPrimary.slice(0, 5));
-
-          // 2. Backfill with Fallback (Reach)
-          if (selected.length < 5) {
-            const needed = 5 - selected.length;
-            selected.push(...shufFallback.slice(0, needed));
-          }
-
-          // 3. Backfill with secondary primary (only if not skipping secondary backfill)
-          const skipSecondaryBackfill = !oos || (oos && consideredStates.length > 0);
-          if (!skipSecondaryBackfill) {
-            if (selected.length < 5) {
-              const needed = 5 - selected.length;
-              selected.push(...shufSecPrimary.slice(0, needed));
-            }
-
-            // 4. Backfill with secondary fallback
-            if (selected.length < 5) {
-              const needed = 5 - selected.length;
-              selected.push(...shufSecFallback.slice(0, needed));
-            }
-          }
-
-          return selected.slice(0, 5).map(c => c.id);
-        };
-
-        const updatePayload: Partial<UserProfile> = {};
-
-        if (targetTab === "matchesInState" || targetTab === "both") {
-          updatePayload.matchedSchoolIdsInState = calculateForStateMode(false);
-        }
-        if (targetTab === "matchesOutOfState" || targetTab === "both") {
-          updatePayload.matchedSchoolIdsOutOfState = calculateForStateMode(true);
-        }
-
-        await updateUserProfile(updatePayload);
-      } catch (err) {
-        console.error("Match Engine Error:", err);
-      } finally {
-        setIsMatching(false);
+      if (!res.ok) {
+        throw new Error(`Matchmaking failed: HTTP ${res.status}`);
       }
-    }, 2500);
+
+      const data = await res.json();
+      if (data.success) {
+        // Merge the new match details into the colleges local state so they render correctly
+        setColleges((prev) => {
+          const prevMap = new Map(prev.map(c => [c.id, c]));
+          const newMatches = [...(data.matchesInState || []), ...(data.matchesOutOfState || [])];
+          newMatches.forEach(c => prevMap.set(c.id, c));
+          return Array.from(prevMap.values());
+        });
+      }
+    } catch (err) {
+      console.error("Match Engine Error:", err);
+      alert("Matchmaking engine failed. Please try again.");
+    } finally {
+      setIsMatching(false);
+    }
   };
 
-  // Load available colleges for searching
+  // Load college details for tracked and matched schools only (very cost-effective)
   useEffect(() => {
-    const fetchColleges = async () => {
+    if (!user) return;
+    
+    // We fetch when applications load or profile matched lists change
+    const trackedIds = applications.map(a => a.collegeId);
+    const inStateIds = profile?.matchedSchoolIdsInState || [];
+    const outOfStateIds = profile?.matchedSchoolIdsOutOfState || [];
+    
+    const allIds = Array.from(new Set([...trackedIds, ...inStateIds, ...outOfStateIds])).filter(Boolean);
+    
+    if (allIds.length === 0) {
+      setColleges([]);
+      return;
+    }
+    
+    const fetchCollegesBatch = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "colleges"));
-        const list: College[] = [];
-        querySnapshot.forEach((doc) => {
-          const rawCol = doc.data() as College;
-          const city = rawCol.city || (rawCol.location && rawCol.location.includes(",") ? rawCol.location.split(",")[0].trim() : "");
-          const state = rawCol.state || (rawCol.location && rawCol.location.includes(",") ? rawCol.location.split(",")[1].trim() : rawCol.location || "");
-          list.push({ ...rawCol, city, state });
+        const token = await user.getIdToken();
+        const idsStr = allIds.join(",");
+        const res = await fetch(`/api/colleges/batch?ids=${encodeURIComponent(idsStr)}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
         });
-        list.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-        setColleges(list);
+        if (res.ok) {
+          const list = await res.json() as College[];
+          setColleges(list);
+        }
       } catch (err) {
-        console.error("Error loading colleges:", err);
+        console.error("Failed to load batch colleges details:", err);
       }
     };
-    fetchColleges();
-  }, []);
+    fetchCollegesBatch();
+  }, [applications, profile?.matchedSchoolIdsInState, profile?.matchedSchoolIdsOutOfState, user]);
 
-  // Derived state search results to avoid useEffect-state sync warnings
-  const searchResults = searchTerm.trim()
-    ? colleges.filter((c) =>
-        (c.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (c.city || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (c.state || "").toLowerCase().includes(searchTerm.toLowerCase())
-      ).slice(0, 5)
-    : [];
+  // Fetch search results asynchronously from cache endpoint
+  useEffect(() => {
+    if (!searchTerm.trim() || !user) {
+      setSearchResults([]);
+      return;
+    }
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch(`/api/colleges/search?q=${encodeURIComponent(searchTerm)}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSearchResults(data);
+        }
+      } catch (err) {
+        console.error("Search failed:", err);
+      }
+    }, 300); // 300ms debounce
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm, user]);
 
   const handleAddApp = async () => {
     if (!user || !selectedCollege) return;

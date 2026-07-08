@@ -3,6 +3,7 @@ import { getCachedColleges } from "@/lib/colleges-cache";
 import { verifyAuth } from "@/lib/api-auth";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { College } from "@/types";
+import { logAnalyticsEventServer } from "@/lib/analyticsServer";
 
 export const dynamic = "force-dynamic";
 
@@ -234,6 +235,9 @@ export async function POST(req: Request) {
 
     // 2. Save matches to user profile in Firestore
     await adminDb.collection("users").doc(uid).update(updatePayload);
+
+    // Log analytics event
+    await logAnalyticsEventServer("run_match", uid, { mode });
 
     // 3. Retrieve and return the full matched college records
     const inStateColleges = colleges.filter(c => matchedInStateIds.includes(c.id));

@@ -5,6 +5,7 @@ import { User, signInWithPopup, signOut, onAuthStateChanged } from "firebase/aut
 import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 import { auth, db, googleProvider } from "./firebase";
 import { UserProfile } from "@/types";
+import { logAnalyticsEvent } from "./analyticsClient";
 
 interface AuthContextType {
   user: User | null;
@@ -45,6 +46,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      // Log Daily Active User (DAU) session once per day per user
+      if (typeof window !== "undefined") {
+        const todayStr = new Date().toISOString().split("T")[0];
+        const storageKey = `dau_logged_${currentUser.uid}`;
+        const lastLogged = localStorage.getItem(storageKey);
+        if (lastLogged !== todayStr) {
+          logAnalyticsEvent("dau_session", currentUser.uid);
+          localStorage.setItem(storageKey, todayStr);
+        }
+      }
+
       // Sync custom claims to check for admin claim
       try {
         const idTokenResult = await currentUser.getIdTokenResult();
@@ -79,6 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
         await setDoc(userRef, newProfile);
         setProfile(newProfile);
+        logAnalyticsEvent("signup", currentUser.uid);
       } else {
         // Sync marketing preference if passed at login
         if (typeof window !== "undefined") {

@@ -1,6 +1,7 @@
 import { doc, getDoc, updateDoc, setDoc, deleteDoc, collection, query, onSnapshot, arrayUnion, arrayRemove } from "firebase/firestore";
 import { db } from "./firebase";
 import { UserProfile } from "@/types";
+import { logAnalyticsEvent } from "./analyticsClient";
 
 export interface ApplicationInfo {
   collegeId: string;
@@ -54,6 +55,9 @@ export async function addApplication(
     await updateDoc(userRef, {
       mySchools: arrayUnion(collegeId)
     });
+
+    // Log analytics event
+    await logAnalyticsEvent("track_school", uid, { collegeId, collegeName });
   } catch (error) {
     console.error("Error adding application:", error);
     throw error;

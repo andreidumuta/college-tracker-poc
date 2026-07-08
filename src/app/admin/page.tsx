@@ -5,7 +5,7 @@ import { collection, query, orderBy, doc, updateDoc, setDoc, deleteDoc, onSnapsh
 import { db, auth, googleProvider } from "@/lib/firebase";
 import { signInWithPopup, signOut } from "firebase/auth";
 import { useAuth } from "@/lib/auth-context";
-import { GraduationCap, Search, Wand2, Download, Table as TableIcon, LogOut, FileSpreadsheet, Upload, ListPlus, Database, Plus, Trash2 } from "lucide-react";
+import { GraduationCap, Search, Wand2, Download, Table as TableIcon, LogOut, FileSpreadsheet, Upload, ListPlus, Database, Plus, Trash2, TrendingUp, Users, Sparkles, Calendar, BarChart2 } from "lucide-react";
 
 interface CostBreakdown {
   inState: number | null;
@@ -79,7 +79,7 @@ export default function AdminDashboard() {
   const [collegesLoading, setCollegesLoading] = useState(true);
   const loading = authLoading || (user && isAdmin && collegesLoading);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState<"database" | "whitelist">("database");
+  const [activeTab, setActiveTab] = useState<"database" | "whitelist" | "analytics">("database");
   
   const [isFetchingScorecard, setIsFetchingScorecard] = useState(false);
   const [fetchProgress, setFetchProgress] = useState({ current: 0, total: 0 });
@@ -88,6 +88,58 @@ export default function AdminDashboard() {
   const [isUploadingCSV, setIsUploadingCSV] = useState(false);
   const [fetchingApiId, setFetchingApiId] = useState<string | null>(null);
   const [researchingColumn, setResearchingColumn] = useState<string | null>(null);
+
+  // Analytics States
+  const [analyticsData, setAnalyticsData] = useState<{
+    summary: { totalSignups: number; totalDau: number; totalTracks: number; totalMatches: number };
+    chartData: Array<{ label: string; signups: number; dau: number; tracks: number; matches: number }>;
+    topColleges: Array<{ name: string; count: number }>;
+  } | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsStartDate, setAnalyticsStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30); // 30 days ago
+    return d.toISOString().substring(0, 10);
+  });
+  const [analyticsEndDate, setAnalyticsEndDate] = useState(() => {
+    return new Date().toISOString().substring(0, 10);
+  });
+  const [analyticsGroupBy, setAnalyticsGroupBy] = useState<"daily" | "weekly" | "monthly">("daily");
+  const [selectedMetric, setSelectedMetric] = useState<"dau" | "signups" | "tracks" | "matches">("dau");
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  // Fetch Analytics
+  useEffect(() => {
+    if (!user || !isAdmin || activeTab !== "analytics") return;
+
+    const fetchAnalytics = async () => {
+      setAnalyticsLoading(true);
+      try {
+        const token = await user.getIdToken();
+        const params = new URLSearchParams({
+          startDate: analyticsStartDate,
+          endDate: analyticsEndDate,
+          groupBy: analyticsGroupBy
+        });
+        const res = await fetch(`/api/admin/analytics?${params.toString()}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setAnalyticsData(data);
+        } else {
+          console.error("Failed to load analytics:", res.statusText);
+        }
+      } catch (err) {
+        console.error("Error fetching analytics:", err);
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    };
+    fetchAnalytics();
+  }, [user, isAdmin, activeTab, analyticsStartDate, analyticsEndDate, analyticsGroupBy]);
 
 
   useEffect(() => {
@@ -722,6 +774,13 @@ export default function AdminDashboard() {
             <ListPlus className="w-5 h-5" />
             Whitelist Manager
           </button>
+          <button 
+            onClick={() => setActiveTab("analytics")}
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === "analytics" ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20" : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"}`}
+          >
+            <TrendingUp className="w-5 h-5" />
+            Analytics Dashboard
+          </button>
         </div>
 
         {/* Tab Content */}
@@ -1292,6 +1351,350 @@ export default function AdminDashboard() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "analytics" && (
+            <div className="p-8 w-full h-full overflow-y-auto space-y-8 max-w-7xl mx-auto">
+              <div>
+                <h2 className="text-3xl font-bold text-white mb-2">Analytics Dashboard</h2>
+                <p className="text-slate-400">
+                  Track user activity, system engagement, and database whitelisting events.
+                </p>
+              </div>
+
+              {/* Filters Panel */}
+              <div className="bg-slate-900 border border-slate-850 p-6 rounded-2xl flex flex-wrap gap-6 items-end">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Start Date</label>
+                  <input
+                    type="date"
+                    value={analyticsStartDate}
+                    onChange={e => setAnalyticsStartDate(e.target.value)}
+                    className="px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-200 text-sm focus:outline-none focus:border-blue-500 w-44"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">End Date</label>
+                  <input
+                    type="date"
+                    value={analyticsEndDate}
+                    onChange={e => setAnalyticsEndDate(e.target.value)}
+                    className="px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-200 text-sm focus:outline-none focus:border-blue-500 w-44"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Group By</label>
+                  <select
+                    value={analyticsGroupBy}
+                    onChange={e => setAnalyticsGroupBy(e.target.value as any)}
+                    className="px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-200 text-sm focus:outline-none focus:border-blue-500 w-40 cursor-pointer"
+                  >
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+                {analyticsLoading && (
+                  <div className="pb-2.5 pl-2">
+                    <span className="text-xs text-blue-400 font-semibold animate-pulse">Loading latest metrics...</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Summary Cards */}
+              {analyticsData && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {/* DAU Card */}
+                  <div className="bg-slate-900 border border-slate-850 p-6 rounded-2xl shadow-md space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Daily Active Users (DAU)</span>
+                      <Users className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <p className="text-4xl font-extrabold text-white">{analyticsData.summary.totalDau}</p>
+                    <p className="text-[10px] text-slate-500 font-semibold">Total unique active users (periods aggregated)</p>
+                  </div>
+                  {/* Signups Card */}
+                  <div className="bg-slate-900 border border-slate-850 p-6 rounded-2xl shadow-md space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">New Signups</span>
+                      <GraduationCap className="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <p className="text-4xl font-extrabold text-white">{analyticsData.summary.totalSignups}</p>
+                    <p className="text-[10px] text-slate-500 font-semibold">Total student profile registrations</p>
+                  </div>
+                  {/* Schools Tracked Card */}
+                  <div className="bg-slate-900 border border-slate-850 p-6 rounded-2xl shadow-md space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Schools Tracked</span>
+                      <Database className="w-5 h-5 text-amber-400" />
+                    </div>
+                    <p className="text-4xl font-extrabold text-white">{analyticsData.summary.totalTracks}</p>
+                    <p className="text-[10px] text-slate-500 font-semibold">Total colleges added by students</p>
+                  </div>
+                  {/* Matches Runs Card */}
+                  <div className="bg-slate-900 border border-slate-850 p-6 rounded-2xl shadow-md space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Match Engine Runs</span>
+                      <Sparkles className="w-5 h-5 text-purple-400" />
+                    </div>
+                    <p className="text-4xl font-extrabold text-white">{analyticsData.summary.totalMatches}</p>
+                    <p className="text-[10px] text-slate-500 font-semibold">Total matchmaking recommendation requests</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Main Trends & Leaderboard */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                {/* SVG Line Chart Box */}
+                <div className="lg:col-span-8 bg-slate-900 border border-slate-850 p-6 rounded-2xl shadow-md flex flex-col relative">
+                  <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-white">Metrics Over Time</h3>
+                      <p className="text-xs text-slate-400">Timeline view of user interactions and metrics</p>
+                    </div>
+
+                    {/* Metric Select Toggle */}
+                    <div className="flex bg-slate-800 p-1 rounded-xl border border-slate-700 shadow-inner">
+                      <button
+                        onClick={() => setSelectedMetric("dau")}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${selectedMetric === "dau" ? "bg-blue-600 text-white shadow" : "text-slate-400 hover:text-slate-200"}`}
+                      >
+                        DAU
+                      </button>
+                      <button
+                        onClick={() => setSelectedMetric("signups")}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${selectedMetric === "signups" ? "bg-emerald-600 text-white shadow" : "text-slate-400 hover:text-slate-200"}`}
+                      >
+                        Signups
+                      </button>
+                      <button
+                        onClick={() => setSelectedMetric("tracks")}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${selectedMetric === "tracks" ? "bg-amber-600 text-white shadow" : "text-slate-400 hover:text-slate-200"}`}
+                      >
+                        Tracks
+                      </button>
+                      <button
+                        onClick={() => setSelectedMetric("matches")}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${selectedMetric === "matches" ? "bg-purple-600 text-white shadow" : "text-slate-400 hover:text-slate-200"}`}
+                      >
+                        Matches
+                      </button>
+                    </div>
+                  </div>
+
+                  {analyticsData && analyticsData.chartData.length > 0 ? (
+                    (() => {
+                      const chartData = analyticsData.chartData;
+                      const metricColors = {
+                        dau: "#3b82f6",
+                        signups: "#10b981",
+                        tracks: "#f59e0b",
+                        matches: "#8b5cf6"
+                      };
+                      const activeColor = metricColors[selectedMetric];
+
+                      // Compute Chart Parameters
+                      const maxVal = Math.max(...chartData.map(d => d[selectedMetric] || 0), 5);
+                      const yMax = Math.ceil(maxVal * 1.15); // Add padding at top
+
+                      const width = 800;
+                      const height = 300;
+                      const paddingLeft = 50;
+                      const paddingRight = 20;
+                      const paddingTop = 30;
+                      const paddingBottom = 40;
+
+                      const plotWidth = width - paddingLeft - paddingRight;
+                      const plotHeight = height - paddingTop - paddingBottom;
+
+                      // Map chart points to coordinates
+                      const coords = chartData.map((d, i) => {
+                        const x = paddingLeft + (chartData.length > 1 ? (i / (chartData.length - 1)) * plotWidth : plotWidth / 2);
+                        const val = d[selectedMetric] || 0;
+                        const y = paddingTop + (1 - val / yMax) * plotHeight;
+                        return { x, y, val, label: d.label };
+                      });
+
+                      const pointsStr = coords.map(c => `${c.x},${c.y}`).join(" ");
+                      const areaPath = `M${paddingLeft},${height - paddingBottom} L${pointsStr} L${paddingLeft + plotWidth},${height - paddingBottom} Z`;
+                      const linePath = `M${pointsStr}`;
+
+                      // Custom X-axis dates labels distribution (up to 5 labels)
+                      const labelStep = Math.max(1, Math.ceil(chartData.length / 5));
+                      const labelPoints = coords.filter((_, idx) => idx % labelStep === 0 || idx === chartData.length - 1);
+
+                      return (
+                        <div className="relative w-full h-[320px]">
+                          <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full">
+                            <defs>
+                              <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor={activeColor} stopOpacity="0.3" />
+                                <stop offset="100%" stopColor={activeColor} stopOpacity="0.0" />
+                              </linearGradient>
+                            </defs>
+
+                            {/* Horizontal Gridlines & Y-Axis Labels */}
+                            {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => {
+                              const y = paddingTop + ratio * plotHeight;
+                              const val = Math.round((1 - ratio) * yMax);
+                              return (
+                                <g key={index}>
+                                  <line
+                                    x1={paddingLeft}
+                                    y1={y}
+                                    x2={width - paddingRight}
+                                    y2={y}
+                                    stroke="#1e293b"
+                                    strokeDasharray="4,4"
+                                  />
+                                  <text
+                                    x={paddingLeft - 12}
+                                    y={y + 4}
+                                    fill="#64748b"
+                                    fontSize="10"
+                                    fontWeight="bold"
+                                    textAnchor="end"
+                                  >
+                                    {val}
+                                  </text>
+                                </g>
+                              );
+                            })}
+
+                            {/* Chart Area Fill */}
+                            <path d={areaPath} fill="url(#chartGrad)" />
+
+                            {/* Chart Line */}
+                            <path
+                              d={linePath}
+                              fill="none"
+                              stroke={activeColor}
+                              strokeWidth="3.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+
+                            {/* Data points markers */}
+                            {coords.map((c, i) => (
+                              <circle
+                                key={i}
+                                cx={c.x}
+                                cy={c.y}
+                                r={hoveredIndex === i ? 6 : 3}
+                                fill={hoveredIndex === i ? activeColor : "#1e293b"}
+                                stroke={hoveredIndex === i ? "#ffffff" : activeColor}
+                                strokeWidth={hoveredIndex === i ? 2 : 1.5}
+                                className="transition-all duration-150"
+                              />
+                            ))}
+
+                            {/* X-Axis Dates Labels */}
+                            {labelPoints.map((c, i) => (
+                              <text
+                                key={i}
+                                x={c.x}
+                                y={height - paddingBottom + 20}
+                                fill="#64748b"
+                                fontSize="9"
+                                fontWeight="bold"
+                                textAnchor="middle"
+                              >
+                                {c.label}
+                              </text>
+                            ))}
+
+                            {/* Hover hit box bars for tooltip reactivity */}
+                            {coords.map((c, i) => {
+                              const barWidth = chartData.length > 1 ? plotWidth / (chartData.length - 1) : plotWidth;
+                              return (
+                                <rect
+                                  key={i}
+                                  x={c.x - barWidth / 2}
+                                  y={paddingTop}
+                                  width={barWidth}
+                                  height={plotHeight}
+                                  fill="transparent"
+                                  onMouseEnter={() => setHoveredIndex(i)}
+                                  onMouseLeave={() => setHoveredIndex(null)}
+                                  className="cursor-pointer"
+                                />
+                              );
+                            })}
+
+                            {/* Interactive tracking line on hover */}
+                            {hoveredIndex !== null && coords[hoveredIndex] && (
+                              <line
+                                x1={coords[hoveredIndex].x}
+                                y1={paddingTop}
+                                x2={coords[hoveredIndex].x}
+                                y2={height - paddingBottom}
+                                stroke="#475569"
+                                strokeDasharray="3,3"
+                                pointerEvents="none"
+                              />
+                            )}
+                          </svg>
+
+                          {/* Hover Tooltip Overlay */}
+                          {hoveredIndex !== null && coords[hoveredIndex] && (
+                            <div
+                              className="absolute bg-slate-900 border border-slate-700 px-3 py-2 rounded-lg shadow-xl pointer-events-none z-30 transition-all duration-100 flex flex-col gap-0.5 text-xs"
+                              style={{
+                                left: `${(coords[hoveredIndex].x / width) * 100}%`,
+                                top: `${(coords[hoveredIndex].y / height) * 100 - 18}%`,
+                                transform: "translate(-50%, -100%)",
+                              }}
+                            >
+                              <span className="text-[10px] text-slate-500 font-bold uppercase">{coords[hoveredIndex].label}</span>
+                              <span className="font-extrabold text-white text-sm">
+                                {selectedMetric === "dau" ? "DAU" :
+                                 selectedMetric === "signups" ? "Signups" :
+                                 selectedMetric === "tracks" ? "Tracked" : "Matches"}: {coords[hoveredIndex].val}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <div className="flex flex-col justify-center items-center h-[280px] bg-slate-900/50 rounded-2xl border border-dashed border-slate-800">
+                      <BarChart2 className="w-12 h-12 text-slate-600 mb-2" />
+                      <p className="text-slate-400 text-sm font-medium">No activity tracked in this date range.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Top Curated Colleges Leaderboard */}
+                <div className="lg:col-span-4 bg-slate-900 border border-slate-850 p-6 rounded-2xl shadow-md space-y-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Top Tracked Colleges</h3>
+                    <p className="text-xs text-slate-400 font-medium">Leaderboard of whitelisted schools added by students</p>
+                  </div>
+
+                  <div className="border border-slate-800 rounded-xl overflow-hidden divide-y divide-slate-800">
+                    {analyticsData && analyticsData.topColleges.length > 0 ? (
+                      analyticsData.topColleges.map((col, idx) => (
+                        <div key={idx} className="flex justify-between items-center p-3.5 hover:bg-slate-850/50">
+                          <div className="flex items-center gap-3">
+                            <span className="w-6 h-6 rounded-lg bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-400">
+                              #{idx + 1}
+                            </span>
+                            <span className="text-sm font-semibold text-white">{col.name}</span>
+                          </div>
+                          <span className="text-xs font-black bg-blue-500/10 text-blue-400 px-2.5 py-1 rounded-full uppercase tracking-wide">
+                            {col.count} tracks
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-8 text-center text-slate-500 text-xs italic">
+                        No schools tracked in this range.
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}
